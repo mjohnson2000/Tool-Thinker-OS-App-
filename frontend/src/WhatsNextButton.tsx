@@ -10,7 +10,7 @@ interface WhatsNextButtonProps {
 const stageOrder = ['discovery', 'idea', 'validation', 'mvp', 'launch'] as const;
 const stageLabels = {
   discovery: 'Discovery',
-  idea: 'Idea',
+  idea: 'Jobs',
   validation: 'Validation',
   mvp: 'MVP',
   launch: 'Launch',

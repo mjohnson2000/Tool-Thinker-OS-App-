@@ -38,7 +38,7 @@ interface IdeaInsights {
 }
 
 const IdeaStage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('jtbd');
+  const [activeTab, setActiveTab] = useState('persona');
   const [showInsights, setShowInsights] = useState(false);
   const [ideaData, setIdeaData] = useState<IdeaData>({
     jtbd: {
@@ -416,22 +416,22 @@ const IdeaStage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
 
       <div className="idea-header">
-        <h2>💡 Idea Stage: Foundation Building</h2>
-        <p>Let's validate your idea with structured thinking frameworks</p>
+        <h2>🧑‍💼 Jobs Stage: Foundation Building</h2>
+        <p>Let's discover the jobs your customer is hiring your product for.</p>
       </div>
 
       <div className="tab-navigation">
-        <button 
-          className={`tab ${activeTab === 'jtbd' ? 'active' : ''}`}
-          onClick={() => setActiveTab('jtbd')}
-        >
-          Jobs-to-be-Done
-        </button>
         <button 
           className={`tab ${activeTab === 'persona' ? 'active' : ''}`}
           onClick={() => setActiveTab('persona')}
         >
           Customer Persona
+        </button>
+        <button 
+          className={`tab ${activeTab === 'jtbd' ? 'active' : ''}`}
+          onClick={() => setActiveTab('jtbd')}
+        >
+          Jobs-to-be-Done
         </button>
         <button 
           className={`tab ${activeTab === 'validation' ? 'active' : ''}`}

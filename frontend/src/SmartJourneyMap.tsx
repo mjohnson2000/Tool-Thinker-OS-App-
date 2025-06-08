@@ -8,7 +8,7 @@ interface SmartJourneyMapProps {
 
 const stages = [
   { key: 'discovery', label: 'Discovery', icon: '🔍' },
-  { key: 'idea', label: 'Idea', icon: '💡' },
+  { key: 'idea', label: 'Jobs', icon: '💡' },
   { key: 'validation', label: 'Validation', icon: '✅' },
   { key: 'mvp', label: 'MVP', icon: '🛠️' },
   { key: 'launch', label: 'Launch', icon: '🚀' },

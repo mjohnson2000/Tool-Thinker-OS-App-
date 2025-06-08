@@ -1,0 +1,221 @@
+.launch-stage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: clamp(2rem, 6vw, 5rem) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.launch-header {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: clamp(16px, 3vw, 32px);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.18);
+  padding: clamp(2rem, 6vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.launch-header h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: var(--accent-blue);
+  margin: 0 0 1rem 0;
+  letter-spacing: -1px;
+}
+
+.launch-header p {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.launch-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.launch-section {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: clamp(16px, 3vw, 32px);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.18);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.launch-section:hover,
+.launch-section.active {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.25);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.not_started {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-badge.in_progress {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.section-tasks {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.launch-task {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.task-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.task-actions select {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.launch-task textarea {
+  width: 100%;
+  min-height: 100px;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 0.875rem;
+  resize: vertical;
+}
+
+.launch-summary {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: clamp(16px, 3vw, 32px);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.18);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  max-width: 800px;
+  width: 100%;
+}
+
+.launch-summary h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.progress-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress-stat h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-blue);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-stat p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .launch-section {
+    padding: 1.25rem;
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .task-actions {
+    width: 100%;
+  }
+  .task-actions select {
+    width: 100%;
+  }
+} 

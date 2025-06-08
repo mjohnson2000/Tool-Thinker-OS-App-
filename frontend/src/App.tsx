@@ -1,255 +1,292 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import IdeaStage from './IdeaStage'
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import IdeaStage from './IdeaStage';
+import IdeaDiscovery from './IdeaDiscovery';
+import { IdeaValidation } from './IdeaValidation';
+import { MVPStage } from './MVPStage';
+import { LaunchStage } from './LaunchStage';
 
-interface FrameworkTool {
-  id: string;
-  name: string;
-  description: string;
-  stage: string;
-  questions?: string[];
+interface UserProgress {
+  completed: boolean;
+  lastUpdated: number;
 }
 
-interface Recommendation {
-  recommendedFramework: FrameworkTool;
-  tip: string;
-  nextSteps: string[];
-}
+type Stage = 'discovery' | 'idea' | 'validation' | 'mvp' | 'launch';
+type AppView = 'landing' | 'stages';
 
-const API_BASE = 'http://localhost:3001/api';
+// Local storage helper functions
+const saveToLocalStorage = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+};
+
+const loadFromLocalStorage = (key: string, defaultValue: any = null) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn('Failed to load from localStorage:', error);
+    return defaultValue;
+  }
+};
 
 function App() {
-  const [currentStage, setCurrentStage] = useState<string>('Idea')
-  const [reflection, setReflection] = useState<string>('')
-  const [frameworks, setFrameworks] = useState<FrameworkTool[]>([])
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [saveStatus, setSaveStatus] = useState<string>('')
-  const [showIdeaStage, setShowIdeaStage] = useState<boolean>(false)
+  // Load initial state from localStorage or use defaults
+  const [currentStage, setCurrentStage] = useState<Stage>(() => 
+    loadFromLocalStorage('toolthinker_current_stage', 'discovery')
+  );
+  const [currentView, setCurrentView] = useState<AppView>(() => 
+    loadFromLocalStorage('toolthinker_onboarding_completed', false) ? 'stages' : 'landing'
+  );
+  const [showOnboarding, setShowOnboarding] = useState(() => 
+    !loadFromLocalStorage('toolthinker_onboarding_completed', false)
+  );
+  const [userProgress, setUserProgress] = useState(() => 
+    loadFromLocalStorage('toolthinker_user_progress', {
+      discovery: { completed: false, lastUpdated: null },
+      idea: { completed: false, lastUpdated: null },
+      validation: { completed: false, lastUpdated: null },
+      mvp: { completed: false, lastUpdated: null },
+      launch: { completed: false, lastUpdated: null }
+    })
+  );
 
-  const stages = ['Idea', 'Validation', 'MVP', 'Launch']
-
-  // Fetch initial data
+  // Save to localStorage whenever state changes
   useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE}/frameworks`).then(res => res.json()),
-      fetch(`${API_BASE}/progress`).then(res => res.json()),
-      fetch(`${API_BASE}/recommendations`).then(res => res.json())
-    ])
-    .then(([frameworksData, progressData, recommendationData]) => {
-      setFrameworks(frameworksData)
-      setCurrentStage(progressData.currentStage)
-      setRecommendation(recommendationData)
-      setLoading(false)
-    })
-    .catch(err => {
-      console.error('Error fetching data:', err)
-      setLoading(false)
-    })
-  }, [])
+    saveToLocalStorage('toolthinker_current_stage', currentStage);
+  }, [currentStage]);
 
-  // Update stage and sync with backend
-  const handleStageChange = async (newStage: string) => {
-    setCurrentStage(newStage)
-    setShowIdeaStage(false) // Close idea stage when switching stages
-    
-    try {
-      await fetch(`${API_BASE}/progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentStage: newStage })
-      })
-      
-      // Fetch new recommendations for the stage
-      const recommendationResponse = await fetch(`${API_BASE}/recommendations`)
-      const newRecommendation = await recommendationResponse.json()
-      setRecommendation(newRecommendation)
-    } catch (err) {
-      console.error('Error updating stage:', err)
-    }
-  }
+  useEffect(() => {
+    saveToLocalStorage('toolthinker_user_progress', userProgress);
+  }, [userProgress]);
 
-  // Save reflection to backend
-  const handleSaveReflection = async () => {
-    if (!reflection.trim()) return
+  const stages = [
+    { id: 'discovery', name: 'Discovery', icon: '🔍' },
+    { id: 'idea', name: 'Idea', icon: '💡' },
+    { id: 'validation', name: 'Validation', icon: '✅' },
+    { id: 'mvp', name: 'MVP', icon: '🛠️' },
+    { id: 'launch', name: 'Launch', icon: '🚀' }
+  ];
+
+
+
+  const coachTips = {
+    discovery: '🎯 Great! Let\'s help you discover your next opportunity by analyzing problems, skills, and market trends.',
+    idea: '💭 Perfect! Let\'s structure your idea using proven frameworks like Jobs-to-be-Done and persona development.',
+    validation: '🔬 Smart choice! Let\'s validate your assumptions and test market demand before building.',
+    mvp: '⚡ Time to build! Let\'s focus on core features that solve your users\' primary job-to-be-done.',
+    launch: '🌟 Launch time! Let\'s create a go-to-market strategy that reaches your target customers effectively.'
+  };
+
+  const handleStageAdvance = (nextStage: string) => {
+    const newStage = nextStage as Stage;
     
-    try {
-      const response = await fetch(`${API_BASE}/reflections`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reflection, stage: currentStage })
-      })
-      
-      if (response.ok) {
-        setSaveStatus('Reflection saved!')
-        setReflection('')
-        setTimeout(() => setSaveStatus(''), 3000)
+    // Mark current stage as completed
+    const updatedProgress = {
+      ...userProgress,
+      [currentStage]: { 
+        completed: true, 
+        lastUpdated: new Date().toISOString() 
       }
-    } catch (err) {
-      console.error('Error saving reflection:', err)
-      setSaveStatus('Error saving reflection')
+    };
+    
+    setUserProgress(updatedProgress);
+    setCurrentStage(newStage);
+  };
+
+  const handleOnboardingChoice = (stage: string) => {
+    setCurrentStage(stage as Stage);
+    setCurrentView('stages');
+    setShowOnboarding(false);
+    saveToLocalStorage('toolthinker_onboarding_completed', true);
+  };
+
+  const goToLanding = () => {
+    setCurrentView('landing');
+  };
+
+  const goToStages = () => {
+    setCurrentView('stages');
+  };
+
+  const skipOnboarding = () => {
+    setShowOnboarding(false);
+    saveToLocalStorage('toolthinker_onboarding_completed', true);
+  };
+
+  const clearAllData = () => {
+    if (window.confirm('Are you sure you want to clear all your progress? This cannot be undone.')) {
+      localStorage.removeItem('toolthinker_current_stage');
+      localStorage.removeItem('toolthinker_user_progress');
+      localStorage.removeItem('toolthinker_onboarding_completed');
+      localStorage.removeItem('toolthinker_discovery_data');
+      localStorage.removeItem('toolthinker_idea_data');
+      window.location.reload();
     }
-  }
+  };
 
-  // Handle framework button click
-  const handleFrameworkClick = () => {
-    if (currentStage === 'Idea') {
-      setShowIdeaStage(true)
-    } else {
-      // For other stages, you could navigate to their specific tools
-      alert(`${currentStage} stage tools coming soon!`)
-    }
-  }
-
-  const currentFramework = frameworks.find(f => f.stage === currentStage)
-
-  if (loading) {
-    return (
-      <div className="thinking-os">
-        <div className="loading-container">
-          <h2>Loading ToolThinker...</h2>
-          <p>Preparing your thinking OS for startup success</p>
+  const renderLandingPage = () => (
+    <div className="landing-page">
+      <div className="landing-hero">
+        <div className="logo-container">
+          <div className="logo">TT</div>
+          <h1>ToolThinker</h1>
+        </div>
+        <p className="hero-subtitle">Your thinking OS for startup success</p>
+        <p className="hero-description">
+          Where are you in your startup journey? Choose your starting point:
+        </p>
+      </div>
+      
+      <div className="pathways-grid">
+        <div className="pathway-card" onClick={() => handleOnboardingChoice('discovery')}>
+          <span className="pathway-icon">🔍</span>
+          <h3>I need an idea</h3>
+          <p>Discover opportunities through problem analysis, skills assessment, and market trends</p>
+          <div className="pathway-button">Start Discovery</div>
+        </div>
+        
+        <div className="pathway-card" onClick={() => handleOnboardingChoice('idea')}>
+          <span className="pathway-icon">💡</span>
+          <h3>I have an idea</h3>
+          <p>Define your concept, target personas, and validate core problems</p>
+          <div className="pathway-button">Define Idea</div>
+        </div>
+        
+        <div className="pathway-card" onClick={() => handleOnboardingChoice('validation')}>
+          <span className="pathway-icon">✅</span>
+          <h3>I need validation</h3>
+          <p>Test market demand, gather feedback, and validate assumptions</p>
+          <div className="pathway-button">Validate Concept</div>
+        </div>
+        
+        <div className="pathway-card" onClick={() => handleOnboardingChoice('mvp')}>
+          <span className="pathway-icon">🛠️</span>
+          <h3>I'm building MVP</h3>
+          <p>Focus on core features and build your minimum viable product</p>
+          <div className="pathway-button">Build MVP</div>
+        </div>
+        
+        <div className="pathway-card" onClick={() => handleOnboardingChoice('launch')}>
+          <span className="pathway-icon">🚀</span>
+          <h3>I'm ready to launch</h3>
+          <p>Create go-to-market strategies and reach your target customers</p>
+          <div className="pathway-button">Plan Launch</div>
         </div>
       </div>
-    )
-  }
+    </div>
+  );
 
-  // Show Idea Stage if selected
-  if (showIdeaStage) {
-    return (
-      <div className="thinking-os">
-        <div className="back-navigation">
-          <button 
-            className="back-button"
-            onClick={() => setShowIdeaStage(false)}
-          >
-            ← Back to Dashboard
-          </button>
-        </div>
-        <IdeaStage onBack={() => setShowIdeaStage(false)} />
-      </div>
-    )
-  }
+  const renderStageContent = () => {
+    switch (currentStage) {
+      case 'discovery':
+        return <IdeaDiscovery onAdvance={() => handleStageAdvance('idea')} />;
+      case 'idea':
+        return <IdeaStage onBack={() => setCurrentStage('discovery')} />;
+      case 'validation':
+        return <IdeaValidation />;
+      case 'mvp':
+        return <MVPStage />;
+      case 'launch':
+        return <LaunchStage />;
+      default:
+        return <IdeaDiscovery onAdvance={() => handleStageAdvance('idea')} />;
+    }
+  };
 
   return (
-    <div className="thinking-os">
-      <header className="app-header">
-        <h1>ToolThinker</h1>
-        <p>Your Thinking OS for Startup Success</p>
-      </header>
-
-      {/* Stage Tracker */}
-      <section className="stage-tracker">
-        <h2>Startup Journey Tracker</h2>
-        <div className="stages">
-          {stages.map((stage, index) => (
-            <div key={stage} className="stage-item">
-              <button 
-                className={`stage-button ${currentStage === stage ? 'active' : ''}`}
-                onClick={() => handleStageChange(stage)}
-              >
-                {stage}
+    <div className="App">
+      {currentView === 'landing' ? (
+        renderLandingPage()
+      ) : (
+        <>
+          {/* Stage Navigation */}
+          <nav className="stage-navigation">
+            <div className="nav-header">
+              <button className="logo-button" onClick={goToLanding}>
+                <div className="nav-logo">TT</div>
+                <span className="nav-title">ToolThinker</span>
               </button>
-              {index < stages.length - 1 && <span className="stage-arrow">→</span>}
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* AI-Recommended Framework */}
-      <section className="framework-section">
-        <h2>AI Recommended Framework</h2>
-        <div className="framework-card">
-          <h3>{recommendation?.recommendedFramework?.name || currentFramework?.name}</h3>
-          <p>{recommendation?.recommendedFramework?.description || currentFramework?.description}</p>
-          <p className="ai-note">🤖 {recommendation?.tip || `AI suggests this framework for your ${currentStage} stage`}</p>
-          
-          {recommendation?.nextSteps && (
-            <div className="next-steps">
-              <h4>Next Steps:</h4>
-              <ul>
-                {recommendation.nextSteps.map((step, index) => (
-                  <li key={index}>{step}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          <button className="cta-button" onClick={handleFrameworkClick}>
-            Start {recommendation?.recommendedFramework?.name || currentFramework?.name}
-          </button>
-        </div>
-      </section>
-
-      {/* Tool Library */}
-      <section className="tools-section">
-        <h2>Framework Library</h2>
-        <div className="tools-grid">
-          {frameworks.map(tool => (
-            <div key={tool.id} className={`tool-card ${tool.stage === currentStage ? 'highlighted' : ''}`}>
-              <h4>{tool.name}</h4>
-              <p>{tool.description}</p>
-              <span className="tool-stage">For: {tool.stage}</span>
-              
-              {tool.questions && (
-                <div className="tool-questions">
-                  <p><strong>Key Questions:</strong></p>
-                  <ul>
-                    {tool.questions.slice(0, 2).map((question, index) => (
-                      <li key={index}>{question}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {tool.stage === currentStage && (
-                <button 
-                  className="tool-action-btn"
-                  onClick={handleFrameworkClick}
+            <div className="nav-stages">
+              {stages.map((stage) => (
+                <button
+                  key={stage.id}
+                  className={`stage-item ${currentStage === stage.id ? 'active' : ''} ${
+                    userProgress[stage.id as Stage]?.completed ? 'completed' : ''
+                  }`}
+                  onClick={() => setCurrentStage(stage.id as Stage)}
                 >
-                  Use This Tool
+                  <span className="stage-icon">{stage.icon}</span>
+                  <span>{stage.name}</span>
                 </button>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </nav>
 
-      {/* Reflection Journal */}
-      <section className="journal-section">
-        <h2>Founder Reflection</h2>
-        <div className="journal-card">
-          <p>What did you learn or decide today?</p>
-          <textarea
-            placeholder="Reflect on your progress, assumptions tested, or key insights..."
-            value={reflection}
-            onChange={(e) => setReflection(e.target.value)}
-            rows={4}
-          />
-          <div className="journal-actions">
-            <button 
-              className="save-button" 
-              onClick={handleSaveReflection}
-              disabled={!reflection.trim()}
-            >
-              Save Reflection
-            </button>
-            {saveStatus && <span className="save-status">{saveStatus}</span>}
+          {/* Main Content */}
+          <div className="main-content">
+            {renderStageContent()}
+          </div>
+        </>
+      )}
+
+      {/* Onboarding Overlay */}
+      {showOnboarding && (
+        <div className="onboarding-overlay">
+          <div className="onboarding-modal">
+            <h2>Welcome to ToolThinker</h2>
+            <p>Where are you in your startup journey?</p>
+            
+            <div className="onboarding-paths">
+              <div className="path-option" onClick={() => handleOnboardingChoice('discovery')}>
+                <span className="path-icon">🔍</span>
+                <div className="path-content">
+                  <h4>I need an idea</h4>
+                  <p className="path-description">Start from scratch</p>
+                </div>
+              </div>
+              
+              <div className="path-option" onClick={() => handleOnboardingChoice('idea')}>
+                <span className="path-icon">💡</span>
+                <div className="path-content">
+                  <h4>I have an idea</h4>
+                  <p className="path-description">Define and refine it</p>
+                </div>
+              </div>
+              
+              <div className="path-option" onClick={() => handleOnboardingChoice('validation')}>
+                <span className="path-icon">✅</span>
+                <div className="path-content">
+                  <h4>I need validation</h4>
+                  <p className="path-description">Test market demand</p>
+                </div>
+              </div>
+              
+              <div className="path-option" onClick={() => handleOnboardingChoice('mvp')}>
+                <span className="path-icon">🛠️</span>
+                <div className="path-content">
+                  <h4>I'm building MVP</h4>
+                  <p className="path-description">Core features ready</p>
+                </div>
+              </div>
+              
+              <div className="path-option" onClick={() => handleOnboardingChoice('launch')}>
+                <span className="path-icon">🚀</span>
+                <div className="path-content">
+                  <h4>I'm ready to launch</h4>
+                  <p className="path-description">Go-to-market time</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* AI Coach */}
-      <section className="ai-coach">
-        <div className="coach-card">
-          <h3>🧠 AI Thinking Coach</h3>
-          <p>Need guidance? Ask about frameworks, validate assumptions, or get unstuck.</p>
-          <p className="coach-tip">Current stage: <strong>{currentStage}</strong> - Focus on {recommendation?.tip?.toLowerCase() || 'building clarity through structured thinking'}</p>
-          <button className="coach-button">Chat with AI Coach</button>
-        </div>
-      </section>
+      )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

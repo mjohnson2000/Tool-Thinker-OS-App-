@@ -5,6 +5,10 @@ import IdeaDiscovery from './IdeaDiscovery';
 import { IdeaValidation } from './IdeaValidation';
 import { MVPStage } from './MVPStage';
 import { LaunchStage } from './LaunchStage';
+import { SmartJourneyMap } from './SmartJourneyMap';
+import './SmartJourneyMap.css';
+import { WhatsNextButton } from './WhatsNextButton';
+import './WhatsNextButton.css';
 
 interface UserProgress {
   completed: boolean;
@@ -128,6 +132,10 @@ function App() {
     }
   };
 
+  const handleSuggestTask = (stage: string) => {
+    alert(`Here's a key task to complete in the ${stage} stage!`);
+  };
+
   const renderLandingPage = () => (
     <div className="landing-page">
       <div className="landing-hero">
@@ -198,41 +206,50 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {currentView === 'landing' ? (
-        renderLandingPage()
-      ) : (
+    <div className="app-root">
+      {currentView === 'stages' && (
         <>
-          {/* Stage Navigation */}
-          <nav className="stage-navigation">
-            <div className="nav-header">
-              <button className="logo-button" onClick={goToLanding}>
-                <div className="nav-logo">TT</div>
-                <span className="nav-title">ToolThinker</span>
-              </button>
-            </div>
-            <div className="nav-stages">
-              {stages.map((stage) => (
-                <button
-                  key={stage.id}
-                  className={`stage-item ${currentStage === stage.id ? 'active' : ''} ${
-                    userProgress[stage.id as Stage]?.completed ? 'completed' : ''
-                  }`}
-                  onClick={() => setCurrentStage(stage.id as Stage)}
-                >
-                  <span className="stage-icon">{stage.icon}</span>
-                  <span>{stage.name}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-
-          {/* Main Content */}
-          <div className="main-content">
-            {renderStageContent()}
-          </div>
+          <SmartJourneyMap
+            currentStage={currentStage}
+            userProgress={userProgress}
+            onStageSelect={setCurrentStage}
+          />
+          <WhatsNextButton
+            currentStage={currentStage}
+            userProgress={userProgress}
+            onAdvanceStage={handleStageAdvance}
+            onSuggestTask={handleSuggestTask}
+          />
         </>
       )}
+      <div className="main-content" style={{ marginLeft: currentView === 'stages' ? 220 : 0 }}>
+        {/* Stage Navigation */}
+        <nav className="stage-navigation">
+          <div className="nav-header">
+            <button className="logo-button" onClick={goToLanding}>
+              <div className="nav-logo">TT</div>
+              <span className="nav-title">ToolThinker</span>
+            </button>
+          </div>
+          <div className="nav-stages">
+            {stages.map((stage) => (
+              <button
+                key={stage.id}
+                className={`stage-item ${currentStage === stage.id ? 'active' : ''} ${
+                  userProgress[stage.id as Stage]?.completed ? 'completed' : ''
+                }`}
+                onClick={() => setCurrentStage(stage.id as Stage)}
+              >
+                <span className="stage-icon">{stage.icon}</span>
+                <span>{stage.name}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        {currentView === 'landing' ? renderLandingPage() : renderStageContent()}
+      </div>
 
       {/* Onboarding Overlay */}
       {showOnboarding && (

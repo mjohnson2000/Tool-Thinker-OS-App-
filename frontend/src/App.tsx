@@ -69,7 +69,7 @@ function App() {
 
   const stages = [
     { id: 'discovery', name: 'Discovery', icon: '🔍' },
-    { id: 'idea', name: 'Idea', icon: '💡' },
+    { id: 'idea', name: 'Jobs', icon: '💡' },
     { id: 'validation', name: 'Validation', icon: '✅' },
     { id: 'mvp', name: 'MVP', icon: '🛠️' },
     { id: 'launch', name: 'Launch', icon: '🚀' }
@@ -159,7 +159,7 @@ function App() {
         
         <div className="pathway-card" onClick={() => handleOnboardingChoice('idea')}>
           <span className="pathway-icon">💡</span>
-          <h3>I have an idea</h3>
+          <h3>I have a job to solve</h3>
           <p>Define your concept, target personas, and validate core problems</p>
           <div className="pathway-button">Define Idea</div>
         </div>
@@ -270,7 +270,7 @@ function App() {
               <div className="path-option" onClick={() => handleOnboardingChoice('idea')}>
                 <span className="path-icon">💡</span>
                 <div className="path-content">
-                  <h4>I have an idea</h4>
+                  <h4>I have a job to solve</h4>
                   <p className="path-description">Define and refine it</p>
                 </div>
               </div>

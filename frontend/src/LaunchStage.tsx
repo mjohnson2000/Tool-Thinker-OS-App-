@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './LaunchStage.css';
 
 interface LaunchSection {
@@ -15,6 +15,9 @@ interface LaunchTask {
   description: string;
   status: 'not_started' | 'in_progress' | 'completed';
   notes?: string;
+  autoContent?: string;
+  isManual?: boolean;
+  manualContent?: string;
 }
 
 export function LaunchStage() {
@@ -98,6 +101,49 @@ export function LaunchStage() {
     );
   };
 
+  useEffect(() => {
+    const synthesizeLaunch = () => {
+      const mvpData = localStorage.getItem('toolthinker_mvp_data');
+      const parsedMVP = mvpData ? JSON.parse(mvpData) : {};
+      setSections(prev => prev.map(section => {
+        const updatedTasks = section.tasks.map(task => {
+          let autoContent = '';
+          switch (task.id) {
+            case 'checklist':
+              autoContent = `Checklist: ${parsedMVP.launchChecklist || 'Finalize MVP, prepare marketing, set launch date'}`;
+              break;
+            case 'timeline':
+              autoContent = `Timeline: ${parsedMVP.launchTimeline || 'Week 1: Finalize MVP\nWeek 2: Marketing\nWeek 3: Launch'}`;
+              break;
+            case 'positioning':
+              autoContent = `Positioning: ${parsedMVP.positioning || 'The only tool that...'} `;
+              break;
+            case 'channels':
+              autoContent = `Channels: ${parsedMVP.channels || 'Email, social, PR, paid ads'}`;
+              break;
+            case 'campaigns':
+              autoContent = `Campaigns: ${parsedMVP.campaigns || 'Pre-launch, launch, post-launch'}`;
+              break;
+            case 'content':
+              autoContent = `Content: ${parsedMVP.content || 'Blog, social posts, press release'}`;
+              break;
+            case 'kpis':
+              autoContent = `KPIs: ${parsedMVP.kpis || 'Signups, active users, revenue'}`;
+              break;
+            case 'feedback':
+              autoContent = `Feedback: ${parsedMVP.feedback || 'Collect user feedback via surveys, interviews'}`;
+              break;
+          }
+          return { ...task, autoContent };
+        });
+        return { ...section, tasks: updatedTasks };
+      }));
+    };
+    synthesizeLaunch();
+  }, []);
+
+  const allComplete = sections.every(section => section.tasks.every(task => task.status === 'completed'));
+
   return (
     <div className="launch-stage">
       <div className="launch-header">
@@ -123,6 +169,33 @@ export function LaunchStage() {
                     <div className="task-header">
                       <h3>{task.title}</h3>
                       <div className="task-actions">
+                        <button
+                          className={`mode-toggle ${task.isManual ? 'manual' : 'auto'}`}
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSections(sections =>
+                              sections.map(sectionItem => {
+                                if (sectionItem.id === section.id) {
+                                  return {
+                                    ...sectionItem,
+                                    tasks: sectionItem.tasks.map(t =>
+                                      t.id === task.id
+                                        ? {
+                                            ...t,
+                                            isManual: !t.isManual,
+                                            manualContent: !t.isManual ? t.notes || '' : t.manualContent
+                                          }
+                                        : t
+                                    ),
+                                  };
+                                }
+                                return sectionItem;
+                              })
+                            );
+                          }}
+                        >
+                          {task.isManual ? '🔄 Auto' : '✏️ Manual'}
+                        </button>
                         <select
                           value={task.status}
                           onChange={e => updateTaskStatus(section.id, task.id, e.target.value as any)}
@@ -134,11 +207,35 @@ export function LaunchStage() {
                       </div>
                     </div>
                     <p>{task.description}</p>
-                    <textarea
-                      placeholder="Add notes..."
-                      value={task.notes || ''}
-                      onChange={e => updateTaskNotes(section.id, task.id, e.target.value)}
-                    />
+                    <div className="task-content">
+                      {task.isManual ? (
+                        <textarea
+                          placeholder="Add your notes or modifications..."
+                          value={task.manualContent || ''}
+                          onChange={e => {
+                            const value = e.target.value;
+                            setSections(sections =>
+                              sections.map(sectionItem => {
+                                if (sectionItem.id === section.id) {
+                                  return {
+                                    ...sectionItem,
+                                    tasks: sectionItem.tasks.map(t =>
+                                      t.id === task.id ? { ...t, manualContent: value } : t
+                                    ),
+                                  };
+                                }
+                                return sectionItem;
+                              })
+                            );
+                          }}
+                        />
+                      ) : (
+                        <div className="auto-content">
+                          <div className="auto-badge">Auto-synthesized</div>
+                          <div className="content">{task.autoContent}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -166,6 +263,9 @@ export function LaunchStage() {
             </div>
           ))}
         </div>
+        <button className="continue-btn" disabled={!allComplete} onClick={() => {/* finish logic here */}}>
+          Finish
+        </button>
       </div>
     </div>
   );

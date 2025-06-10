@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './IdeaValidation.css';
 
 interface ValidationStep {
@@ -15,6 +15,9 @@ interface ValidationTask {
   description: string;
   status: 'not_started' | 'in_progress' | 'completed';
   notes?: string;
+  autoContent?: string;
+  isManual?: boolean;
+  manualContent?: string;
 }
 
 export function IdeaValidation() {
@@ -136,6 +139,51 @@ export function IdeaValidation() {
     );
   };
 
+  useEffect(() => {
+    const synthesizeValidation = () => {
+      const ideaData = localStorage.getItem('toolthinker_idea_data');
+      const parsedIdea = ideaData ? JSON.parse(ideaData) : {};
+      setValidationSteps(prev => prev.map(step => {
+        if (step.id === 'market' || step.id === 'competitors') {
+          const updatedTasks = step.tasks.map(task => {
+            let autoContent = '';
+            if (step.id === 'market') {
+              switch (task.id) {
+                case 'market-size':
+                  autoContent = `TAM: $${parsedIdea.marketTAM || '...'}\nSAM: $${parsedIdea.marketSAM || '...'}\nSOM: $${parsedIdea.marketSOM || '...'}\n(Use research and public data to estimate)`;
+                  break;
+                case 'market-trends':
+                  autoContent = `Key trends: ${parsedIdea.marketTrends || 'AI, automation, remote work, etc.'}`;
+                  break;
+                case 'market-segments':
+                  autoContent = `Segments: ${parsedIdea.marketSegments || 'SMBs, Enterprises, Freelancers, etc.'}`;
+                  break;
+              }
+            } else if (step.id === 'competitors') {
+              switch (task.id) {
+                case 'direct-competitors':
+                  autoContent = `Direct competitors: ${parsedIdea.directCompetitors || 'Company A, Company B'}`;
+                  break;
+                case 'indirect-competitors':
+                  autoContent = `Indirect competitors: ${parsedIdea.indirectCompetitors || 'Manual processes, spreadsheets'}`;
+                  break;
+                case 'competitive-advantage':
+                  autoContent = `Unique value: ${parsedIdea.uniqueValue || 'Faster, cheaper, more user-friendly'}`;
+                  break;
+              }
+            }
+            return { ...task, autoContent };
+          });
+          return { ...step, tasks: updatedTasks };
+        }
+        return step;
+      }));
+    };
+    synthesizeValidation();
+  }, []);
+
+  const allComplete = validationSteps.every(step => step.tasks.every(task => task.status === 'completed'));
+
   return (
     <div className="idea-validation">
       <div className="validation-header">
@@ -165,9 +213,38 @@ export function IdeaValidation() {
                     <div className="task-header">
                       <h3>{task.title}</h3>
                       <div className="task-actions">
+                        {step.id !== 'users' && (
+                          <button
+                            className={`mode-toggle ${task.isManual ? 'manual' : 'auto'}`}
+                            onClick={e => {
+                              e.stopPropagation();
+                              setValidationSteps(steps =>
+                                steps.map(stepItem => {
+                                  if (stepItem.id === step.id) {
+                                    return {
+                                      ...stepItem,
+                                      tasks: stepItem.tasks.map(t =>
+                                        t.id === task.id
+                                          ? {
+                                              ...t,
+                                              isManual: !t.isManual,
+                                              manualContent: !t.isManual ? t.notes || '' : t.manualContent
+                                            }
+                                          : t
+                                      ),
+                                    };
+                                  }
+                                  return stepItem;
+                                })
+                              );
+                            }}
+                          >
+                            {task.isManual ? '🔄 Auto' : '✏️ Manual'}
+                          </button>
+                        )}
                         <select
                           value={task.status}
-                          onChange={(e) => updateTaskStatus(step.id, task.id, e.target.value as any)}
+                          onChange={e => updateTaskStatus(step.id, task.id, e.target.value as any)}
                         >
                           <option value="not_started">Not Started</option>
                           <option value="in_progress">In Progress</option>
@@ -176,11 +253,39 @@ export function IdeaValidation() {
                       </div>
                     </div>
                     <p>{task.description}</p>
-                    <textarea
-                      placeholder="Add notes..."
-                      value={task.notes || ''}
-                      onChange={(e) => updateTaskNotes(step.id, task.id, e.target.value)}
-                    />
+                    <div className="task-content">
+                      {step.id !== 'users' && !task.isManual ? (
+                        <div className="auto-content">
+                          <div className="auto-badge">Auto-synthesized</div>
+                          <div className="content">{task.autoContent}</div>
+                        </div>
+                      ) : (
+                        <textarea
+                          placeholder="Add your notes or modifications..."
+                          value={task.isManual ? task.manualContent || '' : task.notes || ''}
+                          onChange={e => {
+                            const value = e.target.value;
+                            setValidationSteps(steps =>
+                              steps.map(stepItem => {
+                                if (stepItem.id === step.id) {
+                                  return {
+                                    ...stepItem,
+                                    tasks: stepItem.tasks.map(t =>
+                                      t.id === task.id
+                                        ? step.id !== 'users' && task.isManual
+                                          ? { ...t, manualContent: value }
+                                          : { ...t, notes: value }
+                                        : t
+                                    ),
+                                  };
+                                }
+                                return stepItem;
+                              })
+                            );
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -207,6 +312,9 @@ export function IdeaValidation() {
             </div>
           ))}
         </div>
+        <button className="continue-btn" disabled={!allComplete} onClick={() => {/* advance to MVP logic here */}}>
+          Continue to MVP
+        </button>
       </div>
     </div>
   );

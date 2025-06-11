@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const axios = require('axios');
 
 // Load environment variables
 dotenv.config();
@@ -242,6 +243,88 @@ app.get('/api/idea-insights', (req, res) => {
   };
   
   res.json(insights);
+});
+
+// ChatGPT proxy endpoint
+app.post('/api/chatgpt', async (req, res) => {
+  const { prompt, stream } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
+  if (stream) {
+    // Streaming mode
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    try {
+      const response = await axios({
+        method: 'post',
+        url: 'https://api.openai.com/v1/chat/completions',
+        data: {
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 512,
+          temperature: 0.7,
+          stream: true
+        },
+        responseType: 'stream',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        }
+      });
+      response.data.on('data', (chunk) => {
+        const lines = chunk.toString().split('\n');
+        for (const line of lines) {
+          if (line.trim().startsWith('data:')) {
+            const data = line.replace(/^data: /, '');
+            if (data === '[DONE]') {
+              res.write('\n');
+              res.end();
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) res.write(content);
+            } catch {}
+          }
+        }
+      });
+      response.data.on('end', () => {
+        res.end();
+      });
+      response.data.on('error', (err) => {
+        console.error('OpenAI stream error:', err);
+        res.end();
+      });
+    } catch (err) {
+      console.error('OpenAI error:', err.response?.data || err.message);
+      res.status(500).json({ error: 'Failed to fetch from OpenAI', details: err.response?.data || err.message });
+    }
+    return;
+  }
+  // Non-streaming mode (default)
+  try {
+    const openaiRes = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 512,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        }
+      }
+    );
+    const content = openaiRes.data.choices[0].message.content.trim();
+    res.json({ content });
+  } catch (err) {
+    console.error('OpenAI error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch from OpenAI', details: err.response?.data || err.message });
+  }
 });
 
 app.listen(port, () => {

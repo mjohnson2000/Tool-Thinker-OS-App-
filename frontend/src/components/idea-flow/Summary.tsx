@@ -1,7 +1,19 @@
 import React from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title as ChartTitle,
+  Tooltip as ChartTooltip,
+  Legend
+} from 'chart.js';
+import Confetti from 'react-confetti';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTitle, ChartTooltip, Legend);
 
 const Container = styled.div`
   display: flex;
@@ -97,6 +109,53 @@ export interface SummaryProps {
   onRestart: () => void;
 }
 
+const sectionIcons = {
+  executiveSummary: '📝',
+  targetMarket: '🎯',
+  problem: '❗',
+  solution: '💡',
+  features: '✨',
+  goToMarket: '🚀',
+  nextSteps: '✅',
+};
+
+const NextStepsHighlight = styled.div`
+  background: #e6f0ff;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+`;
+
+const CongratsOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  pointer-events: none;
+`;
+
+const CongratsText = styled.div`
+  background: rgba(255,255,255,0.95);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 2.5rem 3.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #007AFF;
+  text-align: center;
+  letter-spacing: -1px;
+  animation: popIn 0.5s cubic-bezier(0.4,0,0.2,1);
+  @keyframes popIn {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+`;
+
 export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
   const [plan, setPlan] = React.useState<null | {
     executiveSummary: string;
@@ -119,6 +178,7 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState(0);
+  const [showConfetti, setShowConfetti] = React.useState(false);
 
   React.useEffect(() => {
     async function generatePlan() {
@@ -148,6 +208,8 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
         if (!parsed || !parsed.executiveSummary) throw new Error('No business plan generated');
         setPlan(parsed);
         setProgress(100);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 7000);
       } catch (err: any) {
         setError('Could not generate business plan. Please try again.');
         setPlan(null);
@@ -173,58 +235,81 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
       {plan && (
         <>
           <Section>
-            <SectionTitle>Executive Summary</SectionTitle>
+            <SectionTitle>{sectionIcons.executiveSummary} Executive Summary</SectionTitle>
             <SectionText>{plan.executiveSummary}</SectionText>
             {plan.visuals?.executiveSummary && typeof plan.visuals.executiveSummary === 'string' && <Visual>{plan.visuals.executiveSummary}</Visual>}
           </Section>
           <Section>
-            <SectionTitle>Target Market</SectionTitle>
+            <SectionTitle>{sectionIcons.targetMarket} Target Market</SectionTitle>
             <ul>{plan.targetMarket && plan.targetMarket.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
             {plan.visuals?.targetMarket && typeof plan.visuals.targetMarket === 'string' && <Visual>{plan.visuals.targetMarket}</Visual>}
-            {plan.visuals?.targetMarket && typeof plan.visuals.targetMarket === 'object' && (
-              <>
-                <Visual>{(plan.visuals.targetMarket as ChartVisual).description}</Visual>
-                {(plan.visuals.targetMarket as ChartVisual).chartData && (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={(plan.visuals.targetMarket as ChartVisual).chartData!.labels.map((label, i) => ({ label, value: (plan.visuals.targetMarket as ChartVisual).chartData!.values[i] }))}>
-                      <XAxis dataKey="label" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#007AFF" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </>
+            {typeof plan.targetMarket === 'object' && (plan.targetMarket as any).chartData ? (
+              <div style={{ width: '100%', height: 300 }}>
+                <Bar
+                  data={{
+                    labels: (plan.targetMarket as any).chartData.labels,
+                    datasets: [
+                      {
+                        label: 'Market Size',
+                        data: (plan.targetMarket as any).chartData.values,
+                        backgroundColor: '#007AFF',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: false },
+                      title: { display: false },
+                    },
+                    scales: {
+                      y: { beginAtZero: true },
+                    },
+                  }}
+                />
+              </div>
+            ) : (
+              <div style={{ color: '#888', fontSize: '0.95rem', marginTop: 12 }}>No chart data available for this target market.</div>
             )}
           </Section>
           <Section>
-            <SectionTitle>Problem Statement</SectionTitle>
+            <SectionTitle>{sectionIcons.problem} Problem Statement</SectionTitle>
             <SectionText>{plan.problem}</SectionText>
             {plan.visuals?.problem && typeof plan.visuals.problem === 'string' && <Visual>{plan.visuals.problem}</Visual>}
           </Section>
           <Section>
-            <SectionTitle>Solution Overview</SectionTitle>
+            <SectionTitle>{sectionIcons.solution} Solution Overview</SectionTitle>
             <SectionText>{plan.solution}</SectionText>
             {plan.visuals?.solution && typeof plan.visuals.solution === 'string' && <Visual>{plan.visuals.solution}</Visual>}
           </Section>
           <Section>
-            <SectionTitle>Key Features & Benefits</SectionTitle>
+            <SectionTitle>{sectionIcons.features} Key Features & Benefits</SectionTitle>
             <ul>{plan.features && plan.features.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
             {plan.visuals?.features && typeof plan.visuals.features === 'string' && <Visual>{plan.visuals.features}</Visual>}
           </Section>
           <Section>
-            <SectionTitle>Go-to-Market Strategy</SectionTitle>
+            <SectionTitle>{sectionIcons.goToMarket} Go-to-Market Strategy</SectionTitle>
             <ul>{plan.goToMarket && plan.goToMarket.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
             {plan.visuals?.goToMarket && typeof plan.visuals.goToMarket === 'string' && <Visual>{plan.visuals.goToMarket}</Visual>}
           </Section>
           <Section>
-            <SectionTitle>Next Steps</SectionTitle>
-            <ul>{plan.nextSteps && plan.nextSteps.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
+            <SectionTitle>{sectionIcons.nextSteps} Next Steps</SectionTitle>
+            <NextStepsHighlight>
+              <ul>{plan.nextSteps && plan.nextSteps.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
+            </NextStepsHighlight>
             {plan.visuals?.nextSteps && typeof plan.visuals.nextSteps === 'string' && <Visual>{plan.visuals.nextSteps}</Visual>}
           </Section>
         </>
       )}
       <RestartButton onClick={onRestart}>Start Over</RestartButton>
+      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} numberOfPieces={250} recycle={false} />}
+      {showConfetti && (
+        <CongratsOverlay>
+          <CongratsText>
+            🎉 Congratulations!<br />Your business plan is ready.
+          </CongratsText>
+        </CongratsOverlay>
+      )}
     </Container>
   );
 } 

@@ -6,6 +6,7 @@ import { CustomerSelection } from './components/idea-flow/CustomerSelection';
 import { JobSelection } from './components/idea-flow/JobSelection';
 import { Summary } from './components/idea-flow/Summary';
 import './index.css';
+import logo from './assets/logo.png';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -22,6 +23,18 @@ const NavBar = styled.div`
   display: flex;
   justify-content: flex-start;
   margin-bottom: 2rem;
+`;
+
+const Logo = styled.img`
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  height: 80px;
+  width: 80px;
+  margin-right: 1rem;
+  cursor: pointer;
+  user-select: none;
+  z-index: 100;
 `;
 
 const NavButton = styled.button`
@@ -97,6 +110,7 @@ export function App() {
 
   return (
     <AppContainer>
+      <Logo src={logo} alt="ToolThinker Logo" onClick={() => setCurrentStep('landing')} />
       {currentStep !== 'landing' && (
         <NavBar>
           <NavButton onClick={handleBack} aria-label="Back">← Back</NavButton>

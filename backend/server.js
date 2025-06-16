@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const axios = require('axios');
+const authRouter = require('./src/routes/auth');
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +13,7 @@ const port = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRouter);
 
 // In-memory storage (in production, use a database)
 let userReflections = [];

@@ -8,12 +8,16 @@ import {
   LinearScale,
   BarElement,
   Title as ChartTitle,
-  Tooltip as ChartTooltip,
-  Legend
+  Tooltip,
+  Legend,
 } from 'chart.js';
 import Confetti from 'react-confetti';
+import { useAuth } from '../../contexts/AuthContext';
+import type { BusinessArea } from './IdeaSelection';
+import type { CustomerOption } from './CustomerSelection';
+import type { JobOption } from './JobSelection';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTitle, ChartTooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTitle, Tooltip, Legend);
 
 const Container = styled.div`
   display: flex;
@@ -99,14 +103,13 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 
 type ChartVisual = { description: string; chartData?: { labels: string[]; values: number[] } };
 
-export interface SummaryProps {
-  idea: {
-    interests: string;
-    area: { title: string; description: string; icon: string } | null;
-  };
-  customer: { title: string; description: string; icon: string } | null;
-  job: { title: string; description: string; icon: string } | null;
+interface SummaryProps {
+  idea: { interests: string; area: BusinessArea, existingIdeaText?: string, problemDescription?: string | null, solutionDescription?: string | null } | null;
+  customer: CustomerOption | null;
+  job: JobOption | null;
   onRestart: () => void;
+  onSignup: () => void;
+  onLogin: () => void;
 }
 
 const sectionIcons = {
@@ -156,7 +159,44 @@ const CongratsText = styled.div`
   }
 `;
 
-export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
+const SignupPrompt = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+  text-align: center;
+  border: 2px solid #e9ecef;
+`;
+
+const SignupTitle = styled.h3`
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #212529;
+`;
+
+const SignupText = styled.p`
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+`;
+
+const SignupButton = styled.button`
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: #0056b3;
+  }
+`;
+
+export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: SummaryProps) {
   const [plan, setPlan] = React.useState<null | {
     executiveSummary: string;
     targetMarket: string[];
@@ -179,6 +219,7 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [progress, setProgress] = React.useState(0);
   const [showConfetti, setShowConfetti] = React.useState(false);
+  const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
     async function generatePlan() {
@@ -192,27 +233,58 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const prompt = `Given the following:\nBusiness Area: ${idea.area.title} - ${idea.area.description}\nCustomer: ${customer.title} - ${customer.description}\nJob: ${job.title} - ${job.description}\nGenerate a professional business plan with these sections:\n1. Executive Summary (2-3 sentences, clear and compelling)\n2. Target Market (bullet points, include customer persona)\n3. Problem Statement (1-2 sentences)\n4. Solution Overview (1-2 sentences)\n5. Key Features/Benefits (bullet points)\n6. Go-to-Market Strategy (bullet points)\n7. Next Steps (bullet points, actionable)\nFor each section, suggest a visual (icon, chart, or diagram) if appropriate. If a chart is appropriate, also return a chartData field as a JSON object (e.g., {labels: [...], values: [...]}) for rendering a bar chart. Return ONLY a JSON object with keys: executiveSummary, targetMarket, problem, solution, features, goToMarket, nextSteps, visuals (an object mapping section names to suggested visuals, each visual may include a chartData field). No explanation, no markdown.`;
+
+        const ideaPrompt = idea.existingIdeaText
+          ? `Business Idea: ${idea.existingIdeaText}`
+          : `Business Area: ${idea.area.title} - ${idea.area.description}`;
+
+        const customerPrompt = customer.title === 'Custom Customer'
+          ? `Customer Profile: ${customer.description}`
+          : `Customer: ${customer.title} - ${customer.description}`;
+
+        const problemPrompt = idea.problemDescription
+          ? `Problem Statement: ${idea.problemDescription}`
+          : ``;
+
+        const solutionPrompt = idea.solutionDescription
+          ? `Solution: ${idea.solutionDescription}`
+          : ``;
+
+        const prompt = `
+Given the following:
+${ideaPrompt}
+${customerPrompt}
+${problemPrompt}
+${solutionPrompt}
+Job: ${job.title} - ${job.description}
+Generate a professional business plan as a single valid JSON object with these keys ONLY: executiveSummary, targetMarket, problem, solution, features, goToMarket, nextSteps, visuals. Each value should be a string or array as appropriate. Do NOT include any explanation, markdown, or extra text. Only output the JSON object, nothing else.`;
         const response = await fetchChatGPT(prompt);
-        let parsed = null;
-        try {
-          parsed = JSON.parse(response);
-        } catch {
-          const match = response.match(/\{[\s\S]*\}/);
-          if (match) {
-            try {
-              parsed = JSON.parse(match[0]);
-            } catch {}
+        let parsed = typeof response === 'object' && response !== null ? response : null;
+        if (!parsed) {
+          try {
+            parsed = JSON.parse(response);
+          } catch {
+            // Try to extract the largest valid JSON object from the string
+            const match = response.match && response.match(/\{[\s\S]*\}/);
+            if (match) {
+              let jsonStr = match[0];
+              jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+              try {
+                parsed = JSON.parse(jsonStr);
+              } catch {}
+            }
           }
         }
-        if (!parsed || !parsed.executiveSummary) throw new Error('No business plan generated');
+        console.log('Parsed plan:', parsed);
+        if (!parsed || typeof parsed.executiveSummary !== 'string' || !parsed.executiveSummary.trim()) {
+          throw new Error('No business plan generated');
+        }
         setPlan(parsed);
         setProgress(100);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 7000);
       } catch (err: any) {
         setError('Could not generate business plan. Please try again.');
-        setPlan(null);
         setProgress(100);
       } finally {
         setIsLoading(false);
@@ -241,7 +313,17 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
           </Section>
           <Section>
             <SectionTitle>{sectionIcons.targetMarket} Target Market</SectionTitle>
-            <ul>{plan.targetMarket && plan.targetMarket.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
+            <ul>
+              {Array.isArray(plan.targetMarket)
+                ? plan.targetMarket.map((item: string, i: number) => <li key={i}>{item}</li>)
+                : plan.targetMarket && typeof plan.targetMarket === 'object'
+                  ? Object.entries(plan.targetMarket).map(([key, value], i) =>
+                      Array.isArray(value)
+                        ? value.map((v, j) => <li key={`${i}-${j}`}>{key}: {v}</li>)
+                        : <li key={i}><strong>{key}:</strong> {String(value)}</li>
+                    )
+                  : null}
+            </ul>
             {plan.visuals?.targetMarket && typeof plan.visuals.targetMarket === 'string' && <Visual>{plan.visuals.targetMarket}</Visual>}
             {typeof plan.targetMarket === 'object' && (plan.targetMarket as any).chartData ? (
               <div style={{ width: '100%', height: 300 }}>
@@ -272,33 +354,76 @@ export function Summary({ idea, customer, job, onRestart }: SummaryProps) {
               <div style={{ color: '#888', fontSize: '0.95rem', marginTop: 12 }}>No chart data available for this target market.</div>
             )}
           </Section>
-          <Section>
-            <SectionTitle>{sectionIcons.problem} Problem Statement</SectionTitle>
-            <SectionText>{plan.problem}</SectionText>
-            {plan.visuals?.problem && typeof plan.visuals.problem === 'string' && <Visual>{plan.visuals.problem}</Visual>}
-          </Section>
-          <Section>
-            <SectionTitle>{sectionIcons.solution} Solution Overview</SectionTitle>
-            <SectionText>{plan.solution}</SectionText>
-            {plan.visuals?.solution && typeof plan.visuals.solution === 'string' && <Visual>{plan.visuals.solution}</Visual>}
-          </Section>
-          <Section>
-            <SectionTitle>{sectionIcons.features} Key Features & Benefits</SectionTitle>
-            <ul>{plan.features && plan.features.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
-            {plan.visuals?.features && typeof plan.visuals.features === 'string' && <Visual>{plan.visuals.features}</Visual>}
-          </Section>
-          <Section>
-            <SectionTitle>{sectionIcons.goToMarket} Go-to-Market Strategy</SectionTitle>
-            <ul>{plan.goToMarket && plan.goToMarket.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
-            {plan.visuals?.goToMarket && typeof plan.visuals.goToMarket === 'string' && <Visual>{plan.visuals.goToMarket}</Visual>}
-          </Section>
-          <Section>
-            <SectionTitle>{sectionIcons.nextSteps} Next Steps</SectionTitle>
-            <NextStepsHighlight>
-              <ul>{plan.nextSteps && plan.nextSteps.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
-            </NextStepsHighlight>
-            {plan.visuals?.nextSteps && typeof plan.visuals.nextSteps === 'string' && <Visual>{plan.visuals.nextSteps}</Visual>}
-          </Section>
+
+          {!isAuthenticated ? (
+            <SignupPrompt>
+              <SignupTitle>Want to see the full business plan?</SignupTitle>
+              <SignupText>
+                Sign up or log in to unlock the complete business plan including:
+                <br />
+                • Problem Statement
+                <br />
+                • Solution Overview
+                <br />
+                • Key Features & Benefits
+                <br />
+                • Go-to-Market Strategy
+                <br />
+                • Next Steps
+              </SignupText>
+              <SignupButton onClick={onSignup} style={{ marginRight: 16 }}>
+                Sign Up
+              </SignupButton>
+              <SignupButton onClick={onLogin} style={{ background: '#fff', color: '#007AFF', border: '1.5px solid #007AFF' }}>
+                Log In
+              </SignupButton>
+            </SignupPrompt>
+          ) : (
+            <>
+              <Section>
+                <SectionTitle>{sectionIcons.problem} Problem Statement</SectionTitle>
+                <SectionText>{plan.problem}</SectionText>
+                {plan.visuals?.problem && typeof plan.visuals.problem === 'string' && <Visual>{plan.visuals.problem}</Visual>}
+              </Section>
+              <Section>
+                <SectionTitle>{sectionIcons.solution} Solution Overview</SectionTitle>
+                <SectionText>{plan.solution}</SectionText>
+                {plan.visuals?.solution && typeof plan.visuals.solution === 'string' && <Visual>{plan.visuals.solution}</Visual>}
+              </Section>
+              <Section>
+                <SectionTitle>{sectionIcons.features} Key Features & Benefits</SectionTitle>
+                <ul>{Array.isArray(plan.features)
+                  ? plan.features.map((item: string, i: number) => <li key={i}>{item}</li>)
+                  : plan.features
+                    ? <li>{plan.features}</li>
+                    : null}
+                </ul>
+                {plan.visuals?.features && typeof plan.visuals.features === 'string' && <Visual>{plan.visuals.features}</Visual>}
+              </Section>
+              <Section>
+                <SectionTitle>{sectionIcons.goToMarket} Go-to-Market Strategy</SectionTitle>
+                <ul>{Array.isArray(plan.goToMarket)
+                  ? plan.goToMarket.map((item: string, i: number) => <li key={i}>{item}</li>)
+                  : plan.goToMarket
+                    ? <li>{plan.goToMarket}</li>
+                    : null}
+                </ul>
+                {plan.visuals?.goToMarket && typeof plan.visuals.goToMarket === 'string' && <Visual>{plan.visuals.goToMarket}</Visual>}
+              </Section>
+              <Section>
+                <SectionTitle>{sectionIcons.nextSteps} Next Steps</SectionTitle>
+                <NextStepsHighlight>
+                  <ul>{Array.isArray(plan.nextSteps)
+                    ? plan.nextSteps.map((item: string, i: number) => <li key={i}>{item}</li>)
+                    : plan.nextSteps
+                      ? <li>{plan.nextSteps}</li>
+                      : null}
+                  </ul>
+                </NextStepsHighlight>
+                {plan.visuals?.nextSteps && typeof plan.visuals.nextSteps === 'string' && <Visual>{plan.visuals.nextSteps}</Visual>}
+              </Section>
+            </>
+          )}
         </>
       )}
       <RestartButton onClick={onRestart}>Start Over</RestartButton>

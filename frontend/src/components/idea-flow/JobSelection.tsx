@@ -112,19 +112,21 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
         }, 200);
         const prompt = `Return ONLY a JSON array of 5 jobs or needs that a customer like: ${customer.title} - ${customer.description} might want help with. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
-        let parsed: JobOption[] = [];
-        try {
-          parsed = JSON.parse(response);
-        } catch {
-          const match = response.match(/\[\s*{[\s\S]*?}\s*\]/);
-          if (match) {
-            try {
-              parsed = JSON.parse(match[0]);
-            } catch {}
+        let parsed: JobOption[] = Array.isArray(response) ? response : [];
+        if (!parsed.length) {
+          try {
+            parsed = JSON.parse(response);
+          } catch {
+            const match = response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
+            if (match) {
+              try {
+                parsed = JSON.parse(match[0]);
+              } catch {}
+            }
           }
         }
         if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No jobs found');
-        setOptions(parsed);
+        setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate jobs. Try again or pick a different customer.');

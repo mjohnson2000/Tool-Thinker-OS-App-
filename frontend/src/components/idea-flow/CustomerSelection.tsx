@@ -120,19 +120,21 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
         }, 200);
         const prompt = `Return ONLY a JSON array of 5 customer types for a business in the area of: ${businessArea.title} - ${businessArea.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
-        let parsed: CustomerOption[] = [];
-        try {
-          parsed = JSON.parse(response);
-        } catch {
-          const match = response.match(/\[\s*{[\s\S]*?}\s*\]/);
-          if (match) {
-            try {
-              parsed = JSON.parse(match[0]);
-            } catch {}
+        let parsed: CustomerOption[] = Array.isArray(response) ? response : [];
+        if (!parsed.length) {
+          try {
+            parsed = JSON.parse(response);
+          } catch {
+            const match = response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
+            if (match) {
+              try {
+                parsed = JSON.parse(match[0]);
+              } catch {}
+            }
           }
         }
         if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No customer types found');
-        setOptions(parsed);
+        setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate customer types. Showing defaults.');

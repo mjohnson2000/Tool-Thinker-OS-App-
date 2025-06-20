@@ -13,6 +13,15 @@ const Container = styled.div`
   min-height: 60vh;
 `;
 
+const Tagline = styled.div`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6c757d;
+  letter-spacing: 0.03em;
+  margin-bottom: 1.2rem;
+  text-align: center;
+`;
+
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: 600;
@@ -46,13 +55,14 @@ const OptionButton = styled.button`
 export function Landing({ onSelect }: LandingProps) {
   return (
     <Container>
-      <Title>Where are you in your startup journey?</Title>
+      <Tagline>Build A Business In 5 Mins</Tagline>
+      <Title>Where are you in your journey?</Title>
       <Options>
         <OptionButton onClick={() => onSelect('idea')} aria-label="I need an idea">
           I need an idea
         </OptionButton>
-        <OptionButton onClick={() => onSelect('customer')} aria-label="I already have an idea">
-          I already have an idea
+        <OptionButton onClick={() => onSelect('customer')} aria-label="My idea is premature">
+          My idea is premature
         </OptionButton>
       </Options>
     </Container>

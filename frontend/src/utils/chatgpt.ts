@@ -1,5 +1,7 @@
-export async function fetchChatGPT(prompt: string): Promise<string> {
-  const response = await fetch('/api/chatgpt', {
+export async function fetchChatGPT(prompt: string): Promise<any> {
+  console.log('Prompt type:', typeof prompt, 'Prompt value:', prompt);
+  console.log('Prompt being sent:', prompt);
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/chatgpt`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -8,11 +10,17 @@ export async function fetchChatGPT(prompt: string): Promise<string> {
   });
   if (!response.ok) throw new Error('Failed to fetch from backend ChatGPT proxy');
   const data = await response.json();
-  return data.content;
+  let parsed = null;
+  try {
+    parsed = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
+  } catch (err) {
+    console.error('Failed to parse response:', err, data.message);
+  }
+  return parsed || data.message;
 }
 
 export async function* fetchChatGPTStream(prompt: string): AsyncGenerator<string, void, unknown> {
-  const response = await fetch('/api/chatgpt', {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/chatgpt`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -38,4 +46,5 @@ export async function* fetchChatGPTStream(prompt: string): AsyncGenerator<string
     }
   }
   if (buffer.trim()) yield buffer;
-} 
+}
+

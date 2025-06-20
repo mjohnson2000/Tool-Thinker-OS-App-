@@ -104,7 +104,14 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 type ChartVisual = { description: string; chartData?: { labels: string[]; values: number[] } };
 
 interface SummaryProps {
-  idea: { interests: string; area: BusinessArea, existingIdeaText?: string, problemDescription?: string | null, solutionDescription?: string | null } | null;
+  idea: { 
+    interests: string; 
+    area: BusinessArea, 
+    existingIdeaText?: string, 
+    problemDescription?: string | null, 
+    solutionDescription?: string | null,
+    competitionDescription?: string | null 
+  } | null;
   customer: CustomerOption | null;
   job: JobOption | null;
   onRestart: () => void;
@@ -250,12 +257,17 @@ export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: S
           ? `Solution: ${idea.solutionDescription}`
           : ``;
 
+        const competitionPrompt = idea.competitionDescription
+          ? `Competitive Advantage: ${idea.competitionDescription}`
+          : ``;
+
         const prompt = `
 Given the following:
 ${ideaPrompt}
 ${customerPrompt}
 ${problemPrompt}
 ${solutionPrompt}
+${competitionPrompt}
 Job: ${job.title} - ${job.description}
 Generate a professional business plan as a single valid JSON object with these keys ONLY: executiveSummary, targetMarket, problem, solution, features, goToMarket, nextSteps, visuals. Each value should be a string or array as appropriate. Do NOT include any explanation, markdown, or extra text. Only output the JSON object, nothing else.`;
         const response = await fetchChatGPT(prompt);

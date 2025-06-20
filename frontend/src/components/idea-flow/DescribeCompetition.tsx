@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { fetchChatGPT } from '../../utils/chatgpt';
 
 const Container = styled.div`
   display: flex;
@@ -55,7 +56,7 @@ const TextArea = styled.textarea`
   }
 `;
 
-const ContinueButton = styled.button`
+const Button = styled.button`
   background: #007AFF;
   color: white;
   border: none;
@@ -74,21 +75,124 @@ const ContinueButton = styled.button`
   }
 `;
 
+const SuggestionContainer = styled.div`
+  background-color: #f0f8ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  text-align: left;
+`;
+
+const SuggestionHeader = styled.h4`
+  color: #0056b3;
+  margin-bottom: 1rem;
+`;
+
+const RejectionMessage = styled.p`
+  color: #c0392b;
+  margin-top: 1rem;
+`;
+
+const StrategicSuggestion = styled.div`
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #007AFF;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+`;
+
 interface DescribeCompetitionProps {
-  onSubmit: (competitionDescription: string | null) => void;
+  onSubmit: (competitionText: string | null) => void;
+  solutionDescription: string | null;
+  initialValue?: string | null;
 }
 
-export function DescribeCompetition({ onSubmit }: DescribeCompetitionProps) {
-  const [isBetter, setIsBetter] = useState<boolean | null>(null);
-  const [description, setDescription] = useState('');
+export function DescribeCompetition({ onSubmit, solutionDescription, initialValue = null }: DescribeCompetitionProps) {
+  const [isBetter, setIsBetter] = useState<boolean | null>(initialValue ? true : (initialValue === null ? null : false));
+  const [description, setDescription] = useState(initialValue || '');
+  const [isLoading, setIsLoading] = useState(false);
+  const [improvedAdvantage, setImprovedAdvantage] = useState<string | null>(null);
+  const [strategicSuggestions, setStrategicSuggestions] = useState<string[]>([]);
+  const [showRejectionMessage, setShowRejectionMessage] = useState(false);
+
+  async function assessAndImproveAdvantage(advantage: string) {
+    const solutionContext = solutionDescription ? ` based on the solution: '${solutionDescription}'` : '';
+    const prompt = `Assess the following competitive advantage${solutionContext}. If it is specific and strong, respond with {"is_good": true}. If it is weak or generic, respond with {"is_good": false, "improved_idea": "your improved version here"}. The improved version should be a more compelling and specific advantage. Advantage: "${advantage}"`;
+    try {
+      const response = await fetchChatGPT(prompt);
+      return typeof response === 'string' ? JSON.parse(response) : response;
+    } catch (e) {
+      return { is_good: true }; // Failsafe
+    }
+  }
+
+  async function generateNicheSolutions() {
+    setIsLoading(true);
+    const solutionContext = solutionDescription ? ` given the proposed solution: '${solutionDescription}'` : '';
+    const prompt = `My business idea isn't clearly better than the competition. ${solutionContext}. Based on a "Blue Ocean Strategy", suggest 3 distinct, niche, and actionable strategic angles to make the business unique. Frame each as a short, compelling competitive advantage. Return ONLY a valid JSON array of strings.`;
+    
+    try {
+        const response = await fetchChatGPT(prompt);
+        let suggestions = typeof response === 'string' ? JSON.parse(response) : response;
+        if (Array.isArray(suggestions)) {
+            setStrategicSuggestions(suggestions);
+        }
+    } catch (e) {
+        // Handle error, maybe show a default message
+    } finally {
+        setIsLoading(false);
+    }
+  }
 
   const handleSelect = (better: boolean) => {
     setIsBetter(better);
+    setImprovedAdvantage(null);
+    setShowRejectionMessage(false);
+    setStrategicSuggestions([]);
+    if (!better) {
+      setDescription('');
+      generateNicheSolutions();
+    }
   };
 
-  const handleSubmit = () => {
-    if (isBetter === null) return;
-    onSubmit(isBetter ? description : null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description.trim()) return;
+
+    setIsLoading(true);
+    setImprovedAdvantage(null);
+    setShowRejectionMessage(false);
+
+    const assessment = await assessAndImproveAdvantage(description);
+    setIsLoading(false);
+
+    if (assessment.is_good) {
+      onSubmit(description);
+    } else {
+      setImprovedAdvantage(assessment.improved_idea);
+    }
+  };
+
+  const handleAccept = () => {
+    if (improvedAdvantage) onSubmit(improvedAdvantage);
+  };
+
+  const handleReject = () => {
+    setImprovedAdvantage(null);
+    setShowRejectionMessage(true);
+  };
+  
+  const handleSuggestionClick = (suggestion: string) => {
+    onSubmit(suggestion);
   };
 
   return (
@@ -104,17 +208,44 @@ export function DescribeCompetition({ onSubmit }: DescribeCompetitionProps) {
       </Options>
 
       {isBetter === true && (
-        <TextArea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="How is your solution better? (e.g., faster, cheaper, more features, better design)"
-        />
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+          <TextArea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="How is your solution better? (e.g., faster, cheaper, more features, better design)"
+          />
+          <Button type="submit" disabled={!description.trim() || isLoading}>
+            {isLoading ? 'Assessing...' : 'Continue'}
+          </Button>
+        </form>
       )}
 
-      {isBetter !== null && (
-        <ContinueButton onClick={handleSubmit} disabled={isBetter === true && !description.trim()}>
-          Continue
-        </ContinueButton>
+      {improvedAdvantage && (
+        <SuggestionContainer>
+          <SuggestionHeader>Suggestion for a Stronger Advantage:</SuggestionHeader>
+          <p>{improvedAdvantage}</p>
+          <Button onClick={handleAccept} style={{ marginRight: '1rem' }}>Use Suggestion</Button>
+          <Button onClick={handleReject} style={{ background: '#c0392b' }}>Reject</Button>
+        </SuggestionContainer>
+      )}
+
+      {showRejectionMessage && (
+        <RejectionMessage>
+          Please describe a more specific competitive advantage.
+        </RejectionMessage>
+      )}
+
+      {isLoading && strategicSuggestions.length === 0 && <p>Finding unique angles for you...</p>}
+      
+      {strategicSuggestions.length > 0 && (
+        <SuggestionContainer>
+          <SuggestionHeader>Your current idea might be in a "Red Ocean" (a crowded market). Consider a "Blue Ocean" strategy by exploring these unique angles:</SuggestionHeader>
+          {strategicSuggestions.map((suggestion, index) => (
+            <StrategicSuggestion key={index} onClick={() => handleSuggestionClick(suggestion)}>
+              {suggestion}
+            </StrategicSuggestion>
+          ))}
+        </SuggestionContainer>
       )}
     </Container>
   );

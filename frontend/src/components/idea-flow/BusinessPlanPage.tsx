@@ -188,6 +188,14 @@ ${recommendation.recommendationText}
 
     useEffect(() => {
         async function generateInitialPlan() {
+          // Guard clause to ensure all necessary data is present before generating the plan
+          if (!props.idea || !props.customer || !props.problemDescription || !props.solutionDescription || !props.competitionDescription) {
+            console.warn("Business plan generation skipped: missing required props.");
+            return;
+          }
+
+          setIsLoading(true); // Start loading only when we are sure to proceed
+
           const initialPlanPrompt = createInitialPlanPrompt(props);
           let planObject = null;
           try {
@@ -214,6 +222,7 @@ ${recommendation.recommendationText}
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 7000);
         }
+        
         generateInitialPlan();
       }, [props, isAuthenticated]);
       

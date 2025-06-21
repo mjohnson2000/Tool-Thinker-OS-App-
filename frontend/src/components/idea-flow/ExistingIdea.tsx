@@ -97,21 +97,107 @@ const BusinessTypeTag = styled.button`
   }
 `;
 
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const InputContainer = styled.div`
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #E5E5E5;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  min-height: 150px;
+  transition: border-color 0.2s;
+
+  &:focus-within {
+    outline: none;
+    border-color: #007AFF;
+  }
+`;
+
+const SelectedTypeTag = styled.div`
+  background-color: #007AFF;
+  color: white;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  margin-right: 0;
+`;
+
+const RemoveTypeButton = styled.button`
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const StyledTextArea = styled.textarea`
+  flex-grow: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 1rem;
+  width: 100%;
+  resize: none;
+
+  &:focus {
+    outline: none;
+  }
+`;
+
 interface ExistingIdeaProps {
   onSubmit: (ideaText: string) => void;
   initialValue?: string;
+  onClear: () => void;
 }
 
 const businessTypes = ["SaaS", "E-commerce", "Marketplace", "Service-based", "Mobile App", "Physical Product"];
 
-export function ExistingIdea({ onSubmit, initialValue = '' }: ExistingIdeaProps) {
-  const [ideaText, setIdeaText] = useState(initialValue);
+export function ExistingIdea({ onSubmit, initialValue = '', onClear }: ExistingIdeaProps) {
+  const [selectedType, setSelectedType] = useState<string | null>(() => {
+    const match = initialValue.match(/A (\w+-?\w+) business that/);
+    return match ? match[1] : null;
+  });
+  const [ideaText, setIdeaText] = useState(() => {
+     return initialValue.replace(/A \w+-?\w+ business that\s?/, '');
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [improvedIdea, setImprovedIdea] = useState<string | null>(null);
-  const [showRejectionMessage, setShowRejectionMessage] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [promptForMoreInfo, setPromptForMoreInfo] = useState(false);
 
-  async function assessAndImproveIdea(idea: string) {
-    const prompt = `Assess the following business idea. If it is specific and clear, respond with a JSON object: {"is_good": true}. If it is vague or needs improvement, respond with a JSON object: {"is_good": false, "improved_idea": "your improved version here"}. The improved idea should be a more detailed and actionable version of the original. Idea: "${idea}"`;
+  async function assessAndImproveIdea(idea: string, isRetry = false) {
+    const retryText = isRetry ? "Provide a different and unique improved version of this idea." : "";
+    const prompt = `Assess the following business idea. If it is specific and clear, respond with a JSON object: {"is_good": true}. If it is vague or needs improvement, respond with a JSON object: {"is_good": false, "improved_idea": "your improved version here"}. The improved idea should be a more detailed and actionable version of the original. ${retryText} Idea: "${idea}"`;
     
     try {
       const response = await fetchChatGPT(prompt);
@@ -124,18 +210,20 @@ export function ExistingIdea({ onSubmit, initialValue = '' }: ExistingIdeaProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ideaText.trim()) return;
+    const fullIdea = selectedType ? `A ${selectedType} business that ${ideaText}` : ideaText;
+    if (!fullIdea.trim()) return;
 
     setIsLoading(true);
     setImprovedIdea(null);
-    setShowRejectionMessage(false);
+    setRetryCount(0);
+    setPromptForMoreInfo(false);
 
-    const assessment = await assessAndImproveIdea(ideaText);
+    const assessment = await assessAndImproveIdea(fullIdea);
 
     setIsLoading(false);
 
     if (assessment.is_good) {
-      onSubmit(ideaText);
+      onSubmit(fullIdea);
     } else {
       setImprovedIdea(assessment.improved_idea);
     }
@@ -147,47 +235,109 @@ export function ExistingIdea({ onSubmit, initialValue = '' }: ExistingIdeaProps)
     }
   };
 
-  const handleReject = () => {
-    setImprovedIdea(null);
-    setShowRejectionMessage(true);
+  const handleRetry = async () => {
+    if (retryCount >= 2) {
+      setPromptForMoreInfo(true);
+      setImprovedIdea(null);
+      return;
+    }
+    
+    setIsLoading(true);
+    setRetryCount(prev => prev + 1);
+    
+    const fullIdea = selectedType ? `A ${selectedType} business that ${ideaText}` : ideaText;
+    const assessment = await assessAndImproveIdea(fullIdea, true);
+    
+    if (!assessment.is_good && assessment.improved_idea) {
+      setImprovedIdea(assessment.improved_idea);
+    } else {
+      setImprovedIdea("We couldn't generate a different suggestion. Your idea seems solid! You can continue or add more detail and retry.");
+      setRetryCount(2);
+    }
+    
+    setIsLoading(false);
   };
 
   const handleBusinessTypeClick = (type: string) => {
-    setIdeaText(prev => prev ? `${prev}, focused on being a ${type} business` : `A ${type} business that `);
+    setSelectedType(type);
   };
+  
+  const handleRemoveType = () => {
+    setSelectedType(null);
+  }
 
   return (
     <Container>
       <Title>Tell us about your idea</Title>
-      <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+      <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <BusinessTypeContainer>
           {businessTypes.map(type => (
-            <BusinessTypeTag key={type} onClick={() => handleBusinessTypeClick(type)}>
+            <BusinessTypeTag 
+              key={type} 
+              type="button" 
+              onClick={() => handleBusinessTypeClick(type)}
+              style={{
+                background: selectedType === type ? '#d3d3d3' : '#e9ecef',
+                cursor: selectedType === type ? 'default' : 'pointer'
+              }}
+              disabled={selectedType === type}
+            >
               {type}
             </BusinessTypeTag>
           ))}
         </BusinessTypeContainer>
-        <TextArea
-          value={ideaText}
-          onChange={(e) => setIdeaText(e.target.value)}
-          placeholder="Describe your business idea"
-        />
-        <Button type="submit" disabled={!ideaText.trim() || isLoading}>
+
+        <InputContainer>
+           <StyledTextArea
+            value={ideaText}
+            onChange={(e) => {
+              setIdeaText(e.target.value);
+              if (promptForMoreInfo) {
+                setPromptForMoreInfo(false);
+              }
+            }}
+            placeholder={"Describe your business idea and select a category"}
+          />
+          {selectedType && (
+            <SelectedTypeTag>
+              {selectedType}
+              <RemoveTypeButton onClick={handleRemoveType} type="button">×</RemoveTypeButton>
+            </SelectedTypeTag>
+          )}
+        </InputContainer>
+        
+        <Button 
+          type="submit" 
+          disabled={!ideaText.trim() || !selectedType || isLoading || promptForMoreInfo}
+        >
           {isLoading ? 'Assessing...' : 'Continue'}
         </Button>
       </form>
-      {improvedIdea && (
+      <ClearButton onClick={() => {
+        setSelectedType(null);
+        setIdeaText('');
+        onClear();
+      }}>Clear and restart this step</ClearButton>
+      
+      {improvedIdea && !promptForMoreInfo && (
         <ImprovementContainer>
           <ImprovementHeader>Suggestion for Improvement:</ImprovementHeader>
           <p>{improvedIdea}</p>
           <Button onClick={handleAccept} style={{ marginRight: '1rem' }}>Accept</Button>
-          <Button onClick={handleReject} style={{ background: '#c0392b' }}>Reject</Button>
+          <Button 
+            onClick={handleRetry} 
+            style={{ background: '#c0392b' }}
+            disabled={isLoading}
+          >
+            {isLoading && retryCount > 0 ? 'Retrying...' : `Retry (${retryCount}/2)`}
+          </Button>
         </ImprovementContainer>
       )}
-      {showRejectionMessage && (
-        <RejectionMessage>
-          Please provide more specific information about your idea and try again.
-        </RejectionMessage>
+      {promptForMoreInfo && (
+        <ImprovementContainer style={{backgroundColor: '#fffbe6', borderColor: '#ffe58f'}}>
+          <ImprovementHeader style={{color: '#d46b08'}}>Please provide more detail</ImprovementHeader>
+          <p>Add more specifics to your idea above to help us generate a better suggestion.</p>
+        </ImprovementContainer>
       )}
     </Container>
   );

@@ -73,13 +73,27 @@ const RejectionMessage = styled.p`
   margin-top: 1rem;
 `;
 
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 interface DescribeSolutionProps {
   onSubmit: (solutionText: string) => void;
   problemDescription: string | null;
   initialValue?: string | null;
+  onClear: () => void;
 }
 
-export function DescribeSolution({ onSubmit, problemDescription, initialValue = null }: DescribeSolutionProps) {
+export function DescribeSolution({ onSubmit, problemDescription, initialValue = null, onClear }: DescribeSolutionProps) {
   const [solutionText, setSolutionText] = useState(initialValue || '');
   const [isLoading, setIsLoading] = useState(false);
   const [improvedSolution, setImprovedSolution] = useState<string | null>(null);
@@ -153,6 +167,7 @@ export function DescribeSolution({ onSubmit, problemDescription, initialValue = 
           Please provide a more specific solution and try again.
         </RejectionMessage>
       )}
+      <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
     </Container>
   );
 } 

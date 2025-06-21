@@ -1,22 +1,42 @@
 export async function fetchChatGPT(prompt: string): Promise<any> {
   console.log('Prompt type:', typeof prompt, 'Prompt value:', prompt);
   console.log('Prompt being sent:', prompt);
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/chatgpt`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ prompt })
-  });
-  if (!response.ok) throw new Error('Failed to fetch from backend ChatGPT proxy');
-  const data = await response.json();
-  let parsed = null;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
   try {
-    parsed = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
-  } catch (err) {
-    console.error('Failed to parse response:', err, data.message);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/chatgpt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch from backend ChatGPT proxy');
+    }
+
+    const data = await response.json();
+    let parsed = null;
+    try {
+      parsed = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
+    } catch (err) {
+      console.error('Failed to parse response:', err, data.message);
+    }
+    return parsed || data.message;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Fetch aborted due to timeout.');
+      throw new Error('Request to AI timed out.');
+    }
+    throw error;
   }
-  return parsed || data.message;
 }
 
 export async function* fetchChatGPTStream(prompt: string): AsyncGenerator<string, void, unknown> {

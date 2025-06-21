@@ -96,13 +96,29 @@ const ContinueButton = styled.button`
   }
 `;
 
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  padding: 0;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 interface DescribeProblemProps {
   onSubmit: (problemDescription: string | null) => void;
   customer: CustomerOption | null;
   initialValue?: string | null;
+  onClear: () => void;
 }
 
-export function DescribeProblem({ onSubmit, customer, initialValue = null }: DescribeProblemProps) {
+export function DescribeProblem({ onSubmit, customer, initialValue = null, onClear }: DescribeProblemProps) {
   const [knowsProblem, setKnowsProblem] = useState<boolean | null>(initialValue ? true : null);
   const [description, setDescription] = useState(initialValue || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -179,6 +195,7 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null }: Des
           <ContinueButton onClick={handleSubmit} disabled={!description.trim() || isLoading}>
             {isLoading ? 'Assessing...' : 'Continue'}
           </ContinueButton>
+          <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
         </>
       )}
 

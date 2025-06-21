@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Landing } from './components/idea-flow/Landing';
 import { IdeaSelection } from './components/idea-flow/IdeaSelection';
@@ -210,6 +210,40 @@ const prematureIdeaFlowSteps = [
 
 const flowStepKeys = [...ideaFlowSteps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
 
+interface AppState {
+  currentStep: Step;
+  entryPoint: EntryPoint;
+  idea: {
+    interests: string;
+    area: BusinessArea | null;
+    existingIdeaText?: string;
+  };
+  customer: CustomerOption | null;
+  job: JobOption | null;
+  problemDescription: string | null;
+  solutionDescription: string | null;
+  competitionDescription: string | null;
+  isTrackerVisible: boolean;
+  stepBeforeAuth: Step | null;
+}
+
+const initialAppState: AppState = {
+  currentStep: 'landing',
+  entryPoint: 'idea',
+  idea: {
+    interests: '',
+    area: null,
+    existingIdeaText: '',
+  },
+  customer: null,
+  job: null,
+  problemDescription: null,
+  solutionDescription: null,
+  competitionDescription: null,
+  isTrackerVisible: true,
+  stepBeforeAuth: null,
+};
+
 function ResetPasswordRoute() {
   const { token } = useParams<{ token: string }>();
   const { resetPassword } = useAuth();
@@ -218,140 +252,161 @@ function ResetPasswordRoute() {
 }
 
 function AppContent() {
-  const [currentStep, setCurrentStep] = useState<Step>('landing');
-  const [entryPoint, setEntryPoint] = useState<EntryPoint>('idea');
-  const [idea, setIdea] = useState<{
-    interests: string;
-    area: BusinessArea | null;
-    existingIdeaText?: string;
-  }>({
-    interests: '',
-    area: null,
-    existingIdeaText: '',
+  const [appState, setAppState] = useState<AppState>(() => {
+    try {
+      const storedState = window.localStorage.getItem('appState');
+      return storedState ? JSON.parse(storedState) : initialAppState;
+    } catch (error) {
+      console.error("Could not load state from localStorage", error);
+      return initialAppState;
+    }
   });
-  const [customer, setCustomer] = useState<CustomerOption | null>(null);
-  const [job, setJob] = useState<JobOption | null>(null);
-  const [problemDescription, setProblemDescription] = useState<string | null>(null);
-  const [solutionDescription, setSolutionDescription] = useState<string | null>(null);
-  const [competitionDescription, setCompetitionDescription] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('appState', JSON.stringify(appState));
+    } catch (error) {
+      console.error("Could not save state to localStorage", error);
+    }
+  }, [appState]);
+
+  const { 
+    currentStep, entryPoint, idea, customer, job, problemDescription, 
+    solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
+  } = appState;
+
   const { isAuthenticated, signup, login, user, requestPasswordReset } = useAuth();
-  const [isTrackerVisible, setIsTrackerVisible] = useState(true);
-  const [stepBeforeAuth, setStepBeforeAuth] = useState<Step | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated && appState.currentStep === 'summary') {
+      setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
+    }
+  }, [isAuthenticated, appState.currentStep]);
 
   const isFlowStep = flowStepKeys.includes(currentStep);
   const activeFlowSteps = entryPoint === 'idea' ? ideaFlowSteps : prematureIdeaFlowSteps;
 
   function handleStepClick(step: string) {
     if (activeFlowSteps.some(s => s.key === step)) {
-      setCurrentStep(step as Step);
+      setAppState(prev => ({ ...prev, currentStep: step as Step }));
     }
   }
 
   function handleLandingSelect(step: EntryPoint) {
-    setEntryPoint(step);
-    if (step === 'customer') {
-      setCurrentStep('existingIdea');
-    } else {
-      setCurrentStep(step);
-    }
+    setAppState(prev => ({ ...prev, entryPoint: step, currentStep: step === 'customer' ? 'existingIdea' : step }));
   }
 
   function handleIdeaSelect(selectedIdea: { interests: string; area: BusinessArea }) {
-    setIdea(selectedIdea);
-    setCurrentStep('customer');
+    setAppState(prev => ({ ...prev, idea: selectedIdea, currentStep: 'customer' }));
   }
 
   function handleCustomerSelect(selectedCustomer: CustomerOption) {
-    setCustomer(selectedCustomer);
-    setCurrentStep('job');
+    setAppState(prev => ({ ...prev, customer: selectedCustomer, currentStep: 'job' }));
   }
 
   function handleJobSelect(selectedJob: JobOption) {
-    setJob(selectedJob);
-    setCurrentStep('summary');
+    setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'summary' }));
   }
 
   function handleExistingIdeaSubmit(ideaText: string) {
-    setIdea(prev => ({ ...prev, existingIdeaText: ideaText, area: { id: 'custom', title: 'Custom Idea', description: ideaText, icon: '💡' } }));
-    setCurrentStep('describeCustomer');
+    setAppState(prev => ({ 
+      ...prev, 
+      idea: { ...prev.idea, existingIdeaText: ideaText, area: { id: 'custom', title: 'Custom Idea', description: ideaText, icon: '💡' } },
+      currentStep: 'describeCustomer' 
+    }));
   }
 
   function handleDescribeCustomerSubmit(description: string | null) {
     if (description) {
-      setCustomer({ id: 'custom', title: 'Custom Customer', description: description, icon: '👤' });
-      setCurrentStep('describeProblem');
+      setAppState(prev => ({ 
+        ...prev, 
+        customer: { id: 'custom', title: 'Custom Customer', description: description, icon: '👤' },
+        currentStep: 'describeProblem'
+      }));
     } else {
-      setCurrentStep('customerGuidance');
+      setAppState(prev => ({ ...prev, currentStep: 'customerGuidance' }));
     }
   }
 
   function handleDescribeProblemSubmit(description: string | null) {
-    setProblemDescription(description);
-    if (description === null) {
-      setCurrentStep('problemGuidance');
-    } else {
-      setCurrentStep('describeSolution');
-    }
+    setAppState(prev => ({
+      ...prev,
+      problemDescription: description,
+      currentStep: description === null ? 'problemGuidance' : 'describeSolution'
+    }));
   }
 
   function handleDescribeSolutionSubmit(description: string) {
-    setSolutionDescription(description);
-    setCurrentStep('describeCompetition');
+    setAppState(prev => ({ ...prev, solutionDescription: description, currentStep: 'describeCompetition' }));
   }
 
   function handleDescribeCompetitionSubmit(description: string | null) {
-    setCompetitionDescription(description);
-    setCurrentStep('businessPlan');
+    setAppState(prev => ({ ...prev, competitionDescription: description, currentStep: 'businessPlan' }));
   }
 
   function handleRestart() {
-    setCurrentStep('landing');
-    setIdea({ interests: '', area: null, existingIdeaText: '' });
-    setCustomer(null);
-    setProblemDescription(null);
-    setSolutionDescription(null);
-    setCompetitionDescription(null);
-    setJob(null);
+    setAppState(prev => ({
+      ...initialAppState,
+      isTrackerVisible: prev.isTrackerVisible
+    }));
   }
 
   function handleBack() {
-    if (currentStep === 'idea') {
-      setCurrentStep('landing');
-    } else if (currentStep === 'customer') {
-      if (idea.existingIdeaText) {
-        setCurrentStep('describeCustomer');
-      } else {
-        setCurrentStep(entryPoint === 'idea' ? 'idea' : 'landing');
-      }
-    } else if (currentStep === 'job') {
-      if (customer?.title === 'Custom Customer') {
-        setCurrentStep('describeCustomer');
-      } else {
-        setCurrentStep('customer');
-      }
-    } else if (currentStep === 'summary') {
-      setCurrentStep('job');
-    } else if (currentStep === 'signup') {
-      setCurrentStep('summary');
-    } else if (currentStep === 'login') {
-      setCurrentStep(stepBeforeAuth || 'summary');
-    } else if (currentStep === 'profile') {
-      setCurrentStep(stepBeforeAuth || 'summary');
-    } else if (currentStep === 'existingIdea') {
-      setCurrentStep('landing');
-    } else if (currentStep === 'describeCustomer') {
-      setCurrentStep('existingIdea');
-    } else if (currentStep === 'describeProblem') {
-      setCurrentStep('describeCustomer');
-    } else if (currentStep === 'describeSolution') {
-      setCurrentStep('describeProblem');
-    } else if (currentStep === 'describeCompetition') {
-      setCurrentStep('describeSolution');
-    } else if (currentStep === 'customerGuidance') {
-      setCurrentStep('describeCustomer');
-    } else if (currentStep === 'businessPlan') {
-      setCurrentStep('describeCompetition');
+    const stepMap: Partial<Record<Step, Step>> = {
+      idea: 'landing',
+      customer: entryPoint === 'idea' ? 'idea' : 'landing',
+      job: 'customer',
+      summary: 'job',
+      login: stepBeforeAuth || 'summary',
+      profile: stepBeforeAuth || 'summary',
+      existingIdea: 'landing',
+      describeCustomer: 'existingIdea',
+      describeProblem: 'describeCustomer',
+      describeSolution: 'describeProblem',
+      describeCompetition: 'describeSolution',
+      customerGuidance: 'describeCustomer',
+      businessPlan: 'describeCompetition',
+    };
+
+    if (currentStep === 'customer' && idea.existingIdeaText) {
+      setAppState(prev => ({ ...prev, currentStep: 'describeCustomer' }));
+      return;
     }
+    if (currentStep === 'job' && customer?.title === 'Custom Customer') {
+      setAppState(prev => ({ ...prev, currentStep: 'describeCustomer' }));
+      return;
+    }
+    
+    const prevStep = stepMap[currentStep];
+    if (prevStep) {
+      setAppState(prev => ({ ...prev, currentStep: prevStep }));
+    }
+  }
+
+  function handleClearStep() {
+    const stepToClear = appState.currentStep;
+    const newState = { ...appState };
+
+    switch (stepToClear) {
+      case 'existingIdea':
+        newState.idea.existingIdeaText = '';
+        break;
+      case 'describeCustomer':
+        newState.customer = null;
+        break;
+      case 'describeProblem':
+        newState.problemDescription = null;
+        break;
+      case 'describeSolution':
+        newState.solutionDescription = null;
+        break;
+      case 'describeCompetition':
+        newState.competitionDescription = null;
+        break;
+      default:
+        return; 
+    }
+    setAppState(newState);
   }
 
   return (
@@ -361,13 +416,7 @@ function AppContent() {
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setCurrentStep('landing');
-              setIdea({ interests: '', area: null, existingIdeaText: '' });
-              setCustomer(null);
-              setProblemDescription(null);
-              setSolutionDescription(null);
-              setCompetitionDescription(null);
-              setJob(null);
+              setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
             }} />
             {currentStep !== 'landing' && currentStep !== 'signup' && currentStep !== 'login' && (
               <NavBar>
@@ -377,17 +426,16 @@ function AppContent() {
             <TopBar>
               {!isAuthenticated ? (
                 <>
-                  <LoginButton onClick={() => setCurrentStep('login')} aria-label="Log In">
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
                     Log in
                   </LoginButton>
-                  <SignupFreeButton onClick={() => setCurrentStep('signup')} aria-label="Sign up for free">
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
                     Sign up for free
                   </SignupFreeButton>
                 </>
               ) : (
                 <AvatarButton onClick={() => {
-                  setStepBeforeAuth(currentStep);
-                  setCurrentStep('profile');
+                  setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
                 }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   <AvatarImg src={defaultAvatar} alt="Avatar" />
                 </AvatarButton>
@@ -402,12 +450,12 @@ function AppContent() {
                         currentStepKey={currentStep}
                         onStepClick={handleStepClick}
                       />
-                      <ToggleTrackerButton onClick={() => setIsTrackerVisible(false)}>Hide Tracker</ToggleTrackerButton>
+                      <ToggleTrackerButton onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}>Hide Tracker</ToggleTrackerButton>
                   </Sidebar>
                 )}
                 <MainContent isExpanded={!isTrackerVisible}>
                   {!isTrackerVisible && (
-                    <ToggleTrackerButton onClick={() => setIsTrackerVisible(true)} style={{ marginBottom: '1rem', width: 'auto' }}>Show Tracker</ToggleTrackerButton>
+                    <ToggleTrackerButton onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))} style={{ marginBottom: '1rem', width: 'auto' }}>Show Tracker</ToggleTrackerButton>
                   )}
                   {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
                   {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
@@ -424,19 +472,12 @@ function AppContent() {
                       job={job} 
                       onRestart={handleRestart} 
                       onSignup={() => {
-                        setStepBeforeAuth('summary');
-                        setCurrentStep('signup');
+                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'signup' }));
                       }} 
                       onLogin={() => {
-                        setStepBeforeAuth('summary');
-                        setCurrentStep('login');
+                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
                       }} 
                     /> )}
-                  {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} />}
-                  {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} />}
-                  {currentStep === 'describeProblem' && <DescribeProblem onSubmit={handleDescribeProblemSubmit} customer={customer} initialValue={problemDescription} />}
-                  {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} />}
-                  {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} />}
                   {currentStep === 'businessPlan' && ( <BusinessPlanPage 
                       idea={idea} 
                       customer={customer} 
@@ -444,14 +485,17 @@ function AppContent() {
                       solutionDescription={solutionDescription} 
                       competitionDescription={competitionDescription}
                       onSignup={() => {
-                        setStepBeforeAuth('businessPlan');
-                        setCurrentStep('signup');
+                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'signup' }));
                       }}
                       onLogin={() => {
-                        setStepBeforeAuth('businessPlan');
-                        setCurrentStep('login');
+                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
                       }}
                     /> )}
+                  {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
+                  {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
+                  {currentStep === 'describeProblem' && <DescribeProblem onSubmit={handleDescribeProblemSubmit} customer={customer} initialValue={problemDescription} onClear={handleClearStep} />}
+                  {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
+                  {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
                 </MainContent>
               </PageLayout>
             ) : (
@@ -460,22 +504,22 @@ function AppContent() {
                 {currentStep === 'signup' && <Signup onSignup={async (email, password) => {
                   try {
                     await signup(email, password);
-                    setCurrentStep(stepBeforeAuth || 'summary');
+                    setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'summary' }));
                   } catch (err: any) {
                     if (err.message && err.message.toLowerCase().includes('already registered')) {
-                      setCurrentStep('login');
+                      setAppState(prev => ({ ...prev, currentStep: 'login' }));
                       return;
                     }
                     throw err;
                   }
-                }} onLogin={() => setCurrentStep('login')} />}
+                }} onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))} />}
                 {currentStep === 'login' && <Login onLogin={async (email, password) => {
                   await login(email, password);
-                  setCurrentStep(stepBeforeAuth || 'summary');
-                }} onSignup={() => setCurrentStep('signup')} onRequestPasswordReset={requestPasswordReset} />}
-                {currentStep === 'profile' && <Profile />}
-                {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setCurrentStep('customer')} /> )}
-                {currentStep === 'problemGuidance' && ( <Guidance message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." buttonText="Let's find the problem" onContinue={() => setCurrentStep('describeSolution')} /> )}
+                  const nextStep = stepBeforeAuth === 'summary' ? 'businessPlan' : (stepBeforeAuth || 'summary');
+                  setAppState(prev => ({ ...prev, currentStep: nextStep }));
+                }} onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))} onRequestPasswordReset={requestPasswordReset} />}
+                {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'customer' }))} /> )}
+                {currentStep === 'problemGuidance' && ( <Guidance message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." buttonText="Let's find the problem" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'describeSolution' }))} /> )}
               </>
             )}
           </AppContainer>

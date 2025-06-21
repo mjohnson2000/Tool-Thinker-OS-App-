@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
 
@@ -110,19 +110,41 @@ const StrategicSuggestion = styled.div`
   }
 `;
 
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  align-self: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 interface DescribeCompetitionProps {
   onSubmit: (competitionText: string | null) => void;
   solutionDescription: string | null;
   initialValue?: string | null;
+  onClear: () => void;
 }
 
-export function DescribeCompetition({ onSubmit, solutionDescription, initialValue = null }: DescribeCompetitionProps) {
+export function DescribeCompetition({ onSubmit, solutionDescription, initialValue = null, onClear }: DescribeCompetitionProps) {
   const [isBetter, setIsBetter] = useState<boolean | null>(initialValue ? true : (initialValue === null ? null : false));
   const [description, setDescription] = useState(initialValue || '');
   const [isLoading, setIsLoading] = useState(false);
   const [improvedAdvantage, setImprovedAdvantage] = useState<string | null>(null);
   const [strategicSuggestions, setStrategicSuggestions] = useState<string[]>([]);
   const [showRejectionMessage, setShowRejectionMessage] = useState(false);
+
+  useEffect(() => {
+    if (initialValue) {
+      setIsBetter(true);
+      setDescription(initialValue);
+    }
+  }, [initialValue]);
 
   async function assessAndImproveAdvantage(advantage: string) {
     const solutionContext = solutionDescription ? ` based on the solution: '${solutionDescription}'` : '';
@@ -214,9 +236,14 @@ export function DescribeCompetition({ onSubmit, solutionDescription, initialValu
             onChange={(e) => setDescription(e.target.value)}
             placeholder="How is your solution better? (e.g., faster, cheaper, more features, better design)"
           />
-          <Button type="submit" disabled={!description.trim() || isLoading}>
-            {isLoading ? 'Assessing...' : 'Continue'}
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', flexDirection: 'column', alignItems: 'center' }}>
+            <Button type="submit" disabled={!description.trim() || isLoading}>
+              {isLoading ? 'Assessing...' : 'Continue'}
+            </Button>
+            <ClearButton onClick={onClear}>
+              Clear and restart this step
+            </ClearButton>
+          </div>
         </form>
       )}
 

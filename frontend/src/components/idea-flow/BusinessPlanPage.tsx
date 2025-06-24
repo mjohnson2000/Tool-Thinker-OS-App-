@@ -136,7 +136,7 @@ interface BusinessPlanPageProps {
     onLogin: () => void;
 }
 
-export function BusinessPlanPage(props: BusinessPlanPageProps) {
+export function BusinessPlanPage(props: BusinessPlanPageProps) { console.log("BusinessPlanPage mounted", props);
     const { isAuthenticated } = useAuth();
     const [plan, setPlan] = useState<BusinessPlan | null>(null);
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -189,7 +189,14 @@ ${recommendation.recommendationText}
     useEffect(() => {
         async function generateInitialPlan() {
           // Guard clause to ensure all necessary data is present before generating the plan
-          if (!props.idea || !props.customer || !props.problemDescription || !props.solutionDescription || !props.competitionDescription) {
+              console.log({
+       idea: props.idea,
+       customer: props.customer,
+       problemDescription: props.problemDescription,
+       solutionDescription: props.solutionDescription,
+       competitionDescription: props.competitionDescription
+     });
+  if (!props.idea || !props.customer || !props.problemDescription || !props.solutionDescription || !props.competitionDescription) {
             console.warn("Business plan generation skipped: missing required props.");
             return;
           }

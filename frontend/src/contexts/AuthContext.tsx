@@ -20,6 +20,13 @@ interface AuthContextType {
   resetPassword: (token: string, newPassword: string) => Promise<void>;
 }
 
+interface ApiResponse {
+  data: {
+    token: string;
+    user: User;
+  };
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -38,10 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const validateToken = async (token: string) => {
     try {
-      const response = await axios.get(`${API_URL}/auth/validate`, {
+      const response = await axios.get<{ user: User }>(`${API_URL}/auth/validate`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(response.data.user);
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
+      }
     } catch (error) {
       localStorage.removeItem('token');
     } finally {
@@ -56,12 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, {
+      const response = await axios.post<ApiResponse>(`${API_URL}/auth/signup`, {
         email,
         password
       });
-      setAuthToken(response.data.data.token);
-      setUser(response.data.data.user);
+      if (response.data && response.data.data) {
+        setAuthToken(response.data.data.token);
+        setUser(response.data.data.user);
+      }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to sign up');
     }
@@ -69,12 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post<ApiResponse>(`${API_URL}/auth/login`, {
         email,
         password
       });
-      setAuthToken(response.data.data.token);
-      setUser(response.data.data.user);
+      if (response.data && response.data.data) {
+        setAuthToken(response.data.data.token);
+        setUser(response.data.data.user);
+      }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to log in');
     }
@@ -140,4 +153,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

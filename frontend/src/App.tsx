@@ -305,7 +305,7 @@ function AppContent() {
   }
 
   function handleJobSelect(selectedJob: JobOption) {
-    setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'summary' }));
+    setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'describeProblem' }));
   }
 
   function handleExistingIdeaSubmit(ideaText: string) {

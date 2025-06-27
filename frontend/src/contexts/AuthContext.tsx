@@ -6,6 +6,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 interface User {
   email: string;
   isVerified: boolean;
+  createdAt?: string;
+  lastLogin?: string;
+  name?: string;
+  profilePic?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +22,7 @@ interface AuthContextType {
   verifyEmail: (token: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
+  updateProfile: (data: { name?: string; profilePic?: string }) => Promise<void>;
 }
 
 interface ApiResponse {
@@ -37,22 +42,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for token and validate it
     const token = localStorage.getItem('token');
     if (token) {
-      validateToken(token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      validateToken();
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const validateToken = async (token: string) => {
+  const validateToken = async () => {
     try {
-      const response = await axios.get<{ user: User }>(`${API_URL}/auth/validate`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
+      const response: any = await axios.get(`${API_URL}/auth/validate`);
+      // Accept both { user: ... } and { data: { user: ... } } for compatibility
+      const userObj = response.data?.data?.user || response.data?.user;
+      if (userObj) {
+        setUser(userObj);
+      } else {
+        setUser(null);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
       }
     } catch (error) {
+      setUser(null);
       localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +140,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: { name?: string; profilePic?: string }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Not authenticated');
+      const response = await axios.patch<{ data: { user: User } }>(`${API_URL}/auth/profile`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && response.data.data && response.data.data.user) {
+        setUser(response.data.data.user);
+      }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to update profile');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -139,7 +166,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         verifyEmail,
         requestPasswordReset,
-        resetPassword
+        resetPassword,
+        updateProfile
       }}
     >
       {children}

@@ -13,12 +13,12 @@ interface OpenAIChatResponse {
   choices: { message: { content: string } }[];
 }
 
-router.post('/', async (req, res, next) => {
+router.post('/', async (req, res) => {
   console.log('Received /api/chatgpt request', req.body);
   try {
     const { prompt } = chatSchema.parse(req.body);
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new AppError(500, 'OpenAI API key not configured');
+    if (!apiKey) throw new Error('OpenAI API key not configured');
 
     const response = await axios.post<OpenAIChatResponse>(
       'https://api.openai.com/v1/chat/completions',
@@ -38,20 +38,21 @@ router.post('/', async (req, res, next) => {
     const message = response.data.choices?.[0]?.message?.content || '';
     res.json({ status: 'success', message });
   } catch (error: any) {
+    let errorMsg = 'Unknown error';
     if (error.response) {
-      // The request was made and the server responded with a status code
       console.error('ChatGPT route error: OpenAI API responded with error', {
         status: error.response.status,
         data: error.response.data,
       });
+      errorMsg = error.response.data?.error?.message || error.response.statusText || 'OpenAI API error';
     } else if (error.request) {
-      // The request was made but no response was received
       console.error('ChatGPT route error: No response from OpenAI API', error.request);
-    } else {
-      // Something happened in setting up the request
+      errorMsg = 'No response from OpenAI API';
+    } else if (error.message) {
       console.error('ChatGPT route error: General error', error.message);
+      errorMsg = error.message;
     }
-    next(error);
+    res.status(500).json({ status: 'error', error: errorMsg });
   }
 });
 

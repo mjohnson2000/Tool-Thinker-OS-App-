@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { User } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
-import { generateToken } from '../utils/token';
+import { generateToken, verifyToken } from '../utils/token';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -22,6 +22,12 @@ const loginSchema = z.object({
 
 const resetPasswordSchema = z.object({
   email: z.string().email()
+});
+
+// Profile update schema
+const profileUpdateSchema = z.object({
+  name: z.string().min(1).max(64).optional(),
+  profilePic: z.string().max(1000000).optional()
 });
 
 // Signup route
@@ -85,6 +91,10 @@ router.post('/login', async (req, res, next) => {
       throw new AppError(401, 'Invalid email or password');
     }
 
+    // Update lastLogin
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate auth token
     const token = user.generateAuthToken();
 
@@ -94,7 +104,11 @@ router.post('/login', async (req, res, next) => {
         token,
         user: {
           email: user.email,
-          isVerified: user.isVerified
+          name: user.name,
+          profilePic: user.profilePic,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin
         }
       }
     });
@@ -155,6 +169,78 @@ router.get('/verify/:token', async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+// Token validation route
+router.get('/validate', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyToken(token); // returns { id: string }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      status: 'success',
+      data: {
+        user: {
+          email: user.email,
+          name: user.name,
+          profilePic: user.profilePic,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin
+        }
+      }
+    });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Middleware to authenticate user via JWT
+function requireAuth(req: Request & { userId?: string }, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) throw new AppError(401, 'No token provided');
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyToken(token); // returns { id: string }
+    req.userId = decoded.id;
+    next();
+  } catch (err) {
+    next(new AppError(401, 'Invalid or expired token'));
+  }
+}
+
+console.log('Registering PATCH /profile');
+router.patch('/profile', requireAuth, async (req: Request & { userId?: string }, res: Response, next: NextFunction) => {
+  try {
+    const { name, profilePic } = profileUpdateSchema.parse(req.body);
+    const user = await User.findById(req.userId);
+    if (!user) throw new AppError(404, 'User not found');
+    if (name !== undefined) user.name = name;
+    if (profilePic !== undefined) user.profilePic = profilePic;
+    await user.save();
+    res.json({
+      status: 'success',
+      data: {
+        user: {
+          email: user.email,
+          name: user.name,
+          profilePic: user.profilePic,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
   }
 });
 

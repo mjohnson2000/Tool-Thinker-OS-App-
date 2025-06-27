@@ -41,6 +41,10 @@ const Button = styled.button`
   &:hover {
     background-color: #0056b3;
   }
+  &:disabled {
+    background: #b3d4fc;
+    cursor: not-allowed;
+  }
 `;
 
 const Subtext = styled.p`
@@ -59,6 +63,12 @@ const Link = styled.a`
   }
 `;
 
+const ErrorMessage = styled.div`
+  color: #dc3545;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+`;
+
 interface SignupProps {
   onSignup: (email: string, password: string) => Promise<void>;
   onLogin: () => void;
@@ -67,10 +77,20 @@ interface SignupProps {
 export function Signup({ onSignup, onLogin }: SignupProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSignup(email, password);
+    setError(null);
+    setIsLoading(true);
+    try {
+      await onSignup(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -91,7 +111,10 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Button type="submit">Sign Up</Button>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Signing up...' : 'Sign Up'}
+        </Button>
       </form>
       <Subtext>
         Already have an account? <Link onClick={onLogin}>Log in</Link>

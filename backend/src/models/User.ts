@@ -9,6 +9,11 @@ export interface IUser extends Document {
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  lastLogin?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  name?: string;
+  profilePic?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
   generateAuthToken(): string;
 }
@@ -32,7 +37,18 @@ const userSchema = new Schema<IUser>({
   },
   verificationToken: String,
   resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetPasswordExpires: Date,
+  lastLogin: Date,
+  name: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  profilePic: {
+    type: String,
+    trim: true,
+    default: ''
+  }
 }, {
   timestamps: true
 });

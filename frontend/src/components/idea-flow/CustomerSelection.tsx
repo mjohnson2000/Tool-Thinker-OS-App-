@@ -120,12 +120,16 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
         }, 200);
         const prompt = `Return ONLY a JSON array of 5 customer types for a business in the area of: ${businessArea.title} - ${businessArea.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
+        if (response && response.error) {
+          console.error('ChatGPT API error:', response.error);
+          throw new Error(response.error);
+        }
         let parsed: CustomerOption[] = Array.isArray(response) ? response : [];
         if (!parsed.length) {
           try {
             parsed = JSON.parse(response);
           } catch {
-            const match = response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
+            const match = response && response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
             if (match) {
               try {
                 parsed = JSON.parse(match[0]);
@@ -133,7 +137,10 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
             }
           }
         }
-        if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No customer types found');
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          console.error('Failed to parse customer types from response:', response);
+          throw new Error('No customer types found');
+        }
         setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
       } catch (err: any) {

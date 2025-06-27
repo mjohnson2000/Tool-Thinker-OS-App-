@@ -10,7 +10,6 @@ import './index.css';
 import logo from './assets/logo.png';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Signup } from './components/auth/Signup';
-import { TestHooks } from './TestHooks';
 import { Login } from './components/auth/Login';
 import { Profile } from './components/auth/Profile';
 import { FaUserCircle } from 'react-icons/fa';
@@ -21,11 +20,12 @@ import { DescribeProblem } from './components/idea-flow/DescribeProblem';
 import { DescribeSolution } from './components/idea-flow/DescribeSolution';
 import { DescribeCompetition } from './components/idea-flow/DescribeCompetition';
 import { Guidance } from './components/idea-flow/Guidance';
-import { BusinessPlanPage } from './components/idea-flow/BusinessPlanPage';
 import { ProgressTracker } from './components/idea-flow/ProgressTracker';
 import type { BusinessArea } from './components/idea-flow/IdeaSelection';
 import type { CustomerOption } from './components/idea-flow/CustomerSelection';
 import type { JobOption } from './components/idea-flow/JobSelection';
+import { BusinessPlanPageDiscovery } from './components/idea-discovery/BusinessPlanPageDiscovery';
+import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -147,27 +147,47 @@ const SignupFreeButton = styled.button`
 `;
 
 const ToggleTrackerButton = styled.button`
-  background: #fff;
-  color: #555;
-  border: 1px solid #e5e5e5;
+  background: #f5f5f7;
+  color: #007aff;
+  border: 1.5px solid #e5e5e5;
   border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  margin-top: 1rem;
-  width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
   transition: background 0.2s, color 0.2s;
-
-  &:hover {
-    background: #f5f5f7;
-    color: #000;
+  &:hover, &:focus {
+    background: #e6f0ff;
+    color: #0056b3;
   }
+`;
+
+const TopBarAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #007aff22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #007aff;
+  font-weight: 700;
+`;
+
+const TopBarAvatarImg = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e5e5;
 `;
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -203,9 +223,10 @@ const prematureIdeaFlowSteps = [
     { key: 'existingIdea', label: '1. Your Idea' },
     { key: 'describeCustomer', label: '2. Your Customer' },
     { key: 'describeProblem', label: '3. The Problem' },
-    { key: 'describeSolution', label: '4. The Solution' },
-    { key: 'describeCompetition', label: '5. Your Advantage' },
-    { key: 'businessPlan', label: '6. Business Plan' },
+    { key: 'prematureJobDiscovery', label: '4. Customer Job' },
+    { key: 'describeSolution', label: '5. The Solution' },
+    { key: 'describeCompetition', label: '6. Your Advantage' },
+    { key: 'businessPlan', label: '7. Business Plan' },
 ];
 
 const flowStepKeys = [...ideaFlowSteps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -277,6 +298,15 @@ function AppContent() {
 
   const { isAuthenticated, signup, login, user, requestPasswordReset } = useAuth();
 
+  console.log('AppContent state:', {
+    currentStep,
+    entryPoint,
+    idea,
+    customer,
+    job,
+    isAuthenticated
+  });
+
   useEffect(() => {
     if (isAuthenticated && appState.currentStep === 'summary') {
       setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
@@ -305,7 +335,7 @@ function AppContent() {
   }
 
   function handleJobSelect(selectedJob: JobOption) {
-    setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'describeProblem' }));
+    setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'businessPlan' }));
   }
 
   function handleExistingIdeaSubmit(ideaText: string) {
@@ -332,6 +362,9 @@ function AppContent() {
     setAppState(prev => ({
       ...prev,
       problemDescription: description,
+      job: description
+        ? { id: 'custom', title: description, description, icon: '💡' }
+        : null,
       currentStep: description === null ? 'problemGuidance' : 'describeSolution'
     }));
   }
@@ -409,6 +442,10 @@ function AppContent() {
     setAppState(newState);
   }
 
+  function handleProblemGuidanceContinue() {
+    setAppState(prev => ({ ...prev, currentStep: 'prematureJobDiscovery' }));
+  }
+
   return (
     <Router>
       <Routes>
@@ -418,7 +455,7 @@ function AppContent() {
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
               setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
             }} />
-            {currentStep !== 'landing' && currentStep !== 'signup' && currentStep !== 'login' && (
+            {currentStep !== 'landing' && currentStep !== 'signup' && currentStep !== 'login' && currentStep !== 'businessPlan' && currentStep !== 'profile' && (
               <NavBar>
                 <NavButton onClick={handleBack} aria-label="Back">← Back</NavButton>
               </NavBar>
@@ -437,7 +474,20 @@ function AppContent() {
                 <AvatarButton onClick={() => {
                   setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
                 }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                  <AvatarImg src={defaultAvatar} alt="Avatar" />
+                  {user && user.profilePic ? (
+                    <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                  ) : user && user.email ? (
+                    <TopBarAvatar>
+                      {user.email
+                        .split('@')[0]
+                        .split(/[._-]/)
+                        .map(part => part[0]?.toUpperCase())
+                        .join('')
+                        .slice(0, 2) || 'U'}
+                    </TopBarAvatar>
+                  ) : (
+                    <AvatarImg src={defaultAvatar} alt="Avatar" />
+                  )}
                 </AvatarButton>
               )}
             </TopBar>
@@ -450,12 +500,22 @@ function AppContent() {
                         currentStepKey={currentStep}
                         onStepClick={handleStepClick}
                       />
-                      <ToggleTrackerButton onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}>Hide Tracker</ToggleTrackerButton>
+                      <ToggleTrackerButton 
+                        onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
+                        style={{ color: '#222' }}
+                      >
+                        Hide Tracker
+                      </ToggleTrackerButton>
                   </Sidebar>
                 )}
                 <MainContent isExpanded={!isTrackerVisible}>
                   {!isTrackerVisible && (
-                    <ToggleTrackerButton onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))} style={{ marginBottom: '1rem', width: 'auto' }}>Show Tracker</ToggleTrackerButton>
+                    <ToggleTrackerButton 
+                      style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
+                      onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
+                    >
+                      Show Tracker
+                    </ToggleTrackerButton>
                   )}
                   {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
                   {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
@@ -478,24 +538,45 @@ function AppContent() {
                         setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
                       }} 
                     /> )}
-                  {currentStep === 'businessPlan' && ( <BusinessPlanPage 
-                      idea={idea} 
-                      customer={customer} 
-                      problemDescription={problemDescription} 
-                      solutionDescription={solutionDescription} 
-                      competitionDescription={competitionDescription}
+                  {currentStep === 'businessPlan' && job && (
+                    <BusinessPlanPageDiscovery
+                      idea={idea}
+                      customer={customer}
+                      job={job}
                       onSignup={() => {
                         setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'signup' }));
                       }}
                       onLogin={() => {
                         setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
                       }}
-                    /> )}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  )}
+                  {currentStep === 'businessPlan' && !job && (
+                    <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                      Please complete all required steps before viewing your business plan.
+                    </div>
+                  )}
                   {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
                   {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
-                  {currentStep === 'describeProblem' && <DescribeProblem onSubmit={handleDescribeProblemSubmit} customer={customer} initialValue={problemDescription} onClear={handleClearStep} />}
+                  {currentStep === 'describeProblem' && (
+                    <DescribeProblem
+                      onSubmit={handleDescribeProblemSubmit}
+                      customer={customer}
+                      initialValue={problemDescription}
+                      onClear={handleClearStep}
+                    />
+                  )}
                   {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
                   {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
+                  {currentStep === 'prematureJobDiscovery' && (
+                    <PrematureJobDiscovery
+                      customer={customer}
+                      onSelect={selectedJob => {
+                        setAppState(prev => ({ ...prev, job: selectedJob, currentStep: 'describeSolution' }));
+                      }}
+                    />
+                  )}
                 </MainContent>
               </PageLayout>
             ) : (
@@ -513,15 +594,33 @@ function AppContent() {
                     throw err;
                   }
                 }} onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))} />}
-                {currentStep === 'login' && <Login onLogin={async (email, password) => {
-                  await login(email, password);
-                  const nextStep = stepBeforeAuth === 'summary' ? 'businessPlan' : (stepBeforeAuth || 'summary');
-                  setAppState(prev => ({ ...prev, currentStep: nextStep }));
-                }} onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))} onRequestPasswordReset={requestPasswordReset} />}
+                {currentStep === 'login' && (
+                  <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading login form...</div>}>
+                    <Login
+                      onLogin={async (email, password) => {
+                        try {
+                          await login(email, password);
+                          setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                        } catch (err: any) {
+                          alert(err.message || 'Failed to log in. Please try again.');
+                        }
+                      }}
+                      onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
+                      onRequestPasswordReset={requestPasswordReset}
+                    />
+                  </React.Suspense>
+                )}
                 {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'customer' }))} /> )}
-                {currentStep === 'problemGuidance' && ( <Guidance message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." buttonText="Let's find the problem" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'describeSolution' }))} /> )}
+                {currentStep === 'problemGuidance' && (
+                  <Guidance 
+                    message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." 
+                    buttonText="Let's find the problem" 
+                    onContinue={handleProblemGuidanceContinue} 
+                  />
+                )}
               </>
             )}
+            {currentStep === 'profile' && <Profile />}
           </AppContainer>
         } />
       </Routes>

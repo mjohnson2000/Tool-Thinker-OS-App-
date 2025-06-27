@@ -9,6 +9,7 @@ import { authRouter } from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { connectDB } from './config/database';
 import { chatgptRouter } from './routes/chatgpt';
+import { businessPlanRouter } from './routes/businessPlan';
 
 // Load environment variables
 config();
@@ -21,11 +22,13 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/chatgpt', chatgptRouter);
+app.use('/api/business-plan', businessPlanRouter);
 
 // Error handling
 app.use(errorHandler);

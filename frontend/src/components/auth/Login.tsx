@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Container = styled.div`
   display: flex;

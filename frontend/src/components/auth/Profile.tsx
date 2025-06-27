@@ -1,193 +1,235 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Container = styled.div`
+  max-width: 420px;
+  margin: 2rem auto;
+  padding: 2.5rem 2rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  max-width: 400px;
-  margin: 3rem auto;
-  padding: 2.5rem 2rem;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.10);
 `;
 
-const Title = styled.h2`
-  font-size: 2rem;
+const Avatar = styled.div`
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  background: #007aff22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #007aff;
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
 `;
 
-const Info = styled.div`
+const AvatarImg = styled.img`
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e5e5;
+`;
+
+const Name = styled.div`
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #222;
+  width: 100%;
+`;
+
+const NameInput = styled.input`
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #222;
+  width: 100%;
+  text-align: center;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  background: #fafbfc;
+  &:focus {
+    outline: 2px solid #007aff;
+    border-color: #007aff;
+  }
+`;
+
+const Email = styled.p`
   font-size: 1.1rem;
-  margin-bottom: 1rem;
-  color: #333;
+  margin-bottom: 0.5rem;
+  color: #444;
+`;
+
+const Status = styled.p<{verified: boolean}>`
+  font-size: 1rem;
+  color: ${props => props.verified ? '#28a745' : '#dc3545'};
+  margin-bottom: 1.2rem;
+`;
+
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1.5rem 0 1.2rem 0;
+  width: 100%;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.98rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+`;
+
+const Actions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 1.2rem;
 `;
 
 const Button = styled.button`
-  background: #007AFF;
-  color: white;
+  background: #007aff;
+  color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
-  margin: 0.5rem 0.5rem 0 0;
-  &:hover {
+  transition: background 0.2s, box-shadow 0.2s;
+  outline: none;
+  &:hover, &:focus {
     background: #0056b3;
+    box-shadow: 0 2px 8px rgba(0,122,255,0.10);
   }
 `;
 
-const Avatar = styled.img`
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 1rem;
-  border: 2px solid #007AFF;
-`;
-
-const AvatarInput = styled.input`
-  display: none;
-`;
-
-const AvatarLabel = styled.label`
-  cursor: pointer;
-  color: #007AFF;
-  font-weight: 500;
-  margin-bottom: 1rem;
-  &:hover {
-    text-decoration: underline;
+const SecondaryButton = styled(Button)`
+  background: #f5f5f7;
+  color: #007aff;
+  border: 1.5px solid #e5e5e5;
+  &:hover, &:focus {
+    background: #e6f0ff;
+    color: #0056b3;
   }
 `;
 
-const Field = styled.div`
-  margin-bottom: 1rem;
-  width: 100%;
+const PicInput = styled.input`
+  margin: 0.5rem 0 1rem 0;
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #E5E5E5;
-  border-radius: 8px;
-  font-size: 1rem;
-  &:focus {
-    outline: none;
-    border-color: #007AFF;
-  }
+const SaveButton = styled(Button)`
+  margin-top: 0.7rem;
 `;
-
-const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
 export function Profile() {
-  const { user, logout } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [email, setEmail] = useState(user?.email || '');
-  const [avatar, setAvatar] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [showSaved, setShowSaved] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, isLoading, logout, updateProfile } = useAuth();
+  const [name, setName] = useState(user?.name || '');
+  const [profilePic, setProfilePic] = useState(user?.profilePic || '');
+  const [picPreview, setPicPreview] = useState(user?.profilePic || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  if (!user) return null;
+  if (isLoading) return <Container aria-busy="true">Loading profile...</Container>;
+  if (!user) return <Container>No user found. Please log in.</Container>;
+  const initials = user.email
+    ? user.email
+        .split('@')[0]
+        .split(/[._-]/)
+        .map(part => part[0]?.toUpperCase())
+        .join('')
+        .slice(0, 2)
+    : 'U';
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setAvatarFile(e.target.files[0]);
-      setAvatar(URL.createObjectURL(e.target.files[0]));
+  function handlePicChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPicPreview(reader.result as string);
+      setProfilePic(reader.result as string); // For now, store as base64 URL
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const update: { name?: string; profilePic?: string } = {};
+      if (name.trim()) update.name = name.trim();
+      if (profilePic) update.profilePic = profilePic;
+      await updateProfile(update);
+      setSuccess('Profile updated!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSuccess(null), 2000);
     }
-  };
-
-  const handleSave = async () => {
-    // TODO: Implement backend update for email/avatar
-    setEditing(false);
-    setShowSaved(true);
-    setTimeout(() => setShowSaved(false), 2000);
-  };
-
-  const handleCancel = () => {
-    setEditing(false);
-    setEmail(user.email);
-    setAvatar('');
-    setAvatarFile(null);
-  };
-
-  const handleChangePassword = () => {
-    // TODO: Implement change password flow/modal
-    alert('Change password flow coming soon!');
-  };
-
-  const handleLogout = () => {
-    setShowLogoutConfirm(true);
-  };
-
-  const confirmLogout = () => {
-    setShowLogoutConfirm(false);
-    logout();
-  };
-
-  const cancelLogout = () => {
-    setShowLogoutConfirm(false);
-  };
+  }
 
   return (
-    <Container>
-      <Title>Your Profile</Title>
-      <Avatar src={avatar || defaultAvatar} alt="Avatar" />
-      {showSaved && <div style={{ color: '#28a745', marginBottom: 12, fontWeight: 500 }}>Profile saved!</div>}
-      {editing ? (
-        <>
-          <AvatarLabel htmlFor="avatar-upload">Change Avatar</AvatarLabel>
-          <AvatarInput
-            id="avatar-upload"
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleAvatarChange}
-          />
-          <Field>
-            <Input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Email"
-            />
-          </Field>
-          <div>
-            <Button onClick={handleSave}>Save</Button>
-            <Button onClick={handleCancel} style={{ background: '#6c757d' }}>Cancel</Button>
-          </div>
-        </>
+    <Container role="main" aria-label="User profile">
+      {picPreview ? (
+        <AvatarImg src={picPreview} alt="Profile" />
       ) : (
-        <>
-          <Info><strong>Email:</strong> {user.email}</Info>
-          <Info><strong>Email Verified:</strong> {user.isVerified ? 'Yes' : 'No'}</Info>
-          <div>
-            <Button onClick={() => setEditing(true)}>Edit Profile</Button>
-            <Button onClick={handleChangePassword} style={{ background: '#f5f5f7', color: '#007AFF', border: '1.5px solid #007AFF', marginLeft: 0 }}>Change Password</Button>
-            <Button onClick={handleLogout} style={{ background: '#6c757d' }}>Log Out</Button>
-          </div>
-        </>
+        <Avatar aria-label="User avatar">{initials}</Avatar>
       )}
-      {showLogoutConfirm && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 2000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.12)', padding: '2rem 2.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 18 }}>Are you sure you want to log out?</div>
-            <Button onClick={confirmLogout} style={{ background: '#6c757d', marginRight: 12 }}>Log Out</Button>
-            <Button onClick={cancelLogout} style={{ background: '#6c757d' }}>Cancel</Button>
-          </div>
-        </div>
-      )}
+      <form onSubmit={handleSave} style={{ width: '100%' }}>
+        <PicInput type="file" accept="image/*" onChange={handlePicChange} aria-label="Upload profile picture" />
+        <NameInput
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Your name"
+          aria-label="Name"
+          maxLength={64}
+        />
+        {error && <div style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</div>}
+        {success && <div style={{ color: 'green', marginBottom: '0.5rem' }}>{success}</div>}
+        <SaveButton type="submit" disabled={isSaving} aria-label="Save profile">
+          {isSaving ? 'Saving...' : 'Save'}
+        </SaveButton>
+      </form>
+      <Email><strong>Email:</strong> {user.email}</Email>
+      <Status verified={user.isVerified} aria-live="polite">
+        {user.isVerified ? 'Verified' : 'Not Verified'}
+      </Status>
+      <Divider />
+      <InfoRow>
+        <span>Account Created</span>
+        <span>{user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}</span>
+      </InfoRow>
+      <InfoRow>
+        <span>Last Login</span>
+        <span>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '—'}</span>
+      </InfoRow>
+      <Divider />
+      <Actions>
+        <Button onClick={() => {/* TODO: Wire up change password flow */}} aria-label="Change password">Change Password</Button>
+        {!user.isVerified && (
+          <SecondaryButton onClick={() => {/* TODO: Wire up resend verification */}} aria-label="Resend verification email">
+            Resend Verification Email
+          </SecondaryButton>
+        )}
+        <SecondaryButton onClick={logout} aria-label="Log out">Log out</SecondaryButton>
+      </Actions>
     </Container>
   );
 } 

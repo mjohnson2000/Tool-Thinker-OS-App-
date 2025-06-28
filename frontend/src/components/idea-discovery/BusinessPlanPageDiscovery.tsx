@@ -43,7 +43,7 @@ const SectionCard = styled.div`
 const SectionTitle = styled.h2`
   font-size: 1.2rem;
   font-weight: 600;
-  color: #007AFF;
+  color: #181a1b;
   margin-bottom: 0.7rem;
   display: flex;
   align-items: center;
@@ -65,7 +65,7 @@ const Actions = styled.div`
 `;
 
 const ActionButton = styled.button`
-  background: #007AFF;
+  background: #181a1b;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -78,7 +78,7 @@ const ActionButton = styled.button`
   gap: 0.5rem;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
   &.centered {
     display: block;
@@ -121,7 +121,7 @@ const ProgressBarContainer = styled.div`
 
 const ProgressBarFill = styled.div<{ percent: number }>`
   height: 100%;
-  background: linear-gradient(90deg, #007AFF 0%, #4FC3F7 100%);
+  background: linear-gradient(90deg, #181a1b 0%, #444 100%);
   width: ${({ percent }) => percent}%;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
@@ -259,7 +259,7 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
             </SectionCard>
           ))}
           <Actions>
-            <button
+            <ActionButton
               onClick={() => {
                 if (user?.isSubscribed) {
                   navigate('/market-validation', { state: { businessPlan: plan } });
@@ -267,10 +267,9 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
                   navigate('/subscribe', { state: { businessPlan: plan } });
                 }
               }}
-              style={{ background: '#007aff', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
             >
               Continue to Market Validation
-            </button>
+            </ActionButton>
           </Actions>
         </>
       )}

@@ -31,7 +31,7 @@ const StepCircle = styled.div<{ $status: string }>`
   height: 32px;
   border-radius: 50%;
   background: ${({ $status }) =>
-    $status === 'completed' ? '#28a745' : $status === 'current' ? '#007AFF' : '#e9ecef'};
+    $status === 'completed' ? '#28a745' : $status === 'current' ? '#181a1b' : '#e9ecef'};
   color: #fff;
   display: flex;
   align-items: center;
@@ -39,9 +39,9 @@ const StepCircle = styled.div<{ $status: string }>`
   font-weight: 700;
   font-size: 1.1rem;
   box-shadow: ${({ $status }) =>
-    $status === 'current' ? '0 4px 12px rgba(0, 122, 255, 0.18)' : 'none'};
+    $status === 'current' ? '0 4px 12px rgba(24,26,27,0.18)' : 'none'};
   border: 2px solid ${({ $status }) =>
-    $status === 'current' ? '#007AFF' : $status === 'completed' ? '#28a745' : '#e9ecef'};
+    $status === 'current' ? '#181a1b' : $status === 'completed' ? '#28a745' : '#e9ecef'};
   transition: background 0.2s, border 0.2s;
   margin-right: 1rem;
 `;
@@ -57,14 +57,14 @@ const StepLabel = styled.div<{ $status: string }>`
 const Connector = styled.div<{ $active: boolean }>`
   width: 2px;
   height: 32px;
-  background: ${({ $active }) => ($active ? 'linear-gradient(180deg, #007AFF 0%, #28a745 100%)' : '#e9ecef')};
+  background: ${({ $active }) => ($active ? 'linear-gradient(180deg, #181a1b 0%, #444 100%)' : '#e9ecef')};
   margin: 0 15px;
   align-self: center;
   border-radius: 1px;
 `;
 
 const PremiumBadge = styled.span`
-  background: linear-gradient(135deg, #007AFF 0%, #4FC3F7 100%);
+  background: linear-gradient(135deg, #181a1b 0%, #444 100%);
   color: white;
   font-size: 0.7rem;
   font-weight: 600;

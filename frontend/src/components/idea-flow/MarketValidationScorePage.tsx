@@ -1,7 +1,228 @@
 import React from 'react';
+import styled from 'styled-components';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png';
+
+const PageBackground = styled.div`
+  min-height: 100vh;
+  background: #f6f7f9;
+  display: flex;
+  flex-direction: column;
+`;
+
+const TopBar = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 1rem 1.5rem 1rem;
+  background: transparent;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+`;
+
+const Card = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  
+  @media (max-width: 768px) {
+    margin: 0 1rem;
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0 0.5rem;
+    padding: 1.5rem 1rem;
+  }
+`;
+
+const Title = styled.h1`
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.6rem;
+  }
+`;
+
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f1f3;
+  &:last-child { border-bottom: none; }
+`;
+
+const Score = styled.div<{ color: string }>`
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: ${props => props.color};
+  margin-bottom: 1rem;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+  }
+`;
+
+const SectionTitle = styled.strong`
+  font-size: 1.1rem;
+  color: #181a1b;
+  margin-bottom: 0.5rem;
+  display: block;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const SectionList = styled.ul`
+  margin: 0;
+  padding-left: 18px;
+  
+  li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    color: #333;
+    
+    &.risk {
+      color: #dc3545;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding-left: 16px;
+    
+    li {
+      font-size: 0.95rem;
+    }
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+`;
+
+const Button = styled.button`
+  background: linear-gradient(90deg, #181a1b 60%, #000 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+  min-width: 160px;
+  
+  &:hover { 
+    background: #000; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.95rem;
+    min-width: auto;
+    width: 100%;
+  }
+`;
+
+const OutlinedButton = styled(Button)`
+  background: #f6f7f9;
+  color: #181a1b;
+  border: 2px solid #e5e7eb;
+  box-shadow: none;
+  
+  &:hover { 
+    background: #e5e7eb; 
+    color: #000; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+`;
+
+const Avatar = styled.img`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e5e5;
+  cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+  }
+`;
+
+const Initials = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #181a1b22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #181a1b;
+  font-weight: 700;
+  cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+`;
+
+const Logo = styled.img`
+  height: 90px;
+  width: 90px;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  
+  @media (max-width: 768px) {
+    height: 40px;
+    width: 40px;
+    border-radius: 10px;
+  }
+`;
 
 export function MarketValidationScorePage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
   const { user } = useAuth();
@@ -16,45 +237,53 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
     return <Navigate to='/' replace />;
   }
 
+  let scoreColor = '#dc3545';
+  if (result.validationScore >= 80) scoreColor = '#28a745';
+  else if (result.validationScore >= 60) scoreColor = '#28a745';
+
   return (
-    <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 700, margin: '0 auto 2rem auto' }}>
-        <img src={logo} alt="ToolThinker Logo" style={{ height: 60, width: 60, borderRadius: 16, cursor: 'pointer' }} onClick={() => navigate('/')} />
+    <PageBackground>
+      <TopBar>
+        <img src={logo} alt="ToolThinker Logo" style={{ height: 90, width: 90, borderRadius: 50, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onClick={() => navigate('/')} />
         {user && (
           user.profilePic ? (
-            <img src={user.profilePic} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#e5e5e5', cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
+            <Avatar src={user.profilePic} alt="Profile" onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
           ) : user.email ? (
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#007aff22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#007aff', fontWeight: 700, cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
+            <Initials onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
               {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-            </div>
+            </Initials>
           ) : null
         )}
-      </div>
-      <div style={{ maxWidth: 700, margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem', color: '#222' }}>Validation Score</h2>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: result.validationScore >= 80 ? '#28a745' : result.validationScore >= 60 ? '#ffc107' : '#dc3545', marginBottom: 16 }}>
-          {result.validationScore}/100
-        </div>
-        <div style={{ marginBottom: 24 }}>
-          <strong>Recommendations:</strong>
-          <ul>
+      </TopBar>
+      <Card>
+        <Title>Validation Score</Title>
+        <Section>
+          <Score color={scoreColor}>{result.validationScore}/100</Score>
+        </Section>
+        <Section>
+          <SectionTitle>Recommendations:</SectionTitle>
+          <SectionList>
             {result.recommendations?.map((rec: string, i: number) => <li key={i}>{rec}</li>)}
-          </ul>
-        </div>
-        <div style={{ marginBottom: 24 }}>
-          <strong>Risks:</strong>
-          <ul>
-            {result.risks?.map((risk: string, i: number) => <li key={i} style={{ color: '#dc3545' }}>{risk}</li>)}
-          </ul>
-        </div>
-        <div>
-          <strong>Next Steps:</strong>
-          <ul>
+          </SectionList>
+        </Section>
+        <Section>
+          <SectionTitle>Risks:</SectionTitle>
+          <SectionList>
+            {result.risks?.map((risk: string, i: number) => <li key={i} className="risk">{risk}</li>)}
+          </SectionList>
+        </Section>
+        <Section>
+          <SectionTitle>Next Steps:</SectionTitle>
+          <SectionList>
             {result.nextSteps?.map((step: string, i: number) => <li key={i}>{step}</li>)}
-          </ul>
-        </div>
-      </div>
-    </>
+          </SectionList>
+        </Section>
+        <ButtonRow>
+          <OutlinedButton onClick={() => navigate(-1)}>Back to Market Validation</OutlinedButton>
+          <Button onClick={() => navigate('/')}>Continue</Button>
+        </ButtonRow>
+      </Card>
+    </PageBackground>
   );
 }
 

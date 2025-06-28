@@ -17,72 +17,292 @@ interface MarketValidationProps {
   currentStep: string;
 }
 
-const Container = styled.div`
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
+const PageBackground = styled.div`
+  min-height: 100vh;
+  background: #f6f7f9;
+  display: flex;
+  flex-direction: column;
+`;
+
+const TopBar = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 1rem 1.5rem 1rem;
+  background: transparent;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+`;
+
+const Card = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  
+  @media (max-width: 768px) {
+    margin: 0 1rem;
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0 0.5rem;
+    padding: 1.5rem 1rem;
+  }
 `;
 
-const Title = styled.h2`
-  font-size: 2rem;
+const Title = styled.h1`
+  font-size: 2.2rem;
   font-weight: 700;
-  margin-bottom: 1rem;
   color: #222;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.6rem;
+  }
 `;
 
-const Section = styled.div`
+const Subtitle = styled.p`
+  font-size: 1.15rem;
+  color: #444;
   margin-bottom: 1.5rem;
+  text-align: center;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #f0f1f3;
+  &:last-child { border-bottom: none; }
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  display: block;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #181a1b;
+  margin-bottom: 0.2rem;
+  font-size: 1.1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const Helper = styled.span`
+  font-size: 0.95rem;
+  color: #6c757d;
+  margin-bottom: 0.3rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  padding: 0.75rem;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 8px;
+  padding: 1rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
   font-size: 1rem;
-  min-height: 80px;
-  margin-bottom: 1rem;
+  background: #f9fafb;
+  margin-bottom: 0.2rem;
+  transition: border 0.2s;
+  resize: vertical;
+  min-height: 100px;
+  
+  &:focus { 
+    border-color: #181a1b; 
+    outline: none; 
+    box-shadow: 0 0 0 3px rgba(24,26,27,0.1);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.7rem;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 8px;
+  padding: 1rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
   font-size: 1rem;
-  margin-bottom: 1rem;
+  background: #f9fafb;
+  margin-bottom: 0.2rem;
+  transition: border 0.2s;
+  
+  &:focus { 
+    border-color: #181a1b; 
+    outline: none; 
+    box-shadow: 0 0 0 3px rgba(24,26,27,0.1);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
 `;
 
 const Button = styled.button`
-  background: #007aff;
+  background: #181a1b;
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.8rem 2rem;
-  font-size: 1.1rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 1rem;
-  transition: background 0.2s;
-  &:hover {
-    background: #0056b3;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+  width: 100%;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  
+  &:hover { 
+    background: #000; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  &:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.95rem;
   }
 `;
 
 const ResultBox = styled.div`
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 1.5rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e9ecef;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem;
+  }
+`;
+
+const BusinessPlanSummary = styled.div`
+  background: #f5f7fa;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #222;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    padding: 0.8rem;
+  }
+`;
+
+const SectionList = styled.ul`
+  margin: 0;
+  padding-left: 18px;
+  
+  li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    
+    strong {
+      color: #181a1b;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding-left: 16px;
+    
+    li {
+      font-size: 0.95rem;
+    }
+  }
+`;
+
+const LoadingMessage = styled.div`
+  color: #181a1b;
+  margin: 2rem 0;
+  text-align: center;
+  font-weight: 500;
+  font-size: 1.1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin: 1.5rem 0;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  color: #dc3545;
+  margin: 1rem 0;
+  text-align: center;
+  font-size: 0.95rem;
+`;
+
+const Avatar = styled.img`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e5e5;
+  cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+  }
+`;
+
+
+const Initials = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #181a1b22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #181a1b;
+  font-weight: 700;
+  cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
 `;
 
 export function MarketValidation({ businessPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
@@ -144,39 +364,45 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
   }
 
   return (
-    <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 700, margin: '0 auto 2rem auto' }}>
-        <img src={logo} alt="ToolThinker Logo" style={{ height: 60, width: 60, borderRadius: 16, cursor: 'pointer' }} onClick={() => navigate('/')} />
+    <PageBackground>
+      <TopBar>
+        <img src={logo} alt="ToolThinker Logo" style={{ height: 90, width: 90, borderRadius: 50, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onClick={() => navigate('/')} />
         {user && (
           user.profilePic ? (
-            <img src={user.profilePic} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#e5e5e5', cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
+            <Avatar src={user.profilePic} alt="Profile" onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
           ) : user.email ? (
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#007aff22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#007aff', fontWeight: 700, cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
+            <Initials onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
               {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-            </div>
+            </Initials>
           ) : null
         )}
-      </div>
-      <Container>
-        <Title>Market Validation</Title>
+      </TopBar>
+      <Card>
+        <div>
+          <Title>Market Validation</Title>
+          <Subtitle>Validate your business idea with AI-powered insights. Review competitors, estimate your market, and craft customer research questions—all in one place.</Subtitle>
+        </div>
         <Section>
           <Label>Business Plan Summary</Label>
-          <div style={{ background: '#f5f7fa', borderRadius: 8, padding: '1rem', marginBottom: 8 }}>{businessPlan.summary}</div>
+          <Helper>A quick overview of your business idea.</Helper>
+          <BusinessPlanSummary>{businessPlan.summary}</BusinessPlanSummary>
         </Section>
         <Section>
           <Label>Key Sections</Label>
-          <ul>
+          <Helper>Core details from your business plan.</Helper>
+          <SectionList>
             {Object.entries(businessPlan.sections).map(([section, content]) => (
               <li key={section}><strong>{section}:</strong> {content}</li>
             ))}
-          </ul>
+          </SectionList>
         </Section>
         {isGenerating ? (
-          <div style={{ color: '#007aff', margin: '2rem 0' }}>Generating suggestions...</div>
+          <LoadingMessage>Generating suggestions…</LoadingMessage>
         ) : (
           <>
             <Section>
               <Label htmlFor="competitors">Main Competitors</Label>
+              <Helper>Who else is solving this problem?</Helper>
               <TextArea
                 id="competitors"
                 value={competitors}
@@ -186,6 +412,7 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
             </Section>
             <Section>
               <Label htmlFor="marketSize">Market Size Estimate</Label>
+              <Helper>How big is your target market?</Helper>
               <Input
                 id="marketSize"
                 value={marketSize}
@@ -195,21 +422,37 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
             </Section>
             <Section>
               <Label htmlFor="customerResearch">Customer Research Questions</Label>
+              <Helper>What do you need to learn from potential customers?</Helper>
               <TextArea
                 id="customerResearch"
                 value={customerResearch}
                 onChange={e => setCustomerResearch(e.target.value)}
-                placeholder="What do you want to learn from customers?"
+                placeholder="List your research questions (one per line)"
               />
             </Section>
-            {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-            <Button onClick={handleValidate} disabled={isLoading || !competitors || !marketSize || !customerResearch}>
-              {isLoading ? 'Validating...' : 'Validate Market'}
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+            <Button onClick={handleValidate} disabled={isLoading}>
+              {isLoading ? 'Validating…' : 'Validate My Idea'}
             </Button>
           </>
         )}
-      </Container>
-    </>
+        {result && (
+          <ResultBox>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>Validation Results</h3>
+            <div style={{ marginBottom: 8 }}><strong>Score:</strong> {result.validationScore}/100</div>
+            <div style={{ marginBottom: 8 }}><strong>Recommendations:</strong>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>{result.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}</ul>
+            </div>
+            <div style={{ marginBottom: 8 }}><strong>Risks:</strong>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>{result.risks.map((risk: string, i: number) => <li key={i}>{risk}</li>)}</ul>
+            </div>
+            <div><strong>Next Steps:</strong>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>{result.nextSteps.map((step: string, i: number) => <li key={i}>{step}</li>)}</ul>
+            </div>
+          </ResultBox>
+        )}
+      </Card>
+    </PageBackground>
   );
 }
 

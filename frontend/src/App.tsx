@@ -27,6 +27,7 @@ import type { JobOption } from './components/idea-flow/JobSelection';
 import { BusinessPlanPageDiscovery } from './components/idea-discovery/BusinessPlanPageDiscovery';
 import { MarketValidationPage } from './components/idea-flow/MarketValidationPage';
 import { MarketValidationScorePage } from './components/idea-flow/MarketValidationScorePage';
+import { SubscriptionPage } from './components/auth/SubscriptionPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -35,6 +36,7 @@ const AppContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 2.5rem 1.5rem 2.5rem 1.5rem;
 `;
 
 const NavBar = styled.div`
@@ -459,20 +461,24 @@ function AppContent() {
 
   return (
     <Router>
+      {/* Always render the Profile modal/page when currentStep === 'profile' */}
+      {currentStep === 'profile' && (
+        <Profile 
+          setAppState={setAppState} 
+          isTrackerVisible={appState.isTrackerVisible}
+          onClose={() => setAppState(prev => ({ ...prev, currentStep: prev.stepBeforeAuth || 'landing' }))}
+        />
+      )}
       <Routes>
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/market-validation" element={<MarketValidationPage />} />
-        <Route path="/validation-score" element={<MarketValidationScorePage />} />
+        <Route path="/market-validation" element={<MarketValidationPage setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/validation-score" element={<MarketValidationScorePage setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
               setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
             }} />
-            {currentStep !== 'landing' && currentStep !== 'signup' && currentStep !== 'login' && currentStep !== 'businessPlan' && currentStep !== 'profile' && (
-              <NavBar>
-                <NavButton onClick={handleBack} aria-label="Back">← Back</NavButton>
-              </NavBar>
-            )}
             <TopBar>
               {!isAuthenticated ? (
                 <>
@@ -632,13 +638,6 @@ function AppContent() {
                   />
                 )}
               </>
-            )}
-            {currentStep === 'profile' && <Profile setAppState={setAppState} isTrackerVisible={appState.isTrackerVisible} />}
-            {(!currentStep || typeof currentStep !== 'string') && (
-              <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                Fallback: Unknown or invalid app state.<br />
-                {JSON.stringify(appState)}
-              </div>
             )}
           </AppContainer>
         } />

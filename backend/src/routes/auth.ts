@@ -107,6 +107,7 @@ router.post('/login', async (req, res, next) => {
           name: user.name,
           profilePic: user.profilePic,
           isVerified: user.isVerified,
+          isSubscribed: user.isSubscribed,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -193,6 +194,7 @@ router.get('/validate', async (req: Request, res: Response, next: NextFunction) 
           name: user.name,
           profilePic: user.profilePic,
           isVerified: user.isVerified,
+          isSubscribed: user.isSubscribed,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -234,6 +236,7 @@ router.patch('/profile', requireAuth, async (req: Request & { userId?: string },
           name: user.name,
           profilePic: user.profilePic,
           isVerified: user.isVerified,
+          isSubscribed: user.isSubscribed,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }

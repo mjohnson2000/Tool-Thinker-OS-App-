@@ -24,6 +24,7 @@ interface AuthContextType {
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   updateProfile: (data: { name?: string; profilePic?: string }) => Promise<void>;
   mockUpgradeToPremium: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 interface ApiResponse {
@@ -173,7 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         requestPasswordReset,
         resetPassword,
         updateProfile,
-        mockUpgradeToPremium
+        mockUpgradeToPremium,
+        refreshUser: validateToken
       }}
     >
       {children}

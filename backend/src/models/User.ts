@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   isVerified: boolean;
+  isSubscribed: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -32,6 +33,10 @@ const userSchema = new Schema<IUser>({
     minlength: 8
   },
   isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isSubscribed: {
     type: Boolean,
     default: false
   },

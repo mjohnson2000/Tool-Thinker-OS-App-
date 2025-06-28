@@ -259,23 +259,18 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
             </SectionCard>
           ))}
           <Actions>
-            {user?.isSubscribed ? (
-              <button onClick={() => navigate('/market-validation', { state: { businessPlan: plan } })} style={{ background: '#007aff', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}>
-                Continue to Market Validation
-              </button>
-            ) : (
-              <div style={{ marginTop: 24 }}>
-                <span style={{ color: 'orange', fontWeight: 500 }}>
-                  Subscribe to unlock Market Validation.
-                </span>
-                <button
-                  onClick={mockUpgradeToPremium}
-                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer', marginTop: 16 }}
-                >
-                  Subscribe Now (Dev Only)
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => {
+                if (user?.isSubscribed) {
+                  navigate('/market-validation', { state: { businessPlan: plan } });
+                } else {
+                  navigate('/subscribe', { state: { businessPlan: plan } });
+                }
+              }}
+              style={{ background: '#007aff', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}
+            >
+              Continue to Market Validation
+            </button>
           </Actions>
         </>
       )}

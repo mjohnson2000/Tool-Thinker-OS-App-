@@ -3,7 +3,7 @@ import { useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import MarketValidation from './MarketValidation';
 
-export function MarketValidationPage() {
+export function MarketValidationPage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
   const { user } = useAuth();
   const location = useLocation();
   const businessPlan = location.state?.businessPlan;
@@ -14,7 +14,7 @@ export function MarketValidationPage() {
   if (!businessPlan) {
     return <Navigate to='/' replace />;
   }
-  return <MarketValidation businessPlan={businessPlan} />;
+  return <MarketValidation businessPlan={businessPlan} setAppState={setAppState} currentStep={currentStep} />;
 }
 
 export default MarketValidationPage; 

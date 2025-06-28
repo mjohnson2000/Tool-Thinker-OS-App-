@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 
 const Container = styled.div`
   max-width: 420px;
   margin: 2rem auto;
   padding: 2.5rem 2rem;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 `;
 
 const Avatar = styled.div`
@@ -135,16 +137,44 @@ const HiddenPicInput = styled.input`
 
 const EditPicButton = styled.button`
   background: none;
-  color: #000;
+  color: #007aff;
   border: none;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  margin-bottom: 1rem;
+  margin-bottom: 0.7rem;
+  text-decoration: underline;
+  &:hover, &:focus {
+    color: #0056b3;
+    text-decoration: none;
+  }
+`;
+
+const EditLink = styled.button`
+  background: none;
+  color: #111;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0.7rem;
   text-decoration: underline;
   &:hover, &:focus {
     color: #222;
     text-decoration: none;
+  }
+`;
+
+const ClearGreyButton = styled(Button)`
+  background: #fff;
+  color: #666;
+  border: 2px solid #ccc;
+  font-weight: 600;
+  box-shadow: none;
+  &:hover, &:focus {
+    background: #f7f7f7;
+    color: #222;
+    border-color: #888;
   }
 `;
 
@@ -207,6 +237,21 @@ const CloseButton = styled.button`
   }
 `;
 
+const PremiumBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, #ffe066 0%, #ffd700 100%);
+  color: #7c5c00;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 999px;
+  padding: 0.3rem 1rem 0.3rem 0.8rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.12);
+  border: 1.5px solid #ffe066;
+`;
+
 interface ProfileProps {
   setAppState: (fn: (prev: any) => any) => void;
   isTrackerVisible: boolean;
@@ -224,6 +269,8 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
   const [success, setSuccess] = useState<string | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   // Track changes to name and profile picture
   useEffect(() => {
@@ -277,7 +324,31 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
     setAppState(prev => ({ ...prev, currentStep: prev.stepBeforeAuth || 'landing' }));
   }
 
-  return (
+  async function handleSubscribe() {
+    if (!user || !user.email) {
+      setSubscribeError('User email not found.');
+      return;
+    }
+    setIsSubscribing(true);
+    setSubscribeError(null);
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || 'Failed to create checkout session');
+      window.location.href = data.url;
+    } catch (err: any) {
+      setSubscribeError(err.message || 'Failed to start subscription');
+    } finally {
+      setIsSubscribing(false);
+    }
+  }
+
+  // Modal content to be portaled
+  const modalContent = (
     <>
       <BlurOverlay />
       <CardWrapper>
@@ -288,8 +359,37 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
           ) : (
             <Avatar aria-label="User avatar">{initials}</Avatar>
           )}
+          {/* Edit link just below avatar */}
+          <EditLink type="button" onClick={() => document.getElementById('profile-pic-upload')?.click()}>
+            Edit
+          </EditLink>
+          {/* Premium badge for subscribed users */}
+          {user && user.isSubscribed && (
+            <>
+              <PremiumBadge title="Premium Subscriber">
+                <span role="img" aria-label="Crown">👑</span> Premium Subscriber
+              </PremiumBadge>
+              <ClearGreyButton
+                type="button"
+                style={{ width: '100%', marginBottom: '1rem' }}
+                onClick={() => navigate('/subscribe')}
+                aria-label="Manage subscription"
+              >
+                Manage Subscription
+              </ClearGreyButton>
+            </>
+          )}
+          {/* Subscribe button for non-subscribed users */}
+          {user && !user.isSubscribed && (
+            <div style={{ marginBottom: '1rem', width: '100%' }}>
+              <Button type="button" onClick={handleSubscribe} disabled={isSubscribing} style={{ width: '100%' }}>
+                {isSubscribing ? 'Redirecting to Stripe...' : 'Subscribe to Premium'}
+              </Button>
+              {subscribeError && <div style={{ color: 'red', marginTop: '0.5rem' }}>{subscribeError}</div>}
+            </div>
+          )}
           <form onSubmit={handleSave} style={{ width: '100%' }}>
-            <label htmlFor="profile-pic-upload">
+            <label htmlFor="profile-pic-upload" style={{ display: 'none' }}>
               <EditPicButton type="button" onClick={() => document.getElementById('profile-pic-upload')?.click()}>
                 Edit
               </EditPicButton>
@@ -358,4 +458,7 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
       </CardWrapper>
     </>
   );
+
+  // Use portal to render modal at the root of the DOM
+  return createPortal(modalContent, document.body);
 } 

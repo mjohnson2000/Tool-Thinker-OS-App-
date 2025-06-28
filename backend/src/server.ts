@@ -10,11 +10,16 @@ import { errorHandler } from './middleware/errorHandler';
 import { connectDB } from './config/database';
 import { chatgptRouter } from './routes/chatgpt';
 import { businessPlanRouter } from './routes/businessPlan';
+const stripeRouter = require('./routes/stripe');
+const stripeWebhookRouter = require('./routes/stripeWebhook');
 
 // Load environment variables
 config();
 
 const app = express();
+
+// Register Stripe webhook route BEFORE any body parsing middleware
+app.use('/api/stripe', stripeWebhookRouter);
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -29,6 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/auth', authRouter);
 app.use('/api/chatgpt', chatgptRouter);
 app.use('/api/business-plan', businessPlanRouter);
+app.use('/api/stripe', stripeRouter);
 
 // Error handling
 app.use(errorHandler);

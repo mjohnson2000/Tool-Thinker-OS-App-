@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
 import { useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo.png';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface BusinessPlan {
   summary: string;
@@ -11,6 +13,8 @@ interface BusinessPlan {
 interface MarketValidationProps {
   businessPlan: BusinessPlan;
   onComplete?: (result: any) => void;
+  setAppState: React.Dispatch<React.SetStateAction<any>>;
+  currentStep: string;
 }
 
 const Container = styled.div`
@@ -81,7 +85,8 @@ const ResultBox = styled.div`
   margin-top: 2rem;
 `;
 
-export function MarketValidation({ businessPlan, onComplete }: MarketValidationProps) {
+export function MarketValidation({ businessPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
+  const { user } = useAuth();
   const [competitors, setCompetitors] = useState('');
   const [marketSize, setMarketSize] = useState('');
   const [customerResearch, setCustomerResearch] = useState('');
@@ -139,58 +144,72 @@ export function MarketValidation({ businessPlan, onComplete }: MarketValidationP
   }
 
   return (
-    <Container>
-      <Title>Market Validation</Title>
-      <Section>
-        <Label>Business Plan Summary</Label>
-        <div style={{ background: '#f5f7fa', borderRadius: 8, padding: '1rem', marginBottom: 8 }}>{businessPlan.summary}</div>
-      </Section>
-      <Section>
-        <Label>Key Sections</Label>
-        <ul>
-          {Object.entries(businessPlan.sections).map(([section, content]) => (
-            <li key={section}><strong>{section}:</strong> {content}</li>
-          ))}
-        </ul>
-      </Section>
-      {isGenerating ? (
-        <div style={{ color: '#007aff', margin: '2rem 0' }}>Generating suggestions...</div>
-      ) : (
-        <>
-          <Section>
-            <Label htmlFor="competitors">Main Competitors</Label>
-            <TextArea
-              id="competitors"
-              value={competitors}
-              onChange={e => setCompetitors(e.target.value)}
-              placeholder="List your main competitors (one per line)"
-            />
-          </Section>
-          <Section>
-            <Label htmlFor="marketSize">Market Size Estimate</Label>
-            <Input
-              id="marketSize"
-              value={marketSize}
-              onChange={e => setMarketSize(e.target.value)}
-              placeholder="e.g., $1B, 10,000 customers, etc."
-            />
-          </Section>
-          <Section>
-            <Label htmlFor="customerResearch">Customer Research Questions</Label>
-            <TextArea
-              id="customerResearch"
-              value={customerResearch}
-              onChange={e => setCustomerResearch(e.target.value)}
-              placeholder="What do you want to learn from customers?"
-            />
-          </Section>
-          {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-          <Button onClick={handleValidate} disabled={isLoading || !competitors || !marketSize || !customerResearch}>
-            {isLoading ? 'Validating...' : 'Validate Market'}
-          </Button>
-        </>
-      )}
-    </Container>
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 700, margin: '0 auto 2rem auto' }}>
+        <img src={logo} alt="ToolThinker Logo" style={{ height: 60, width: 60, borderRadius: 16, cursor: 'pointer' }} onClick={() => navigate('/')} />
+        {user && (
+          user.profilePic ? (
+            <img src={user.profilePic} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#e5e5e5', cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
+          ) : user.email ? (
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#007aff22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#007aff', fontWeight: 700, cursor: 'pointer' }} onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
+              {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
+            </div>
+          ) : null
+        )}
+      </div>
+      <Container>
+        <Title>Market Validation</Title>
+        <Section>
+          <Label>Business Plan Summary</Label>
+          <div style={{ background: '#f5f7fa', borderRadius: 8, padding: '1rem', marginBottom: 8 }}>{businessPlan.summary}</div>
+        </Section>
+        <Section>
+          <Label>Key Sections</Label>
+          <ul>
+            {Object.entries(businessPlan.sections).map(([section, content]) => (
+              <li key={section}><strong>{section}:</strong> {content}</li>
+            ))}
+          </ul>
+        </Section>
+        {isGenerating ? (
+          <div style={{ color: '#007aff', margin: '2rem 0' }}>Generating suggestions...</div>
+        ) : (
+          <>
+            <Section>
+              <Label htmlFor="competitors">Main Competitors</Label>
+              <TextArea
+                id="competitors"
+                value={competitors}
+                onChange={e => setCompetitors(e.target.value)}
+                placeholder="List your main competitors (one per line)"
+              />
+            </Section>
+            <Section>
+              <Label htmlFor="marketSize">Market Size Estimate</Label>
+              <Input
+                id="marketSize"
+                value={marketSize}
+                onChange={e => setMarketSize(e.target.value)}
+                placeholder="e.g., $1B, 10,000 customers, etc."
+              />
+            </Section>
+            <Section>
+              <Label htmlFor="customerResearch">Customer Research Questions</Label>
+              <TextArea
+                id="customerResearch"
+                value={customerResearch}
+                onChange={e => setCustomerResearch(e.target.value)}
+                placeholder="What do you want to learn from customers?"
+              />
+            </Section>
+            {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
+            <Button onClick={handleValidate} disabled={isLoading || !competitors || !marketSize || !customerResearch}>
+              {isLoading ? 'Validating...' : 'Validate Market'}
+            </Button>
+          </>
+        )}
+      </Container>
+    </>
   );
 }
 

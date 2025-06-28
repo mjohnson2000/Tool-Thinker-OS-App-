@@ -6,11 +6,13 @@ import { AuthProvider } from './contexts/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-createRoot(document.getElementById('root')!).render(
+const rootDiv = document.getElementById('root');
+
+createRoot(rootDiv!).render(
   <StrictMode>
     <AuthProvider>
       <App />
     </AuthProvider>
-  </StrictMode>,
+  </StrictMode>
 )
 

@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface User {
   email: string;
-  isVerified: boolean;
+  isSubscribed: boolean;
   createdAt?: string;
   lastLogin?: string;
   name?: string;
@@ -23,6 +23,7 @@ interface AuthContextType {
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   updateProfile: (data: { name?: string; profilePic?: string }) => Promise<void>;
+  mockUpgradeToPremium: () => void;
 }
 
 interface ApiResponse {
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await axios.get(`${API_URL}/auth/verify/${token}`);
       if (user) {
-        setUser({ ...user, isVerified: true });
+        setUser({ ...user, isSubscribed: true });
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to verify email');
@@ -155,6 +156,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const mockUpgradeToPremium = () => {
+    if (user) setUser({ ...user, isSubscribed: true });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -167,7 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verifyEmail,
         requestPasswordReset,
         resetPassword,
-        updateProfile
+        updateProfile,
+        mockUpgradeToPremium
       }}
     >
       {children}

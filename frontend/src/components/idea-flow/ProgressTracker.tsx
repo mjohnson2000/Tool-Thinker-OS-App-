@@ -2,55 +2,93 @@ import React from 'react';
 import styled from 'styled-components';
 
 const TrackerContainer = styled.div`
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 2rem 0 2rem 0.5rem;
+  min-width: 210px;
+  margin-left: 1rem;
 `;
 
-const StepItem = styled.div<{ $status: string; $isClickable: boolean }>`
+const StepItem = styled.button<{ $status: string; $isClickable: boolean }>`
+  background: none;
+  border: none;
+  outline: none;
   display: flex;
   align-items: center;
+  cursor: ${({ $isClickable }) => ($isClickable ? 'pointer' : 'default')};
   margin-bottom: 1.5rem;
-  opacity: ${props => (props.$status === 'upcoming' ? 0.6 : 1)};
-  transition: all 0.3s ease;
-  cursor: ${props => (props.$isClickable ? 'pointer' : 'default')};
-
-  &:hover {
-    background-color: ${props => (props.$isClickable ? '#f8f9fa' : 'transparent')};
+  padding: 0;
+  width: 100%;
+  &:hover .circle {
+    box-shadow: ${({ $isClickable }) =>
+      $isClickable ? '0 4px 12px rgba(0, 122, 255, 0.25)' : 'none'};
   }
 `;
 
-const StepIcon = styled.div<{ $status: string }>`
+const StepCircle = styled.div<{ $status: string }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${props => {
-    if (props.$status === 'completed') return '#28a745';
-    if (props.$status === 'current') return '#007AFF';
-    return '#e9ecef';
-  }};
-  color: white;
+  background: ${({ $status }) =>
+    $status === 'completed' ? '#28a745' : $status === 'current' ? '#007AFF' : '#e9ecef'};
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: ${({ $status }) =>
+    $status === 'current' ? '0 4px 12px rgba(0, 122, 255, 0.18)' : 'none'};
+  border: 2px solid ${({ $status }) =>
+    $status === 'current' ? '#007AFF' : $status === 'completed' ? '#28a745' : '#e9ecef'};
+  transition: background 0.2s, border 0.2s;
   margin-right: 1rem;
-  font-weight: bold;
-  flex-shrink: 0;
-  transform: ${props => (props.$status === 'current' ? 'scale(1.1)' : 'scale(1)')};
-  box-shadow: ${props => (props.$status === 'current' ? '0 4px 12px rgba(0, 122, 255, 0.3)' : 'none')};
 `;
 
 const StepLabel = styled.div<{ $status: string }>`
   font-size: 1rem;
-  font-weight: ${props => (props.$status === 'current' ? '600' : '500')};
-  color: ${props => (props.$status === 'current' ? '#222' : '#6c757d')};
+  font-weight: ${({ $status }) => ($status === 'current' ? '600' : '500')};
+  color: ${({ $status }) => ($status === 'current' ? '#222' : '#6c757d')};
+  display: flex;
+  align-items: center;
+`;
+
+const Connector = styled.div<{ $active: boolean }>`
+  width: 2px;
+  height: 32px;
+  background: ${({ $active }) => ($active ? 'linear-gradient(180deg, #007AFF 0%, #28a745 100%)' : '#e9ecef')};
+  margin: 0 15px;
+  align-self: center;
+  border-radius: 1px;
+`;
+
+const PremiumBadge = styled.span`
+  background: linear-gradient(135deg, #007AFF 0%, #4FC3F7 100%);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 0.3rem;
+`;
+
+const LockIcon = styled.span`
+  color: #ffc107;
+  font-size: 0.9rem;
+  margin-left: 0.3rem;
 `;
 
 interface ProgressTrackerProps {
-  steps: { key: string; label: string }[];
+  steps: { key: string; label: string; isPremium?: boolean }[];
   currentStepKey: string;
   onStepClick: (stepKey: string) => void;
+  isSubscribed?: boolean;
 }
 
-export function ProgressTracker({ steps, currentStepKey, onStepClick }: ProgressTrackerProps) {
+export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscribed = false }: ProgressTrackerProps) {
   const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
 
   const getStatus = (stepIndex: number) => {
@@ -60,23 +98,40 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick }: Progress
     return 'upcoming';
   };
 
+  const canAccessStep = (step: { key: string; isPremium?: boolean }) => {
+    if (!step.isPremium) return true;
+    return isSubscribed;
+  };
+
   return (
     <TrackerContainer>
       {steps.map((step, index) => {
         const status = getStatus(index);
-        const isClickable = status === 'completed';
+        const isClickable = status === 'completed' && canAccessStep(step);
+        const isPremium = step.isPremium && !isSubscribed;
         return (
-          <StepItem 
-            key={step.key} 
-            $status={status}
-            $isClickable={isClickable}
-            onClick={() => isClickable && onStepClick(step.key)}
-          >
-            <StepIcon $status={status}>
-              {status === 'completed' ? '✓' : index + 1}
-            </StepIcon>
-            <StepLabel $status={status}>{step.label}</StepLabel>
-          </StepItem>
+          <React.Fragment key={step.key}>
+            <StepItem
+              $status={status}
+              $isClickable={isClickable}
+              onClick={() => isClickable && onStepClick(step.key)}
+              aria-current={status === 'current' ? 'step' : undefined}
+              tabIndex={isClickable ? 0 : -1}
+            >
+              <StepCircle className="circle" $status={status}>
+                {status === 'completed' ? '✓' : index + 1}
+              </StepCircle>
+              <StepLabel $status={status}>
+                {step.label}
+                {step.isPremium && <PremiumBadge>Premium</PremiumBadge>}
+                {isPremium && <LockIcon>🔒</LockIcon>}
+              </StepLabel>
+            </StepItem>
+            {/* Remove the vertical connector lines */}
+            {/* {index < steps.length - 1 && (
+              <Connector $active={getStatus(index + 1) !== 'upcoming'} />
+            )} */}
+          </React.Fragment>
         );
       })}
     </TrackerContainer>

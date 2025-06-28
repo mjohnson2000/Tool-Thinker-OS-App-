@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { FiCopy } from 'react-icons/fi';
+import Confetti from 'react-confetti';
+import { useAuth } from '../../contexts/AuthContext';
+import MarketValidation from '../idea-flow/MarketValidation';
+import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
   background: #fff;
@@ -122,6 +126,36 @@ const ProgressBarFill = styled.div<{ percent: number }>`
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
+const CongratsWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+`;
+
+const Congrats = styled.div`
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #28a745;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  animation: pulsePop 1s cubic-bezier(0.23, 1, 0.32, 1) 0s 3;
+  @keyframes pulsePop {
+    0% { opacity: 0; transform: scale(0.7); }
+    20% { opacity: 1; transform: scale(1.1); }
+    50% { opacity: 1; transform: scale(1); }
+    70% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+`;
+
+const CenteredText = styled.p`
+  text-align: center;
+  width: 100%;
+  margin-top: 1rem;
+`;
+
 interface BusinessPlanPageDiscoveryProps {
   idea: any;
   customer: any;
@@ -129,6 +163,7 @@ interface BusinessPlanPageDiscoveryProps {
   onSignup: () => void;
   onLogin: () => void;
   isAuthenticated: boolean;
+  onContinueToValidation?: () => void;
 }
 
 interface BusinessPlan {
@@ -138,20 +173,16 @@ interface BusinessPlan {
 
 export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps) {
   const { idea, customer, job, ...rest } = props;
-  console.log('BusinessPlanPageDiscovery received props:', { idea, customer, job, ...rest });
-  if (!idea || !customer || !job) {
-    return <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-      Missing required data for business plan.<br />
-      idea: {JSON.stringify(idea)}<br />
-      customer: {JSON.stringify(customer)}<br />
-      job: {JSON.stringify(job)}
-    </div>;
-  }
+  const { user, mockUpgradeToPremium } = useAuth();
   const [plan, setPlan] = useState<BusinessPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showMarketValidation, setShowMarketValidation] = useState(false);
+  const prevPlanRef = useRef<BusinessPlan | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let progressInterval: ReturnType<typeof setInterval> | null = null;
@@ -188,19 +219,13 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
     };
   }, [idea, customer, job]);
 
-  function handleCopy() {
-    if (!plan) return;
-    let text = `Summary:\n${plan.summary}\n\n` +
-      displayedSections
-        .map(([section, content]) => `${section}:\n${content}\n`)
-        .join('\n');
-    if (!props.isAuthenticated) {
-      text += '\n\n[Sign up or log in to view the complete business plan]';
+  useEffect(() => {
+    if (plan && plan !== prevPlanRef.current) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 12500);
+      prevPlanRef.current = plan;
     }
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
+  }, [plan]);
 
   let displayedSections: [string, string][] = [];
   if (plan) {
@@ -216,12 +241,16 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
           <ProgressBarContainer>
             <ProgressBarFill percent={progress} />
           </ProgressBarContainer>
-          <p>Generating your business plan...</p>
+          <CenteredText>Generating your business plan...</CenteredText>
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {plan && (
+      {plan && !isLoading && (
         <>
+          <CongratsWrapper>
+            {showConfetti && <Confetti numberOfPieces={180} recycle={false} style={{ pointerEvents: 'none' }} />}
+            <Congrats>Congratulations!</Congrats>
+          </CongratsWrapper>
           <Summary>{plan.summary}</Summary>
           {displayedSections.map(([section, content]) => (
             <SectionCard key={section}>
@@ -229,21 +258,23 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
               <SectionContent>{content}</SectionContent>
             </SectionCard>
           ))}
-          {!props.isAuthenticated && (
-            <SignupPrompt>
-              <SignupTitle>Unlock Your Complete Business Plan</SignupTitle>
-              <SignupText>You're viewing a preview of your business plan. Sign up or log in to access the full plan with all sections and actionable insights.</SignupText>
-              <ActionButton className="centered" onClick={props.onSignup}>Sign Up to Continue</ActionButton>
-              <p style={{marginTop: '1rem', fontSize: '0.9rem'}}>
-                Already have an account? <a href="#" onClick={e => { e.preventDefault(); props.onLogin(); }}>Log In</a>
-              </p>
-            </SignupPrompt>
-          )}
           <Actions>
-            {props.isAuthenticated && (
-              <ActionButton onClick={handleCopy} aria-label="Copy business plan">
-                <FiCopy /> {copied ? 'Copied!' : 'Copy Plan'}
-              </ActionButton>
+            {user?.isSubscribed ? (
+              <button onClick={() => navigate('/market-validation', { state: { businessPlan: plan } })} style={{ background: '#007aff', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer' }}>
+                Continue to Market Validation
+              </button>
+            ) : (
+              <div style={{ marginTop: 24 }}>
+                <span style={{ color: 'orange', fontWeight: 500 }}>
+                  Subscribe to unlock Market Validation.
+                </span>
+                <button
+                  onClick={mockUpgradeToPremium}
+                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 500, cursor: 'pointer', marginTop: 16 }}
+                >
+                  Subscribe Now (Dev Only)
+                </button>
+              </div>
             )}
           </Actions>
         </>

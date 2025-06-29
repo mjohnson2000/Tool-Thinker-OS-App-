@@ -31,6 +31,8 @@ import { NextStepsHub } from './components/idea-flow/NextStepsHub';
 import { SubscriptionPage } from './components/auth/SubscriptionPage';
 import { CoachMarketplace } from './components/learning/CoachMarketplace';
 import { CourseLibrary } from './components/learning/CourseLibrary';
+import BusinessPlanDashboard from './components/business-plan/BusinessPlanDashboard';
+import BusinessPlanEditPage from './components/business-plan/BusinessPlanEditPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -85,8 +87,14 @@ const TopBar = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 2.7rem 2rem 0 0;
+  padding: 1.1rem 2.7rem 0 0;
   z-index: 1000;
+`;
+
+const TopBarRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
 `;
 
 const AvatarButton = styled.button`
@@ -94,6 +102,7 @@ const AvatarButton = styled.button`
   border: none;
   padding: 0;
   margin-left: 1rem;
+  margin-top: 0rem;
   cursor: pointer;
   border-radius: 50%;
   width: 44px;
@@ -108,11 +117,12 @@ const AvatarButton = styled.button`
 `;
 
 const AvatarImg = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   background: #e5e5e5;
+  margin-top: 0.3rem;
 `;
 
 const LoginButton = styled.button`
@@ -184,11 +194,31 @@ const TopBarAvatar = styled.div`
 `;
 
 const TopBarAvatarImg = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
   background: #e5e5e5;
+  margin-top: 1.3rem;
+`;
+
+const PlanBadge = styled.div`
+  margin-top: -0.2rem;
+  background: #f3f4f6;
+  color: #181a1b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid #181a1b;
+  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.01em;
+  user-select: none;
 `;
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
@@ -261,7 +291,7 @@ interface AppState {
   stepBeforeAuth: Step | null;
 }
 
-const initialAppState: AppState = {
+export const initialAppState: AppState = {
   currentStep: 'landing',
   entryPoint: 'idea',
   idea: {
@@ -287,6 +317,7 @@ function ResetPasswordRoute() {
 
 function AppContent() {
   const { isLoading, isAuthenticated, signup, login, user, requestPasswordReset, mockUpgradeToPremium } = useAuth();
+  console.log('USER OBJECT:', user); // Debug log for user object
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -482,6 +513,8 @@ function AppContent() {
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={<CoachMarketplace />} />
         <Route path="/courses" element={<CourseLibrary />} />
+        <Route path="/plans" element={<BusinessPlanDashboard setAppState={setAppState} />} />
+        <Route path="/business-plan/:id/edit" element={<BusinessPlanEditPage setAppState={setAppState} />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
@@ -498,24 +531,43 @@ function AppContent() {
                   </SignupFreeButton>
                 </>
               ) : (
-                <AvatarButton onClick={() => {
-                  setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
-                }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                  {user && user.profilePic ? (
-                    <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-                  ) : user && user.email ? (
-                    <TopBarAvatar>
-                      {user.email
-                        .split('@')[0]
-                        .split(/[._-]/)
-                        .map(part => part[0]?.toUpperCase())
-                        .join('')
-                        .slice(0, 2) || 'U'}
-                    </TopBarAvatar>
-                  ) : (
-                    <AvatarImg src={defaultAvatar} alt="Avatar" />
-                  )}
-                </AvatarButton>
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Plans
+                  </NavButton>
+                  <AvatarButton onClick={() => {
+                    setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
+                  }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                      {user?.subscriptionTier && (
+                        <PlanBadge>
+                          {user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1)}
+                        </PlanBadge>
+                      )}
+                    </div>
+                  </AvatarButton>
+                </TopBarRight>
               )}
             </TopBar>
             {isFlowStep ? (
@@ -654,12 +706,4 @@ function AppContent() {
   );
 }
 
-export function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-export default App;
+export default AppContent;

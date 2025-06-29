@@ -65,7 +65,9 @@ router.post('/signup', async (req, res, next) => {
         token,
         user: {
           email: user.email,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          isSubscribed: user.isSubscribed,
+          subscriptionTier: user.subscriptionTier,
         }
       }
     });
@@ -108,6 +110,7 @@ router.post('/login', async (req, res, next) => {
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
+          subscriptionTier: user.subscriptionTier,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -195,6 +198,7 @@ router.get('/validate', async (req: Request, res: Response, next: NextFunction) 
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
+          subscriptionTier: user.subscriptionTier,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -237,6 +241,7 @@ router.patch('/profile', requireAuth, async (req: Request & { userId?: string },
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
+          subscriptionTier: user.subscriptionTier,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }

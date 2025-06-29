@@ -171,6 +171,8 @@ interface BusinessPlan {
   sections: { [key: string]: string };
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps) {
   const { idea, customer, job, ...rest } = props;
   const { user, mockUpgradeToPremium } = useAuth();
@@ -204,6 +206,39 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
         const data = await res.json();
         setPlan(data);
         setProgress(100);
+
+        // Save plan to backend if authenticated
+        if (user && user.email) {
+          try {
+            await fetch(`${API_URL}/business-plan`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              },
+              body: JSON.stringify({
+                title: 'Untitled Business Plan',
+                summary: data.summary,
+                sections: data.sections,
+                idea,
+                customer,
+                job,
+                problem: {
+                  description: data.sections?.Problem || 'Problem description not provided.',
+                  impact: '',
+                  urgency: 'medium'
+                },
+                solution: {
+                  description: data.sections?.Product || 'Solution description not provided.',
+                  keyFeatures: [],
+                  uniqueValue: ''
+                }
+              })
+            });
+          } catch (saveErr) {
+            // Optionally handle save error
+          }
+        }
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setProgress(100);
@@ -259,16 +294,8 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
             </SectionCard>
           ))}
           <Actions>
-            <ActionButton
-              onClick={() => {
-                if (user?.isSubscribed) {
-                  navigate('/market-validation', { state: { businessPlan: plan } });
-                } else {
-                  navigate('/subscribe', { state: { businessPlan: plan } });
-                }
-              }}
-            >
-              Continue to Market Validation
+            <ActionButton className="centered" onClick={() => navigate('/plans')}>
+              Manage Business Plan
             </ActionButton>
           </Actions>
         </>

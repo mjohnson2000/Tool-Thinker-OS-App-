@@ -15,6 +15,14 @@ import coursesRouter from './routes/courses';
 const stripeRouter = require('./routes/stripe');
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 
+// Import models to ensure they're registered
+import './models/User';
+import './models/BusinessPlan';
+import './models/Coach';
+import './models/Course';
+import './models/Booking';
+import './models/UserProgress';
+
 // Load environment variables
 config();
 

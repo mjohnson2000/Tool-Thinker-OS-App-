@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface BusinessPlan {
   summary: string;
   sections: { [key: string]: string };
+  _id: string;
 }
 
 interface MarketValidationProps {
@@ -305,6 +306,25 @@ const Initials = styled.div`
   }
 `;
 
+const MyPlansButton = styled.button`
+  background: #fff;
+  color: #181a1b;
+  border: 1.5px solid #181a1b;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  &:hover {
+    background: #181a1b;
+    color: #fff;
+    border-color: #181a1b;
+  }
+`;
+
 export function MarketValidation({ businessPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
   const { user } = useAuth();
   const [competitors, setCompetitors] = useState('');
@@ -336,10 +356,11 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
     generateSuggestions();
   }, [businessPlan]);
 
-  function handleValidate() {
+  async function handleValidate() {
     setIsLoading(true);
     setError(null);
-    setTimeout(() => {
+    try {
+      // Simulate validation result (replace with real logic as needed)
       const mockResult = {
         validationScore: 75,
         recommendations: [
@@ -357,25 +378,46 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
         ]
       };
       setResult(mockResult);
+      // Save validation score to backend
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      await fetch(`${API_URL}/business-plan/${businessPlan._id}/validation-score`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ score: mockResult.validationScore })
+      });
       setIsLoading(false);
       if (onComplete) onComplete(mockResult);
-      navigate('/validation-score', { state: { result: mockResult } });
-    }, 1200);
+      navigate('/validation-score', { state: { result: mockResult, businessPlanId: businessPlan._id } });
+    } catch (err) {
+      setError('Failed to validate and save score.');
+      setIsLoading(false);
+    }
   }
 
   return (
     <PageBackground>
       <TopBar>
-        <img src={logo} alt="ToolThinker Logo" style={{ height: 90, width: 90, borderRadius: 50, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onClick={() => navigate('/')} />
-        {user && (
-          user.profilePic ? (
-            <Avatar src={user.profilePic} alt="Profile" onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
-          ) : user.email ? (
-            <Initials onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
-              {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-            </Initials>
-          ) : null
-        )}
+        <img src={logo} alt="ToolThinker Logo" style={{ height: 90, width: 90, borderRadius: 50, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onClick={() => {
+          if (typeof setAppState === 'function') {
+            setAppState((prev: any) => ({ ...prev, currentStep: 'landing', idea: { interests: '', area: null, existingIdeaText: '' }, customer: null, job: null, problemDescription: null, solutionDescription: null, competitionDescription: null }));
+          }
+          navigate('/');
+        }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <MyPlansButton onClick={() => navigate('/plans')}>My Business Plans</MyPlansButton>
+          {user && (
+            user.profilePic ? (
+              <Avatar src={user.profilePic} alt="Profile" onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} />
+            ) : user.email ? (
+              <Initials onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}>
+                {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
+              </Initials>
+            ) : null
+          )}
+        </div>
       </TopBar>
       <Card>
         <div>

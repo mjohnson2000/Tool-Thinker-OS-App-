@@ -376,6 +376,9 @@ interface BusinessPlan {
   views: number;
   createdAt: string;
   updatedAt: string;
+  validationScore?: {
+    score: number;
+  };
 }
 
 interface BusinessPlanDashboardProps {
@@ -477,7 +480,27 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
       
       if (!response.ok) throw new Error('Failed to delete plan');
       
-      setPlans(plans.filter(p => p._id !== planId));
+      setPlans(prevPlans => {
+        const updatedPlans = prevPlans.filter(p => p._id !== planId);
+        // Update stats immediately
+        const total = updatedPlans.length;
+        const active = updatedPlans.filter((p) => p.status === 'active').length;
+        const draft = updatedPlans.filter((p) => p.status === 'draft').length;
+        const validated = updatedPlans.filter((p) => p.status === 'validated').length;
+        const totalProgress = updatedPlans.reduce((sum, plan) => {
+          const progressFields = Object.values(plan.progress);
+          const completed = progressFields.filter(Boolean).length;
+          return sum + (completed / progressFields.length) * 100;
+        }, 0);
+        setStats({
+          total,
+          active,
+          draft,
+          validated,
+          averageProgress: total > 0 ? Math.round(totalProgress / total) : 0
+        });
+        return updatedPlans;
+      });
     } catch (err: any) {
       setError(err.message);
     }
@@ -636,6 +659,11 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
                 <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
                   {getProgressPercentage(plan)}% Complete
                 </div>
+                {plan.validationScore && typeof plan.validationScore.score === 'number' && (
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#181a1b', marginBottom: '0.7rem' }}>
+                    Validation Score: <span style={{ color: plan.validationScore.score >= 80 ? '#28a745' : plan.validationScore.score >= 60 ? '#ffc107' : '#dc3545' }}>{plan.validationScore.score}/100</span>
+                  </div>
+                )}
                 
                 <PlanActions onClick={(e) => e.stopPropagation()}>
                   <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>

@@ -458,5 +458,21 @@ businessPlanRouter.post('/improve-section', auth, async (req: AuthRequest, res: 
     console.error('AI improve-section error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to improve section', details: error.message });
   }
+});
+
+// Add or update validation score for a business plan
+businessPlanRouter.put('/:id/validation-score', async (req, res) => {
+  try {
+    const { score } = req.body;
+    const plan = await BusinessPlan.findByIdAndUpdate(
+      req.params.id,
+      { validationScore: { score, date: new Date() } },
+      { new: true }
+    );
+    if (!plan) return res.status(404).json({ message: 'Business plan not found' });
+    res.json({ status: 'success', plan });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update validation score' });
+  }
 }); 
 

@@ -96,6 +96,12 @@ export interface IBusinessPlan extends Document {
   views: number;
   lastViewed: Date;
   
+  // Validation Score
+  validationScore?: {
+    score: number;
+    date: Date;
+  };
+  
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -315,6 +321,12 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
   lastViewed: {
     type: Date,
     default: Date.now
+  },
+  
+  // Validation Score
+  validationScore: {
+    score: { type: Number },
+    date: { type: Date }
   }
 }, {
   timestamps: true

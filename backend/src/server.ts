@@ -10,6 +10,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { connectDB } from './config/database';
 import { chatgptRouter } from './routes/chatgpt';
 import { businessPlanRouter } from './routes/businessPlan';
+import coachesRouter from './routes/coaches';
+import coursesRouter from './routes/courses';
 const stripeRouter = require('./routes/stripe');
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 
@@ -34,6 +36,8 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/auth', authRouter);
 app.use('/api/chatgpt', chatgptRouter);
 app.use('/api/business-plan', businessPlanRouter);
+app.use('/api/coaches', coachesRouter);
+app.use('/api/courses', coursesRouter);
 app.use('/api/stripe', stripeRouter);
 
 // Error handling

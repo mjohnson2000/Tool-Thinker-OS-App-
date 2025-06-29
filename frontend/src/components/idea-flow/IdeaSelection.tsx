@@ -40,23 +40,37 @@ const Subtitle = styled.p`
   text-align: center;
 `;
 
+const TextAreaWrapper = styled.div.attrs({ 'data-textarea-wrapper': true } as any)`
+  width: 100%;
+  border: 2px solid #E5E5E5;
+  border-radius: 12px;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+  outline: none !important;
+  box-shadow: none !important;
+  &:focus-within {
+    border-color: #181a1b;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+`;
+
 const TextArea = styled.textarea`
   width: 100%;
   height: 120px;
   padding: 1rem;
-  border: 2px solid #E5E5E5;
+  border: none;
   border-radius: 12px;
   font-size: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   resize: none;
-  &:focus {
-    outline: none;
-    border-color: #007AFF;
-  }
+  background: #fafbfc;
+  outline: none !important;
+  box-shadow: none !important;
 `;
 
 const Button = styled.button`
-  background: #007AFF;
+  background: #181a1b;
   color: white;
   border: none;
   border-radius: 8px;
@@ -66,7 +80,7 @@ const Button = styled.button`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
   &:disabled {
     background: #ccc;
@@ -87,7 +101,7 @@ const AreaCard = styled.button<{ isSelected: boolean }>`
   flex-direction: column;
   align-items: center;
   background: var(--card-background);
-  border: 2px solid ${props => props.isSelected ? '#007AFF' : '#E5E5E5'};
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 2rem 1.5rem;
@@ -95,7 +109,7 @@ const AreaCard = styled.button<{ isSelected: boolean }>`
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
   &:hover, &:focus {
-    border: 2px solid #007AFF;
+    border: 2px solid #181a1b;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
   }
 `;
@@ -128,7 +142,7 @@ const ProgressBarContainer = styled.div`
 
 const ProgressBarFill = styled.div<{ percent: number }>`
   height: 100%;
-  background: linear-gradient(90deg, #007AFF 0%, #4FC3F7 100%);
+  background: #181a1b;
   width: ${({ percent }) => percent}%;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
@@ -200,11 +214,13 @@ export function IdeaSelection({ onSelect }: IdeaSelectionProps) {
     <Container>
       <Title>What interests you?</Title>
       <Subtitle>Tell us what you like doing or what problems you've noticed</Subtitle>
-      <TextArea
-        value={interests}
-        onChange={(e) => setInterests(e.target.value)}
-        placeholder="e.g., I love teaching, I notice people struggle with time management, I'm passionate about fitness..."
-      />
+      <TextAreaWrapper>
+        <TextArea
+          value={interests}
+          onChange={(e) => setInterests(e.target.value)}
+          placeholder="e.g., I love teaching, I notice people struggle with time management, I'm passionate about fitness..."
+        />
+      </TextAreaWrapper>
       <Button 
         onClick={handleFindAreas}
         disabled={!interests.trim() || isLoading}

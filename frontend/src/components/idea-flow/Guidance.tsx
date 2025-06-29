@@ -19,9 +19,14 @@ const Message = styled.p`
   line-height: 1.6;
 `;
 
-const ContinueButton = styled.button`
-  background: #007AFF;
-  color: white;
+const Highlight = styled.span`
+  color: #181a1b;
+  font-weight: 600;
+`;
+
+const ActionButton = styled.button`
+  background: #181a1b;
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -30,7 +35,11 @@ const ContinueButton = styled.button`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
+  }
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
   }
 `;
 
@@ -44,7 +53,7 @@ export function Guidance({ message, buttonText, onContinue }: GuidanceProps) {
   return (
     <Container>
       <Message>{message}</Message>
-      <ContinueButton onClick={onContinue}>{buttonText}</ContinueButton>
+      <ActionButton onClick={onContinue}>{buttonText}</ActionButton>
     </Container>
   );
 } 

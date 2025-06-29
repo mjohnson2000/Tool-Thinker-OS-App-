@@ -39,12 +39,12 @@ const JobGrid = styled.div`
   max-width: 700px;
 `;
 
-const JobCard = styled.button<{ isSelected: boolean }>`
+const OptionCard = styled.button<{ isSelected: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--card-background);
-  border: 2px solid ${props => props.isSelected ? '#007AFF' : '#E5E5E5'};
+  background: #fff;
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 2rem 1.5rem;
@@ -52,7 +52,7 @@ const JobCard = styled.button<{ isSelected: boolean }>`
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
   &:hover, &:focus {
-    border: 2px solid #007AFF;
+    border: 2px solid #181a1b;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
   }
 `;
@@ -85,7 +85,7 @@ const ProgressBarContainer = styled.div`
 
 const ProgressBarFill = styled.div<{ percent: number }>`
   height: 100%;
-  background: linear-gradient(90deg, #007AFF 0%, #4FC3F7 100%);
+  background: #181a1b;
   width: ${({ percent }) => percent}%;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
@@ -177,7 +177,7 @@ export const PrematureJobDiscovery: React.FC<PrematureJobDiscoveryProps> = ({ cu
       {error && <Subtitle style={{ color: 'red' }}>{error}</Subtitle>}
       <JobGrid>
         {options.map(job => (
-          <JobCard
+          <OptionCard
             key={job.id}
             isSelected={selected === job.id}
             onClick={() => handleSelect(job)}
@@ -187,7 +187,7 @@ export const PrematureJobDiscovery: React.FC<PrematureJobDiscoveryProps> = ({ cu
             <Icon>{job.icon}</Icon>
             <JobTitle>{job.title}</JobTitle>
             <JobDescription>{job.description}</JobDescription>
-          </JobCard>
+          </OptionCard>
         ))}
       </JobGrid>
     </Container>

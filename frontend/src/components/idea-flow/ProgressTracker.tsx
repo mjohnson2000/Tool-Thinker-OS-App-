@@ -31,17 +31,18 @@ const StepCircle = styled.div<{ $status: string }>`
   height: 32px;
   border-radius: 50%;
   background: ${({ $status }) =>
-    $status === 'completed' ? '#28a745' : $status === 'current' ? '#181a1b' : '#e9ecef'};
-  color: #fff;
+    $status === 'completed' ? '#181a1b' : $status === 'current' ? '#888888' : '#e9ecef'};
+  color: ${({ $status }) =>
+    $status === 'current' ? '#fff' : $status === 'completed' ? '#181a1b' : '#b0b0b0'};
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1.1rem;
   box-shadow: ${({ $status }) =>
-    $status === 'current' ? '0 4px 12px rgba(24,26,27,0.18)' : 'none'};
+    $status === 'current' ? '0 4px 12px rgba(136, 136, 136, 0.18)' : 'none'};
   border: 2px solid ${({ $status }) =>
-    $status === 'current' ? '#181a1b' : $status === 'completed' ? '#28a745' : '#e9ecef'};
+    $status === 'current' ? '#888888' : $status === 'completed' ? '#181a1b' : '#e9ecef'};
   transition: background 0.2s, border 0.2s;
   margin-right: 1rem;
 `;
@@ -76,7 +77,7 @@ const PremiumBadge = styled.span`
 `;
 
 const LockIcon = styled.span`
-  color: #ffc107;
+  color: #181a1b;
   font-size: 0.9rem;
   margin-left: 0.3rem;
 `;
@@ -119,10 +120,14 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
               tabIndex={isClickable ? 0 : -1}
             >
               <StepCircle className="circle" $status={status}>
-                {status === 'completed' ? '✓' : index + 1}
+                {status === 'completed' ? (
+                  <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1 }}>✓</span>
+                ) : (
+                  index + 1
+                )}
               </StepCircle>
               <StepLabel $status={status}>
-                {step.label}
+                {step.label.replace(/^\d+\.\s*/, '')}
                 {step.isPremium && <PremiumBadge>Premium</PremiumBadge>}
                 {isPremium && <LockIcon>🔒</LockIcon>}
               </StepLabel>

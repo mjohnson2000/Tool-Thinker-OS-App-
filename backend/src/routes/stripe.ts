@@ -12,14 +12,22 @@ const stripe = new Stripe(stripeSecretKey);
 // TODO: Replace with your actual Stripe price ID for the subscription
 const STRIPE_PRICE_ID = 'price_1RerbQEJVpgloXFqB2Fqx3mn';
 
+// Add your Basic plan price ID here
+const BASIC_PRICE_ID = 'price_1RfAkSEJVpgloXFqQ8RSblDc';
+
 // POST /api/stripe/create-checkout-session
 router.post('/create-checkout-session', async (req, res) => {
+  console.log('Stripe checkout session endpoint hit');
   try {
     // In production, get the authenticated user's email from req.user
-    const { email } = req.body;
+    const { email, priceId } = req.body;
+    console.log('Received priceId:', priceId);
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
+    const selectedPriceId = priceId || STRIPE_PRICE_ID;
+    console.log('Selected priceId:', selectedPriceId);
+    const isBasic = selectedPriceId === BASIC_PRICE_ID;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -27,10 +35,15 @@ router.post('/create-checkout-session', async (req, res) => {
       customer_email: email,
       line_items: [
         {
-          price: STRIPE_PRICE_ID,
+          price: selectedPriceId,
           quantity: 1,
         },
       ],
+      ...(isBasic && {
+        subscription_data: {
+          trial_period_days: 7,
+        },
+      }),
       success_url: `${req.headers.origin}/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/?canceled=true`,
     });

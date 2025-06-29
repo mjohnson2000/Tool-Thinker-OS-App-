@@ -280,7 +280,7 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
         </Section>
         <ButtonRow>
           <OutlinedButton onClick={() => navigate(-1)}>Back to Market Validation</OutlinedButton>
-          <Button onClick={() => navigate('/')}>Continue</Button>
+          <Button onClick={() => navigate('/next-steps-hub', { state: { result, businessPlan: location.state?.businessPlan } })}>Continue to Next Steps</Button>
         </ButtonRow>
       </Card>
     </PageBackground>

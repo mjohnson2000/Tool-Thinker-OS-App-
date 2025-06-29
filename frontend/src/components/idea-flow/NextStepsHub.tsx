@@ -428,11 +428,11 @@ const ResourceIcon = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #007bff;
+  background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #181a1b;
   font-size: 1.2rem;
   margin-bottom: 1rem;
 `;

@@ -28,34 +28,67 @@ const TextArea = styled.textarea`
   font-size: 1rem;
   margin-bottom: 1.5rem;
   resize: none;
+  background: #fafbfc;
+  transition: border-color 0.2s;
   &:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #181a1b;
+    background: #fafbfc;
   }
 `;
 
-const Button = styled.button`
-  background: #007AFF;
-  color: white;
+const PrimaryButton = styled.button`
+  background: #181a1b;
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  padding: 0.7rem 1.6rem;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
-  &:hover {
-    background: #0056b3;
+  &:hover:not(:disabled) {
+    background: #222;
+  }
+  &:active:not(:disabled) {
+    background: #333;
   }
   &:disabled {
-    background: #ccc;
+    background: #f5f5f7;
+    color: #b0b0b0;
+    cursor: not-allowed;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background: #f5f5f7;
+  color: #181a1b;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 0.7rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  &:hover:not(:disabled) {
+    background: #e5e5e5;
+    border-color: #d1d1d1;
+  }
+  &:active:not(:disabled) {
+    background: #d1d1d1;
+    border-color: #b0b0b0;
+  }
+  &:disabled {
+    background: #f5f5f7;
+    color: #b0b0b0;
+    border-color: #e5e5e5;
     cursor: not-allowed;
   }
 `;
 
 const ImprovementContainer = styled.div`
-  background-color: #f0f8ff;
-  border: 1px solid #b3d7ff;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1.5rem;
@@ -64,7 +97,9 @@ const ImprovementContainer = styled.div`
 `;
 
 const ImprovementHeader = styled.h4`
-  color: #0056b3;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #181a1b;
   margin-bottom: 0.5rem;
 `;
 
@@ -150,16 +185,18 @@ export function DescribeSolution({ onSubmit, problemDescription, initialValue = 
           onChange={(e) => setSolutionText(e.target.value)}
           placeholder="Describe how your product or service directly addresses the customer's struggle you identified. What makes your solution effective?"
         />
-        <Button type="submit" disabled={!solutionText.trim() || isLoading}>
+        <PrimaryButton type="submit" disabled={!solutionText.trim() || isLoading}>
           {isLoading ? 'Assessing...' : 'Continue'}
-        </Button>
+        </PrimaryButton>
       </form>
       {improvedSolution && (
         <ImprovementContainer>
           <ImprovementHeader>Suggestion for Improvement:</ImprovementHeader>
           <p>{improvedSolution}</p>
-          <Button onClick={handleAccept} style={{ marginRight: '1rem' }}>Accept</Button>
-          <Button onClick={handleReject} style={{ background: '#c0392b' }}>Reject</Button>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <PrimaryButton onClick={handleAccept} disabled={isLoading}>Accept</PrimaryButton>
+            <SecondaryButton onClick={handleReject} disabled={isLoading}>Reject</SecondaryButton>
+          </div>
         </ImprovementContainer>
       )}
       {showRejectionMessage && (

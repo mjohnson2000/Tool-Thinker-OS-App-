@@ -44,9 +44,10 @@ const ImprovementContainer = styled.div`
     text-align: left;
 `;
 
-const ImprovementHeader = styled.h3`
+const ImprovementHeader = styled.h4`
     font-size: 1.1rem;
-    color: #0d6efd;
+    font-weight: 700;
+    color: #181a1b;
     margin-top: 0;
     margin-bottom: 0.5rem;
 `;
@@ -91,21 +92,19 @@ const ClearButton = styled.button`
   }
 `;
 
-const Button = styled.button`
-  background: #007aff;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
+const SubmitButton = styled.button`
+  background: #181a1b;
+  color: #fff;
   border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-
+  transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
-
   &:disabled {
     background: #ccc;
     cursor: not-allowed;
@@ -119,19 +118,18 @@ const Options = styled.div`
   justify-content: center;
 `;
 
-const OptionButton = styled.button<{ isSelected: boolean }>`
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  border: 2px solid ${props => props.isSelected ? '#007AFF' : '#E5E5E5'};
+const OptionCard = styled.button<{ isSelected: boolean }>`
+  background: #fff;
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 12px;
-  background: ${props => props.isSelected ? '#e6f0ff' : '#fff'};
-  color: #333;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  
-  &:hover {
-    border-color: #007AFF;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  &:hover, &:focus {
+    border: 2px solid #181a1b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
   }
 `;
 
@@ -353,12 +351,12 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear }: Descr
         <>
           <Subtitle>Do you have a specific customer in mind?</Subtitle>
           <Options>
-            <OptionButton isSelected={false} onClick={() => handleSelect(true)}>
+            <OptionCard isSelected={false} onClick={() => handleSelect(true)}>
               Yes, I do
-            </OptionButton>
-            <OptionButton isSelected={false} onClick={() => handleSelect(false)}>
+            </OptionCard>
+            <OptionCard isSelected={false} onClick={() => handleSelect(false)}>
               No, not really
-            </OptionButton>
+            </OptionCard>
           </Options>
         </>
       )}
@@ -393,17 +391,14 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear }: Descr
               placeholder="e.g., 'Freelance graphic designers who work from home and struggle with managing client invoices.'"
               aria-label="Customer Description"
             />
-            <Button 
+            <SubmitButton 
               type="submit" 
               disabled={!description.trim() || isLoading || promptForMoreInfo}
             >
               {isLoading && retryCount === 0 ? 'Assessing...' : 'Continue'}
-            </Button>
+            </SubmitButton>
           </form>
-          <ClearButton onClick={() => {
-            setDescription('');
-            onClear();
-          }}>Clear and restart this step</ClearButton>
+          <SubmitButton onClick={onClear}>Clear and restart this step</SubmitButton>
 
           {improvedDescription && !promptForMoreInfo && (
             <ImprovementContainer>

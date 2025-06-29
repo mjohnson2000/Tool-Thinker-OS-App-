@@ -28,3 +28,13 @@ button {
   --border-color: #E5E5E5;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+*:focus, *:focus-visible, *:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-textarea-wrapper]:focus, [data-textarea-wrapper]:focus-visible, [data-textarea-wrapper]:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}

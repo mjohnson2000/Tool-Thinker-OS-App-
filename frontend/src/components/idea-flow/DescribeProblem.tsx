@@ -26,40 +26,43 @@ const Options = styled.div`
   margin-bottom: 2rem;
 `;
 
-const OptionButton = styled.button<{ isSelected: boolean }>`
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  border: 2px solid ${props => props.isSelected ? '#007AFF' : '#E5E5E5'};
+const OptionCard = styled.button<{ isSelected: boolean }>`
+  background: ${props => props.isSelected ? '#ededed' : 'var(--card-background)'};
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 12px;
-  background: ${props => props.isSelected ? '#e6f0ff' : 'var(--card-background)'};
-  box-shadow: var(--shadow);
-  color: var(--text-primary);
+  padding: 1.5rem 1rem;
+  margin-bottom: 1rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  &:hover {
-    border-color: #007AFF;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  &:hover, &:focus {
+    border: 2px solid #181a1b;
+    background: #ededed;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
   }
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  height: 150px;
+  height: 120px;
   padding: 1rem;
   border: 2px solid #E5E5E5;
   border-radius: 12px;
   font-size: 1rem;
   margin-bottom: 1.5rem;
   resize: none;
+  background: #fafbfc;
+  transition: border-color 0.2s;
   &:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #181a1b;
+    background: #fafbfc;
   }
 `;
 
 const ImprovementContainer = styled.div`
-  background-color: #f0f8ff;
-  border: 1px solid #b3d7ff;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1.5rem;
@@ -68,7 +71,9 @@ const ImprovementContainer = styled.div`
 `;
 
 const ImprovementHeader = styled.h4`
-  color: #0056b3;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #181a1b;
   margin-bottom: 0.5rem;
 `;
 
@@ -77,9 +82,9 @@ const RejectionMessage = styled.p`
   margin-top: 1rem;
 `;
 
-const ContinueButton = styled.button`
-  background: #007AFF;
-  color: white;
+const SubmitButton = styled.button`
+  background: #181a1b;
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -88,7 +93,7 @@ const ContinueButton = styled.button`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
   &:disabled {
     background: #ccc;
@@ -108,6 +113,57 @@ const ClearButton = styled.button`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const PrimaryButton = styled.button`
+  background: #181a1b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: #000;
+  }
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background: #f5f5f7;
+  color: #181a1b;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 0.7rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  &:hover:not(:disabled) {
+    background: #e5e5e5;
+    border-color: #d1d1d1;
+  }
+  &:active:not(:disabled) {
+    background: #d1d1d1;
+    border-color: #b0b0b0;
+  }
+  &:disabled {
+    background: #f5f5f7;
+    color: #b0b0b0;
+    border-color: #e5e5e5;
+    cursor: not-allowed;
   }
 `;
 
@@ -177,12 +233,12 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
     <Container>
       <Title>What is your customer struggling to achieve?</Title>
       <Options>
-        <OptionButton isSelected={knowsProblem === true} onClick={() => handleSelect(true)}>
+        <OptionCard isSelected={knowsProblem === true} onClick={() => handleSelect(true)}>
           I can describe the struggle
-        </OptionButton>
-        <OptionButton isSelected={knowsProblem === false} onClick={() => handleSelect(false)}>
+        </OptionCard>
+        <OptionCard isSelected={knowsProblem === false} onClick={() => handleSelect(false)}>
           I'm not sure
-        </OptionButton>
+        </OptionCard>
       </Options>
 
       {knowsProblem === true && (
@@ -192,9 +248,9 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe the task your customer is trying to accomplish and what makes it difficult for them. Think about the functional and emotional aspects of their struggle."
           />
-          <ContinueButton onClick={handleSubmit} disabled={!description.trim() || isLoading}>
+          <SubmitButton onClick={handleSubmit} disabled={!description.trim() || isLoading}>
             {isLoading ? 'Assessing...' : 'Continue'}
-          </ContinueButton>
+          </SubmitButton>
           <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
         </>
       )}
@@ -203,8 +259,15 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
         <ImprovementContainer>
           <ImprovementHeader>Suggestion for Improvement:</ImprovementHeader>
           <p>{improvedDescription}</p>
-          <ContinueButton onClick={handleAccept} style={{ marginRight: '1rem' }}>Accept</ContinueButton>
-          <ContinueButton onClick={handleReject} style={{ background: '#c0392b' }}>Reject</ContinueButton>
+          <ButtonGroup>
+            <PrimaryButton onClick={handleAccept} disabled={isLoading} style={{ marginRight: '1rem' }}>Accept</PrimaryButton>
+            <SecondaryButton 
+              onClick={handleReject}
+              disabled={isLoading}
+            >
+              Reject
+            </SecondaryButton>
+          </ButtonGroup>
         </ImprovementContainer>
       )}
 

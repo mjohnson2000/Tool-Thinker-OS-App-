@@ -27,7 +27,10 @@ import type { JobOption } from './components/idea-flow/JobSelection';
 import { BusinessPlanPageDiscovery } from './components/idea-discovery/BusinessPlanPageDiscovery';
 import { MarketValidationPage } from './components/idea-flow/MarketValidationPage';
 import { MarketValidationScorePage } from './components/idea-flow/MarketValidationScorePage';
+import { NextStepsHub } from './components/idea-flow/NextStepsHub';
 import { SubscriptionPage } from './components/auth/SubscriptionPage';
+import { CoachMarketplace } from './components/learning/CoachMarketplace';
+import { CourseLibrary } from './components/learning/CourseLibrary';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -125,9 +128,9 @@ const LoginButton = styled.button`
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   transition: background 0.2s, color 0.2s, border 0.2s;
   &:hover {
-    background: #f5f5f7;
-    border-color: #007AFF;
-    color: #007AFF;
+    background: #ededed;
+    border-color: #181a1b;
+    color: #181a1b;
   }
 `;
 
@@ -190,7 +193,7 @@ const TopBarAvatarImg = styled.img`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketValidation' | 'validationScore';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketValidation' | 'validationScore' | 'nextStepsHub';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -223,6 +226,7 @@ const steps = [
   { key: 'businessPlan', label: '5. Business Plan' },
   { key: 'marketValidation', label: '6. Market Validation', isPremium: true },
   { key: 'validationScore', label: '7. Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: '8. Next Steps Hub', isPremium: true },
 ];
 
 const prematureIdeaFlowSteps = [
@@ -235,6 +239,7 @@ const prematureIdeaFlowSteps = [
   { key: 'businessPlan', label: '7. Business Plan' },
   { key: 'marketValidation', label: '8. Market Validation', isPremium: true },
   { key: 'validationScore', label: '9. Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: '10. Next Steps Hub', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -473,7 +478,10 @@ function AppContent() {
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
         <Route path="/market-validation" element={<MarketValidationPage setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/validation-score" element={<MarketValidationScorePage setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/next-steps-hub" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
+        <Route path="/coaches" element={<CoachMarketplace />} />
+        <Route path="/courses" element={<CourseLibrary />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
@@ -518,7 +526,7 @@ function AppContent() {
                         steps={entryPoint === 'idea' ? steps : prematureIdeaFlowSteps} 
                         currentStepKey={currentStep}
                         onStepClick={handleStepClick}
-                        isSubscribed={user?.isVerified}
+                        isSubscribed={user?.isSubscribed}
                       />
                       <ToggleTrackerButton 
                         onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}

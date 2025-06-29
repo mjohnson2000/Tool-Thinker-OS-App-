@@ -25,40 +25,43 @@ const Options = styled.div`
   margin-bottom: 2rem;
 `;
 
-const OptionButton = styled.button<{ isSelected: boolean }>`
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  border: 2px solid ${props => props.isSelected ? '#007AFF' : '#E5E5E5'};
+const OptionCard = styled.button<{ isSelected: boolean }>`
+  background: ${props => props.isSelected ? '#ededed' : 'var(--card-background)'};
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 12px;
-  background: ${props => props.isSelected ? '#e6f0ff' : 'var(--card-background)'};
-  box-shadow: var(--shadow);
-  color: var(--text-primary);
+  padding: 1.5rem 1rem;
+  margin-bottom: 1rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  &:hover {
-    border-color: #007AFF;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  &:hover, &:focus {
+    border: 2px solid #181a1b;
+    background: #ededed;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
   }
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  height: 150px;
+  height: 120px;
   padding: 1rem;
   border: 2px solid #E5E5E5;
   border-radius: 12px;
   font-size: 1rem;
   margin-bottom: 1.5rem;
   resize: none;
+  background: #fafbfc;
+  transition: border-color 0.2s;
   &:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #181a1b;
+    background: #fafbfc;
   }
 `;
 
-const Button = styled.button`
-  background: #007AFF;
-  color: white;
+const SubmitButton = styled.button`
+  background: #181a1b;
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -67,7 +70,7 @@ const Button = styled.button`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
   &:disabled {
     background: #ccc;
@@ -76,8 +79,8 @@ const Button = styled.button`
 `;
 
 const SuggestionContainer = styled.div`
-  background-color: #f0f8ff;
-  border: 1px solid #b3d7ff;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
   padding: 1.5rem;
   margin-top: 1.5rem;
@@ -122,6 +125,13 @@ const ClearButton = styled.button`
   &:hover {
     text-decoration: underline;
   }
+`;
+
+const ImprovementHeader = styled.h4`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 0.5rem;
 `;
 
 interface DescribeCompetitionProps {
@@ -221,12 +231,12 @@ export function DescribeCompetition({ onSubmit, solutionDescription, initialValu
     <Container>
       <Title>Is your solution better than the competition?</Title>
       <Options>
-        <OptionButton isSelected={isBetter === true} onClick={() => handleSelect(true)}>
+        <OptionCard isSelected={isBetter === true} onClick={() => handleSelect(true)}>
           Yes
-        </OptionButton>
-        <OptionButton isSelected={isBetter === false} onClick={() => handleSelect(false)}>
+        </OptionCard>
+        <OptionCard isSelected={isBetter === false} onClick={() => handleSelect(false)}>
           No
-        </OptionButton>
+        </OptionCard>
       </Options>
 
       {isBetter === true && (
@@ -237,9 +247,9 @@ export function DescribeCompetition({ onSubmit, solutionDescription, initialValu
             placeholder="How is your solution better? (e.g., faster, cheaper, more features, better design)"
           />
           <div style={{ display: 'flex', justifyContent: 'center', width: '100%', flexDirection: 'column', alignItems: 'center' }}>
-            <Button type="submit" disabled={!description.trim() || isLoading}>
+            <SubmitButton type="submit" disabled={!description.trim() || isLoading}>
               {isLoading ? 'Assessing...' : 'Continue'}
-            </Button>
+            </SubmitButton>
             <ClearButton onClick={onClear}>
               Clear and restart this step
             </ClearButton>
@@ -249,10 +259,10 @@ export function DescribeCompetition({ onSubmit, solutionDescription, initialValu
 
       {improvedAdvantage && (
         <SuggestionContainer>
-          <SuggestionHeader>Suggestion for a Stronger Advantage:</SuggestionHeader>
+          <ImprovementHeader>Suggestion for Improvement:</ImprovementHeader>
           <p>{improvedAdvantage}</p>
-          <Button onClick={handleAccept} style={{ marginRight: '1rem' }}>Use Suggestion</Button>
-          <Button onClick={handleReject} style={{ background: '#c0392b' }}>Reject</Button>
+          <SubmitButton onClick={handleAccept} style={{ marginRight: '1rem' }}>Use Suggestion</SubmitButton>
+          <SubmitButton onClick={handleReject} style={{ background: '#c0392b' }}>Reject</SubmitButton>
         </SuggestionContainer>
       )}
 

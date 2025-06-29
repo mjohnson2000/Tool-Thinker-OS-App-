@@ -35,14 +35,16 @@ const Input = styled.input`
   border: 2px solid #E5E5E5;
   border-radius: 8px;
   font-size: 1rem;
+  background: #fafbfc;
   &:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #ededed;
+    background: #fafbfc;
   }
 `;
 
 const Button = styled.button`
-  background: #007AFF;
+  background: #181a1b;
   color: white;
   border: none;
   border-radius: 8px;
@@ -52,11 +54,28 @@ const Button = styled.button`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
-    background: #0056b3;
+    background: #000;
   }
   &:disabled {
     background: #ccc;
     cursor: not-allowed;
+  }
+`;
+
+const LinkButton = styled.button`
+  background: none;
+  color: #181a1b;
+  border: none;
+  box-shadow: none;
+  font-weight: 500;
+  padding: 0;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+  &:hover {
+    color: #000;
+    text-decoration: underline;
   }
 `;
 
@@ -152,14 +171,14 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
             </Button>
           </Form>
           <SwitchText>
-            <Button type="button" onClick={onSignup} style={{ background: '#6c757d', color: 'white' }}>
+            <LinkButton type="button" onClick={onSignup}>
               Sign Up
-            </Button>
+            </LinkButton>
           </SwitchText>
           <SwitchText>
-            <Button type="button" onClick={() => setShowReset(true)} style={{ background: 'none', color: '#007AFF', border: 'none', boxShadow: 'none', fontWeight: 500, padding: 0 }}>
+            <LinkButton type="button" onClick={() => setShowReset(true)}>
               Forgot password?
-            </Button>
+            </LinkButton>
           </SwitchText>
         </>
       ) : (
@@ -177,9 +196,9 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
             <Button type="submit">Send Reset Email</Button>
           </Form>
           <SwitchText>
-            <Button type="button" onClick={() => setShowReset(false)} style={{ background: 'none', color: '#007AFF', border: 'none', boxShadow: 'none', fontWeight: 500, padding: 0 }}>
+            <LinkButton type="button" onClick={() => setShowReset(false)}>
               Back to login
-            </Button>
+            </LinkButton>
           </SwitchText>
         </>
       )}

@@ -41,7 +41,7 @@ const Section = styled.div`
 
 const SectionTitle = styled.h2`
   font-size: 1.5rem;
-  color: #007aff;
+  color: #181a1b;
   margin-bottom: 1rem;
   border-bottom: 2px solid #e5e5e5;
   padding-bottom: 0.5rem;
@@ -71,22 +71,24 @@ const Button = styled.button`
 `;
 
 const PrimaryButton = styled(Button)`
-  background-color: #007aff;
+  background-color: #181a1b;
   color: #fff;
-  border-color: #007aff;
+  border-color: #181a1b;
 
   &:hover {
-    background-color: #0056b3;
+    background-color: #000;
   }
 `;
 
 const SecondaryButton = styled(Button)`
   background-color: #fff;
-  color: #007aff;
-  border-color: #007aff;
+  color: #181a1b;
+  border-color: #e5e5e5;
 
   &:hover {
-    background-color: #f0f8ff;
+    background-color: #f5f5f7;
+    color: #181a1b;
+    border-color: #181a1b;
   }
 `;
 

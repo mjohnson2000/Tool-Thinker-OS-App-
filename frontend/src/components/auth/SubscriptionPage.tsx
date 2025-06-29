@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FaCheckCircle } from 'react-icons/fa';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -105,6 +108,132 @@ const GoBackButton = styled.button`
   }
 `;
 
+const tiers = [
+  {
+    name: 'Basic',
+    key: 'basic',
+    price: '$9.99',
+    priceId: 'price_1RfAkSEJVpgloXFqQ8RSblDc',
+    features: [
+      'Resource Library',
+      'Market Validation',
+      'Progress Tracker',
+    ],
+    accent: false,
+  },
+  {
+    name: 'Pro',
+    key: 'pro',
+    price: '$19.00',
+    priceId: 'price_1RerbQEJVpgloXFqB2Fqx3mn',
+    features: [
+      'Everything in Basic',
+      'Course Library',
+      'Advanced Analytics',
+    ],
+    accent: false,
+  },
+  {
+    name: 'Elite',
+    key: 'elite',
+    price: '$29.00',
+    priceId: 'price_1RfAmhEJVpgloXFqk80ZwKEz',
+    features: [
+      'Everything in Pro',
+      '1:1 Coaching',
+      'Priority Support',
+    ],
+    accent: true,
+  },
+];
+
+const TierGrid = styled.div`
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin: 2rem 0 1.5rem 0;
+  flex-wrap: wrap;
+`;
+
+const TierCard = styled.div<{ accent?: boolean; current?: boolean }>`
+  background: ${({ accent }) => (accent ? '#f8f9fa' : '#fff')};
+  border: 2px solid ${({ current, accent }) =>
+    current ? '#181a1b' : accent ? '#e5e5e5' : '#e5e5e5'};
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  min-width: 260px;
+  max-width: 320px;
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  outline: ${({ current }) => (current ? '2px solid #181a1b' : 'none')};
+`;
+
+const TierName = styled.h3`
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 0.5rem;
+`;
+
+const TierPrice = styled.div`
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 1.2rem;
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.2rem 0;
+  width: 100%;
+`;
+
+const FeatureItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  color: #222;
+  margin-bottom: 0.5rem;
+`;
+
+const TierButton = styled.button<{ current?: boolean }>`
+  background: ${({ current }) => (current ? '#181a1b' : '#fff')};
+  color: ${({ current }) => (current ? '#fff' : '#181a1b')};
+  border: 2px solid #181a1b;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: ${({ current }) => (current ? 'default' : 'pointer')};
+  margin-top: 1rem;
+  width: 100%;
+  transition: background 0.2s, color 0.2s;
+  &:hover, &:focus {
+    background: ${({ current }) => (current ? '#181a1b' : '#f8f9fa')};
+    color: #181a1b;
+  }
+`;
+
+const AccentBadge = styled.div`
+  position: absolute;
+  top: -18px;
+  right: 18px;
+  background: #181a1b;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.3rem 1.1rem;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+`;
+
 export function SubscriptionPage() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -124,23 +253,31 @@ export function SubscriptionPage() {
     }
   }, [user?.isSubscribed, businessPlan, navigate]);
 
-  async function handleSubscribe() {
+  async function handleSubscribe(priceId: string) {
     if (!user || !user.email) {
       setError('User email not found.');
       return;
     }
     setIsLoading(true);
     setError(null);
+    
+    console.log('Starting subscription with:', { email: user.email, priceId });
+    
     try {
-      const res = await fetch('/api/stripe/create-checkout-session', {
+      const res = await fetch(`${API_URL}/stripe/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({ email: user.email, priceId }),
       });
+      
+      console.log('Response status:', res.status);
       const data = await res.json();
+      console.log('Response data:', data);
+      
       if (!res.ok || !data.url) throw new Error(data.error || 'Failed to create checkout session');
       window.location.href = data.url;
     } catch (err: any) {
+      console.error('Subscription error:', err);
       setError(err.message || 'Failed to start subscription');
     } finally {
       setIsLoading(false);
@@ -155,7 +292,7 @@ export function SubscriptionPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/stripe/create-customer-portal-session', {
+      const res = await fetch(`${API_URL}/stripe/create-customer-portal-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),
@@ -170,34 +307,40 @@ export function SubscriptionPage() {
     }
   }
 
+  const currentTier = user?.subscriptionTier || 'basic';
+
   return (
     <PageContainer>
-      <Card>
-        {user && user.isSubscribed && (
-          <PremiumBadge title="Premium Subscriber">
-            <span role="img" aria-label="Crown">👑</span> Premium Subscriber
-          </PremiumBadge>
-        )}
-        <Title>{user && user.isSubscribed ? 'Manage Your Subscription' : 'Upgrade to Premium'}</Title>
-        <BenefitsList>
-          <li>Access Market Validation and Validation Score features</li>
-          <li>Unlock AI-powered business insights</li>
-          <li>Priority support and early access to new features</li>
-        </BenefitsList>
-        {user && user.isSubscribed ? (
-          <ClearGreyButton type="button" onClick={handleManage} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Manage Subscription'}
-          </ClearGreyButton>
-        ) : (
-          <Button type="button" onClick={handleSubscribe} disabled={isLoading}>
-            {isLoading ? 'Redirecting to Stripe...' : 'Subscribe to Premium'}
-          </Button>
-        )}
-        {error && <div style={{ color: 'red', margin: '0.7rem 0' }}>{error}</div>}
-        <GoBackButton type="button" onClick={() => navigate(-1)}>
-          Go Back
-        </GoBackButton>
-      </Card>
+      <Title style={{ marginBottom: 0 }}>Choose Your Plan</Title>
+      <TierGrid>
+        {tiers.map(tier => (
+          <TierCard
+            key={tier.key}
+            accent={tier.accent}
+            current={currentTier === tier.key}
+          >
+            {tier.accent && <AccentBadge>Most Value</AccentBadge>}
+            <TierName>{tier.name}</TierName>
+            <TierPrice>{tier.price} <span style={{ fontSize: '1rem', fontWeight: 400 }}>/mo</span></TierPrice>
+            <FeatureList>
+              {tier.features.map((feature, i) => (
+                <FeatureItem key={i}><FaCheckCircle style={{ color: '#181a1b', fontSize: '1em' }} /> {feature}</FeatureItem>
+              ))}
+            </FeatureList>
+            {currentTier === tier.key && user?.isSubscribed ? (
+              <TierButton current disabled>Current Plan</TierButton>
+            ) : (
+              <TierButton onClick={() => handleSubscribe(tier.priceId)} disabled={isLoading}>
+                {isLoading ? 'Loading...' : tier.key === 'basic' ? 'Start 7-Day Free Trial' : `Upgrade to ${tier.name}`}
+              </TierButton>
+            )}
+          </TierCard>
+        ))}
+      </TierGrid>
+      <GoBackButton type="button" onClick={() => navigate(-1)}>
+        Go Back
+      </GoBackButton>
+      {error && <div style={{ color: 'red', margin: '0.7rem 0' }}>{error}</div>}
     </PageContainer>
   );
 }

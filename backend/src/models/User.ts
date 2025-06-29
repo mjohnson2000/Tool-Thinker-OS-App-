@@ -7,6 +7,9 @@ export interface IUser extends Document {
   password: string;
   isVerified: boolean;
   isSubscribed: boolean;
+  subscriptionTier: 'basic' | 'pro' | 'elite';
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -39,6 +42,19 @@ const userSchema = new Schema<IUser>({
   isSubscribed: {
     type: Boolean,
     default: false
+  },
+  subscriptionTier: {
+    type: String,
+    enum: ['basic', 'pro', 'elite'],
+    default: 'basic',
+  },
+  stripeSubscriptionId: {
+    type: String,
+    default: ''
+  },
+  stripePriceId: {
+    type: String,
+    default: ''
   },
   verificationToken: String,
   resetPasswordToken: String,

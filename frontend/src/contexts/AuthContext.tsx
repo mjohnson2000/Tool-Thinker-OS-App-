@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 interface User {
   email: string;
   isSubscribed: boolean;
+  subscriptionTier?: 'basic' | 'pro' | 'elite';
   createdAt?: string;
   lastLogin?: string;
   name?: string;

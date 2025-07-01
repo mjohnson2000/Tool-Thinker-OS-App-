@@ -5,14 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
-interface BusinessPlan {
+interface StartupPlan {
   summary: string;
   sections: { [key: string]: string };
   _id: string;
 }
 
 interface MarketValidationProps {
-  businessPlan: BusinessPlan;
+  startupPlan: StartupPlan;
   onComplete?: (result: any) => void;
   setAppState: React.Dispatch<React.SetStateAction<any>>;
   currentStep: string;
@@ -214,7 +214,7 @@ const ResultBox = styled.div`
   }
 `;
 
-const BusinessPlanSummary = styled.div`
+const StartupPlanSummary = styled.div`
   background: #f5f7fa;
   border-radius: 10px;
   padding: 1rem;
@@ -325,7 +325,7 @@ const MyPlansButton = styled.button`
   }
 `;
 
-export function MarketValidation({ businessPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
+export function MarketValidation({ startupPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
   const { user } = useAuth();
   const [competitors, setCompetitors] = useState('');
   const [marketSize, setMarketSize] = useState('');
@@ -341,7 +341,7 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
       setIsGenerating(true);
       setError(null);
       try {
-        const prompt = `Given the following business plan summary and sections, suggest 3 main competitors, a market size estimate, and 3 customer research questions. Return as JSON with keys: competitors (array), marketSize (string), customerResearch (array).\nSummary: ${businessPlan.summary}\nSections: ${Object.entries(businessPlan.sections).map(([k,v]) => `${k}: ${v}`).join(' | ')}`;
+        const prompt = `Given the following startup plan summary and sections, suggest 3 main competitors, a market size estimate, and 3 customer research questions. Return as JSON with keys: competitors (array), marketSize (string), customerResearch (array).\nSummary: ${startupPlan.summary}\nSections: ${Object.entries(startupPlan.sections).map(([k,v]) => `${k}: ${v}`).join(' | ')}`;
         const response = await fetchChatGPT(prompt);
         const data = typeof response === 'string' ? JSON.parse(response) : response;
         setCompetitors((data.competitors || []).join('\n'));
@@ -354,7 +354,7 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
       }
     }
     generateSuggestions();
-  }, [businessPlan]);
+  }, [startupPlan]);
 
   async function handleValidate() {
     setIsLoading(true);
@@ -380,7 +380,7 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
       setResult(mockResult);
       // Save validation score to backend
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-      await fetch(`${API_URL}/business-plan/${businessPlan._id}/validation-score`, {
+      await fetch(`${API_URL}/startup-plan/${startupPlan._id}/validation-score`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -390,7 +390,7 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
       });
       setIsLoading(false);
       if (onComplete) onComplete(mockResult);
-      navigate('/validation-score', { state: { result: mockResult, businessPlanId: businessPlan._id } });
+      navigate('/validation-score', { state: { result: mockResult, startupPlanId: startupPlan._id } });
     } catch (err) {
       setError('Failed to validate and save score.');
       setIsLoading(false);
@@ -425,15 +425,15 @@ export function MarketValidation({ businessPlan, onComplete, setAppState, curren
           <Subtitle>Validate your business idea with AI-powered insights. Review competitors, estimate your market, and craft customer research questions—all in one place.</Subtitle>
         </div>
         <Section>
-          <Label>Business Plan Summary</Label>
+          <Label>Startup Plan Summary</Label>
           <Helper>A quick overview of your business idea.</Helper>
-          <BusinessPlanSummary>{businessPlan.summary}</BusinessPlanSummary>
+          <StartupPlanSummary>{startupPlan.summary}</StartupPlanSummary>
         </Section>
         <Section>
           <Label>Key Sections</Label>
-          <Helper>Core details from your business plan.</Helper>
+          <Helper>Core details from your startup plan.</Helper>
           <SectionList>
-            {Object.entries(businessPlan.sections).map(([section, content]) => (
+            {Object.entries(startupPlan.sections).map(([section, content]) => (
               <li key={section}><strong>{section}:</strong> {content}</li>
             ))}
           </SectionList>

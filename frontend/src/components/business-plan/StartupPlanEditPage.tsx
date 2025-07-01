@@ -147,7 +147,7 @@ const LoadingMsg = styled.div`
   margin-bottom: 1rem;
 `;
 
-interface BusinessPlan {
+interface StartupPlan {
   _id: string;
   title: string;
   summary: string;
@@ -162,15 +162,15 @@ interface BusinessPlan {
   updatedAt: string;
 }
 
-interface BusinessPlanEditPageProps {
+interface StartupPlanEditPageProps {
   setAppState?: (fn: (prev: any) => any) => void;
 }
 
-export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps) {
+export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [plan, setPlan] = useState<BusinessPlan | null>(null);
+  const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [sections, setSections] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,12 +182,12 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/business-plan/${id}`, {
+        const res = await fetch(`${API_URL}/startup-plan/${id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        if (!res.ok) throw new Error('Failed to fetch business plan');
+        if (!res.ok) throw new Error('Failed to fetch startup plan');
         const data = await res.json();
         setPlan(data);
         setSections(data.sections || {});
@@ -208,7 +208,7 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
     setImproving(prev => ({ ...prev, [key]: true }));
     try {
       // Call AI improvement endpoint (replace with your actual endpoint)
-      const res = await fetch(`${API_URL}/business-plan/improve-section`, {
+      const res = await fetch(`${API_URL}/startup-plan/improve-section`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/business-plan/${id}`, {
+      const res = await fetch(`${API_URL}/startup-plan/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +242,7 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
         },
         body: JSON.stringify({ sections })
       });
-      if (!res.ok) throw new Error('Failed to save business plan');
+      if (!res.ok) throw new Error('Failed to save startup plan');
       navigate('/plans');
     } catch (err: any) {
       setError(err.message || 'Unknown error');
@@ -255,7 +255,7 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
     navigate('/plans');
   };
 
-  if (loading) return <Container><LoadingMsg>Loading business plan...</LoadingMsg></Container>;
+  if (loading) return <Container><LoadingMsg>Loading startup plan...</LoadingMsg></Container>;
   if (error) return <Container><ErrorMsg>{error}</ErrorMsg></Container>;
   if (!plan) return null;
 
@@ -281,7 +281,7 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
         </AvatarButton>
       </TopBar>
       <Container>
-        <Title>Edit Business Plan</Title>
+        <Title>Edit Startup Plan</Title>
         {Object.entries(sections).map(([key, value]) => (
           <Section key={key}>
             <SectionLabel>{key}</SectionLabel>
@@ -314,4 +314,4 @@ export function BusinessPlanEditPage({ setAppState }: BusinessPlanEditPageProps)
   );
 }
 
-export default BusinessPlanEditPage; 
+export default StartupPlanEditPage; 

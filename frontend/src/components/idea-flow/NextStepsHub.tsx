@@ -13,7 +13,7 @@ interface ValidationResult {
   nextSteps: string[];
 }
 
-interface BusinessPlan {
+interface StartupPlan {
   summary: string;
   sections: { [key: string]: string };
 }
@@ -533,6 +533,32 @@ const Initials = styled.div`
   }
 `;
 
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
+  elite: 'Elite',
+};
+
+const PlanBadge = styled.div`
+  margin-top: -0.2rem;
+  background: #f3f4f6;
+  color: #181a1b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid #181a1b;
+  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.01em;
+  user-select: none;
+`;
+
 // Mock data - in real app, this would come from backend
 const mockProgress = {
   currentRevenue: 0,
@@ -603,7 +629,7 @@ const mockCoaches: Coach[] = [
   }
 ];
 
-const getActionItems = (validationScore: number, businessPlan: BusinessPlan): ActionItem[] => {
+const getActionItems = (validationScore: number, startupPlan: StartupPlan): ActionItem[] => {
   const baseItems: ActionItem[] = [
     {
       id: 1,
@@ -1044,10 +1070,10 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const result = location.state?.result as ValidationResult;
-  const businessPlan = location.state?.businessPlan as BusinessPlan;
+  const startupPlan = location.state?.startupPlan as StartupPlan;
 
   const [progress, setProgress] = useState(mockProgress);
-  const [actionItems, setActionItems] = useState(getActionItems(result?.validationScore || 0, businessPlan));
+  const [actionItems, setActionItems] = useState(getActionItems(result?.validationScore || 0, startupPlan));
   const [showMilestone, setShowMilestone] = useState(false);
   const [openHelpItem, setOpenHelpItem] = useState<number | null>(null);
 
@@ -1101,19 +1127,26 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
           onClick={() => navigate('/')} 
         />
         {user && (
-          user.profilePic ? (
-            <Avatar 
-              src={user.profilePic} 
-              alt="Profile" 
-              onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} 
-            />
-          ) : user.email ? (
-            <Initials 
-              onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}
-            >
-              {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-            </Initials>
-          ) : null
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+            {user.profilePic ? (
+              <Avatar 
+                src={user.profilePic} 
+                alt="Profile" 
+                onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} 
+              />
+            ) : user.email ? (
+              <Initials 
+                onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}
+              >
+                {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
+              </Initials>
+            ) : null}
+            <PlanBadge>
+              {!user?.isSubscribed
+                ? PLAN_DISPLAY_NAMES['free']
+                : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+            </PlanBadge>
+          </div>
         )}
       </TopBar>
 
@@ -1343,7 +1376,7 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
                     <p>Learn new skills to grow your business</p>
                   </div>
                 </QuickActionButton>
-                <QuickActionButton onClick={() => navigate('/market-validation', { state: { businessPlan } })}>
+                <QuickActionButton onClick={() => navigate('/market-validation', { state: { startupPlan } })}>
                   <FiTrendingUp />
                   <div>
                     <h4>Re-validate Market</h4>

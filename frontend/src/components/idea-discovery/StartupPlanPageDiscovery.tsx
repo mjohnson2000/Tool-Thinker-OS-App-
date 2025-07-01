@@ -156,7 +156,7 @@ const CenteredText = styled.p`
   margin-top: 1rem;
 `;
 
-interface BusinessPlanPageDiscoveryProps {
+interface StartupPlanPageDiscoveryProps {
   idea: any;
   customer: any;
   job: any;
@@ -166,24 +166,24 @@ interface BusinessPlanPageDiscoveryProps {
   onContinueToValidation?: () => void;
 }
 
-interface BusinessPlan {
+interface StartupPlan {
   summary: string;
   sections: { [key: string]: string };
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps) {
+export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const { idea, customer, job, ...rest } = props;
   const { user, mockUpgradeToPremium } = useAuth();
-  const [plan, setPlan] = useState<BusinessPlan | null>(null);
+  const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showMarketValidation, setShowMarketValidation] = useState(false);
-  const prevPlanRef = useRef<BusinessPlan | null>(null);
+  const prevPlanRef = useRef<StartupPlan | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,12 +197,12 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const res = await fetch('/api/business-plan/discovery', {
+        const res = await fetch('/api/startup-plan/discovery', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idea, customer, job })
         });
-        if (!res.ok) throw new Error('Failed to generate business plan');
+        if (!res.ok) throw new Error('Failed to generate startup plan');
         const data = await res.json();
         setPlan(data);
         setProgress(100);
@@ -210,14 +210,14 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
         // Save plan to backend if authenticated
         if (user && user.email) {
           try {
-            await fetch(`${API_URL}/business-plan`, {
+            await fetch(`${API_URL}/startup-plan`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
               },
               body: JSON.stringify({
-                title: 'Untitled Business Plan',
+                title: 'Untitled Startup Plan',
                 summary: data.summary,
                 sections: data.sections,
                 idea,
@@ -270,13 +270,13 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
 
   return (
     <Container>
-      <Title>Your Business Plan</Title>
+      <Title>Your Startup Plan</Title>
       {isLoading && (
         <>
           <ProgressBarContainer>
             <ProgressBarFill percent={progress} />
           </ProgressBarContainer>
-          <CenteredText>Generating your business plan...</CenteredText>
+          <CenteredText>Generating your startup plan...</CenteredText>
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
@@ -295,7 +295,7 @@ export function BusinessPlanPageDiscovery(props: BusinessPlanPageDiscoveryProps)
           ))}
           <Actions>
             <ActionButton className="centered" onClick={() => navigate('/plans')}>
-              Manage Business Plan
+              Manage Startup Plan
             </ActionButton>
           </Actions>
         </>

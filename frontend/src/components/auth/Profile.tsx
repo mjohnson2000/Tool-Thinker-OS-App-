@@ -237,19 +237,31 @@ const CloseButton = styled.button`
   }
 `;
 
-const PremiumBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(90deg, #ffe066 0%, #ffd700 100%);
-  color: #7c5c00;
-  font-weight: 700;
-  font-size: 1rem;
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
+  elite: 'Elite',
+};
+
+const PlanBadge = styled.div`
+  margin-top: -0.2rem;
+  margin-bottom: 1.2rem;
+  background: #f3f4f6;
+  color: #181a1b;
+  font-size: 0.82rem;
+  font-weight: 600;
   border-radius: 999px;
-  padding: 0.3rem 1rem 0.3rem 0.8rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.12);
-  border: 1.5px solid #ffe066;
+  border: 1.5px solid #181a1b;
+  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.01em;
+  user-select: none;
 `;
 
 interface ProfileProps {
@@ -359,35 +371,16 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
           ) : (
             <Avatar aria-label="User avatar">{initials}</Avatar>
           )}
-          {/* Edit link just below avatar */}
-          <EditLink type="button" onClick={() => document.getElementById('profile-pic-upload')?.click()}>
+          {/* Edit link just below avatar, with less margin */}
+          <EditLink type="button" style={{ marginBottom: '0.3rem', marginTop: '-0.5rem' }} onClick={() => document.getElementById('profile-pic-upload')?.click()}>
             Edit
           </EditLink>
-          {/* Premium badge for subscribed users */}
-          {user && user.isSubscribed && (
-            <>
-              <PremiumBadge title="Premium Subscriber">
-                <span role="img" aria-label="Crown">👑</span> Premium Subscriber
-              </PremiumBadge>
-              <ClearGreyButton
-                type="button"
-                style={{ width: '100%', marginBottom: '1rem' }}
-                onClick={() => navigate('/subscribe')}
-                aria-label="Manage subscription"
-              >
-                Manage Subscription
-              </ClearGreyButton>
-            </>
-          )}
-          {/* Subscribe button for non-subscribed users */}
-          {user && !user.isSubscribed && (
-            <div style={{ marginBottom: '1rem', width: '100%' }}>
-              <Button type="button" onClick={handleSubscribe} disabled={isSubscribing} style={{ width: '100%' }}>
-                {isSubscribing ? 'Redirecting to Stripe...' : 'Subscribe to Premium'}
-              </Button>
-              {subscribeError && <div style={{ color: 'red', marginTop: '0.5rem' }}>{subscribeError}</div>}
-            </div>
-          )}
+          {/* PlanBadge below Edit link, with extra margin-bottom */}
+          <PlanBadge>
+            {!user?.isSubscribed
+              ? PLAN_DISPLAY_NAMES['free']
+              : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+          </PlanBadge>
           <form onSubmit={handleSave} style={{ width: '100%' }}>
             <label htmlFor="profile-pic-upload" style={{ display: 'none' }}>
               <EditPicButton type="button" onClick={() => document.getElementById('profile-pic-upload')?.click()}>

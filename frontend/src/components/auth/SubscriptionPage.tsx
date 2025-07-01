@@ -110,6 +110,18 @@ const GoBackButton = styled.button`
 
 const tiers = [
   {
+    name: 'Free',
+    key: 'free',
+    price: '$0',
+    priceId: '',
+    features: [
+      'Access to basic features',
+      'Limited business plans',
+      'Community support',
+    ],
+    accent: false,
+  },
+  {
     name: 'Basic',
     key: 'basic',
     price: '$9.99',
@@ -234,6 +246,13 @@ const AccentBadge = styled.div`
   box-shadow: 0 2px 8px rgba(24,26,27,0.08);
 `;
 
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
+  elite: 'Elite',
+};
+
 export function SubscriptionPage() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -307,7 +326,7 @@ export function SubscriptionPage() {
     }
   }
 
-  const currentTier = user?.subscriptionTier || 'basic';
+  const currentTier = !user?.isSubscribed ? 'free' : user?.subscriptionTier || 'basic';
 
   return (
     <PageContainer>
@@ -327,12 +346,14 @@ export function SubscriptionPage() {
                 <FeatureItem key={i}><FaCheckCircle style={{ color: '#181a1b', fontSize: '1em' }} /> {feature}</FeatureItem>
               ))}
             </FeatureList>
-            {currentTier === tier.key && user?.isSubscribed ? (
-              <TierButton current disabled>Current Plan</TierButton>
-            ) : (
-              <TierButton onClick={() => handleSubscribe(tier.priceId)} disabled={isLoading}>
-                {isLoading ? 'Loading...' : tier.key === 'basic' ? 'Start 7-Day Free Trial' : `Upgrade to ${tier.name}`}
-              </TierButton>
+            {tier.key !== 'free' && (
+              currentTier === tier.key && user?.isSubscribed ? (
+                <TierButton current disabled>Current Plan</TierButton>
+              ) : (
+                <TierButton onClick={() => handleSubscribe(tier.priceId)} disabled={isLoading}>
+                  {isLoading ? 'Loading...' : tier.key === 'basic' ? 'Start 7-Day Free Trial' : `Upgrade to ${tier.name}`}
+                </TierButton>
+              )
             )}
           </TierCard>
         ))}

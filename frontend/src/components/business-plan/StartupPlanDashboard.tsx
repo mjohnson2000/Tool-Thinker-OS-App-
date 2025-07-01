@@ -2,20 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FaPlus, 
-  FaEdit, 
-  FaEye, 
-  FaTrash, 
-  FaShare, 
-  FaHistory, 
-  FaUsers,
-  FaChartLine,
-  FaLightbulb,
-  FaCheckCircle,
-  FaClock,
-  FaStar
-} from 'react-icons/fa';
+import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar } from 'react-icons/fa';
 import logo from '../../assets/logo.png';
 import { initialAppState } from '../../App';
 
@@ -356,7 +343,7 @@ const EmptyText = styled.p`
   margin-bottom: 2rem;
 `;
 
-interface BusinessPlan {
+interface StartupPlan {
   _id: string;
   title: string;
   summary: string;
@@ -370,26 +357,23 @@ interface BusinessPlan {
     problemDefinition: boolean;
     solutionDesign: boolean;
     marketValidation: boolean;
-    businessPlan: boolean;
+    startupPlan: boolean;
     nextSteps: boolean;
   };
   views: number;
   createdAt: string;
   updatedAt: string;
-  validationScore?: {
-    score: number;
-  };
 }
 
-interface BusinessPlanDashboardProps {
-  onSelectPlan?: (plan: BusinessPlan) => void;
+interface StartupPlanDashboardProps {
+  onSelectPlan?: (plan: StartupPlan) => void;
   setAppState?: (fn: (prev: any) => any) => void;
 }
 
-export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: BusinessPlanDashboardProps) {
+export default function StartupPlanDashboard({ onSelectPlan, setAppState }: StartupPlanDashboardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<BusinessPlan[]>([]);
+  const [plans, setPlans] = useState<StartupPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -408,7 +392,7 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/business-plan`, {
+      const response = await fetch(`${API_URL}/startup-plan`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -417,15 +401,15 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
       if (!response.ok) throw new Error('Failed to fetch plans');
       
       const data = await response.json();
-      setPlans(data.businessPlans);
+      setPlans(data.startupPlans);
       
       // Calculate stats
-      const total = data.businessPlans.length;
-      const active = data.businessPlans.filter((p: BusinessPlan) => p.status === 'active').length;
-      const draft = data.businessPlans.filter((p: BusinessPlan) => p.status === 'draft').length;
-      const validated = data.businessPlans.filter((p: BusinessPlan) => p.status === 'validated').length;
+      const total = data.startupPlans.length;
+      const active = data.startupPlans.filter((p: StartupPlan) => p.status === 'active').length;
+      const draft = data.startupPlans.filter((p: StartupPlan) => p.status === 'draft').length;
+      const validated = data.startupPlans.filter((p: StartupPlan) => p.status === 'validated').length;
       
-      const totalProgress = data.businessPlans.reduce((sum: number, plan: BusinessPlan) => {
+      const totalProgress = data.startupPlans.reduce((sum: number, plan: StartupPlan) => {
         const progressFields = Object.values(plan.progress);
         const completed = progressFields.filter(Boolean).length;
         return sum + (completed / progressFields.length) * 100;
@@ -455,23 +439,23 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
     }
   };
 
-  const handleViewPlan = (plan: BusinessPlan) => {
+  const handleViewPlan = (plan: StartupPlan) => {
     if (onSelectPlan) {
       onSelectPlan(plan);
     } else {
-      navigate(`/business-plan/${plan._id}`);
+      navigate(`/startup-plan/${plan._id}`);
     }
   };
 
-  const handleEditPlan = (plan: BusinessPlan) => {
-    navigate(`/business-plan/${plan._id}/edit`);
+  const handleEditPlan = (plan: StartupPlan) => {
+    navigate(`/startup-plan/${plan._id}/edit`);
   };
 
   const handleDeletePlan = async (planId: string) => {
-    if (!confirm('Are you sure you want to delete this business plan?')) return;
+    if (!confirm('Are you sure you want to delete this startup plan?')) return;
     
     try {
-      const response = await fetch(`${API_URL}/business-plan/${planId}`, {
+      const response = await fetch(`${API_URL}/startup-plan/${planId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -480,27 +464,7 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
       
       if (!response.ok) throw new Error('Failed to delete plan');
       
-      setPlans(prevPlans => {
-        const updatedPlans = prevPlans.filter(p => p._id !== planId);
-        // Update stats immediately
-        const total = updatedPlans.length;
-        const active = updatedPlans.filter((p) => p.status === 'active').length;
-        const draft = updatedPlans.filter((p) => p.status === 'draft').length;
-        const validated = updatedPlans.filter((p) => p.status === 'validated').length;
-        const totalProgress = updatedPlans.reduce((sum, plan) => {
-          const progressFields = Object.values(plan.progress);
-          const completed = progressFields.filter(Boolean).length;
-          return sum + (completed / progressFields.length) * 100;
-        }, 0);
-        setStats({
-          total,
-          active,
-          draft,
-          validated,
-          averageProgress: total > 0 ? Math.round(totalProgress / total) : 0
-        });
-        return updatedPlans;
-      });
+      setPlans(plans.filter(p => p._id !== planId));
     } catch (err: any) {
       setError(err.message);
     }
@@ -510,7 +474,7 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
     statusFilter === 'all' || plan.status === statusFilter
   );
 
-  const getProgressPercentage = (plan: BusinessPlan) => {
+  const getProgressPercentage = (plan: StartupPlan) => {
     const progressFields = Object.values(plan.progress);
     const completed = progressFields.filter(Boolean).length;
     return Math.round((completed / progressFields.length) * 100);
@@ -520,7 +484,17 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
     return (
       <Container>
         <div style={{ textAlign: 'center', padding: '4rem' }}>
-          <div>Loading your business plans...</div>
+          <div>Loading your startup plans...</div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <div style={{ textAlign: 'center', padding: '4rem', color: '#dc3545' }}>
+          <div>Error: {error}</div>
         </div>
       </Container>
     );
@@ -528,12 +502,9 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
 
   return (
     <>
-      <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-        localStorage.removeItem('appState');
-        navigate('/');
-      }} />
+      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
       <TopBar>
-        <AvatarButton onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'plans', currentStep: 'profile' }))} aria-label="Profile">
+        <AvatarButton onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} aria-label="Profile">
           {user && user.profilePic ? (
             <TopBarAvatarImg src={user.profilePic} alt="Profile" />
           ) : user && user.email ? (
@@ -552,7 +523,7 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
       </TopBar>
       <Container>
         <Header>
-          <Title>My Business Plans</Title>
+          <Title>Startup Plans</Title>
           <CreateButton onClick={handleCreatePlan}>
             <FaPlus /> Create New Plan
           </CreateButton>
@@ -564,31 +535,28 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
               <FaChartLine /> Total Plans
             </StatTitle>
             <StatValue>{stats.total}</StatValue>
-            <StatSubtitle>All your business ideas</StatSubtitle>
+            <StatSubtitle>All startup plans</StatSubtitle>
           </StatCard>
-          
           <StatCard>
             <StatTitle>
               <FaCheckCircle /> Active Plans
             </StatTitle>
             <StatValue>{stats.active}</StatValue>
-            <StatSubtitle>Currently working on</StatSubtitle>
+            <StatSubtitle>Currently active</StatSubtitle>
           </StatCard>
-          
+          <StatCard>
+            <StatTitle>
+              <FaClock /> Draft Plans
+            </StatTitle>
+            <StatValue>{stats.draft}</StatValue>
+            <StatSubtitle>In progress</StatSubtitle>
+          </StatCard>
           <StatCard>
             <StatTitle>
               <FaStar /> Validated Plans
             </StatTitle>
             <StatValue>{stats.validated}</StatValue>
             <StatSubtitle>Market validated</StatSubtitle>
-          </StatCard>
-          
-          <StatCard>
-            <StatTitle>
-              <FaClock /> Average Progress
-            </StatTitle>
-            <StatValue>{stats.averageProgress}%</StatValue>
-            <StatSubtitle>Across all plans</StatSubtitle>
           </StatCard>
         </StatsGrid>
 
@@ -619,26 +587,18 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
           </FilterButton>
         </Filters>
 
-        {error && (
-          <div style={{ color: 'red', textAlign: 'center', marginBottom: '2rem' }}>
-            {error}
-          </div>
-        )}
-
-        {filteredPlans.length === 0 ? (
+        {plans.length === 0 ? (
           <EmptyState>
-            <EmptyIcon>💡</EmptyIcon>
-            <EmptyTitle>No business plans yet</EmptyTitle>
-            <EmptyText>
-              Start building your first business plan to turn your ideas into reality.
-            </EmptyText>
+            <EmptyIcon>📋</EmptyIcon>
+            <EmptyTitle>No startup plans yet</EmptyTitle>
+            <EmptyText>Create your first startup plan to get started</EmptyText>
             <CreateButton onClick={handleCreatePlan}>
               <FaPlus /> Create Your First Plan
             </CreateButton>
           </EmptyState>
         ) : (
           <PlansGrid>
-            {filteredPlans.map(plan => (
+            {filteredPlans.map((plan) => (
               <PlanCard key={plan._id} onClick={() => handleViewPlan(plan)}>
                 <PlanHeader>
                   <PlanTitle>{plan.title}</PlanTitle>
@@ -647,23 +607,14 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
                 
                 <PlanSummary>{plan.summary}</PlanSummary>
                 
-                <PlanMeta>
-                  <span>v{plan.version}</span>
-                  <span>{new Date(plan.updatedAt).toLocaleDateString()}</span>
-                </PlanMeta>
-                
                 <ProgressBar>
                   <ProgressFill percent={getProgressPercentage(plan)} />
                 </ProgressBar>
                 
-                <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
-                  {getProgressPercentage(plan)}% Complete
-                </div>
-                {plan.validationScore && typeof plan.validationScore.score === 'number' && (
-                  <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#181a1b', marginBottom: '0.7rem' }}>
-                    Validation Score: <span style={{ color: plan.validationScore.score >= 80 ? '#28a745' : plan.validationScore.score >= 60 ? '#ffc107' : '#dc3545' }}>{plan.validationScore.score}/100</span>
-                  </div>
-                )}
+                <PlanMeta>
+                  <span>v{plan.version}</span>
+                  <span>{new Date(plan.updatedAt).toLocaleDateString()}</span>
+                </PlanMeta>
                 
                 <PlanActions onClick={(e) => e.stopPropagation()}>
                   <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>
@@ -672,23 +623,8 @@ export default function BusinessPlanDashboard({ onSelectPlan, setAppState }: Bus
                   <ActionButton variant="secondary" onClick={() => handleEditPlan(plan)}>
                     <FaEdit /> Edit
                   </ActionButton>
-                  <ActionButton onClick={() => navigate(`/business-plan/${plan._id}/versions`)}>
-                    <FaHistory /> Versions
-                  </ActionButton>
-                  <ActionButton onClick={() => navigate(`/business-plan/${plan._id}/collaborators`)}>
-                    <FaUsers /> Share
-                  </ActionButton>
                   <ActionButton variant="danger" onClick={() => handleDeletePlan(plan._id)}>
                     <FaTrash /> Delete
-                  </ActionButton>
-                  <ActionButton variant="primary" onClick={() => {
-                    if (user?.isSubscribed) {
-                      navigate('/market-validation', { state: { businessPlan: plan } });
-                    } else {
-                      navigate('/subscribe', { state: { businessPlan: plan } });
-                    }
-                  }}>
-                    Continue to Market Validation
                   </ActionButton>
                 </PlanActions>
               </PlanCard>

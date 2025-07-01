@@ -67,7 +67,7 @@ router.post('/signup', async (req, res, next) => {
           email: user.email,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
-          subscriptionTier: user.subscriptionTier,
+          subscriptionTier: user.subscriptionTier || 'basic',
         }
       }
     });
@@ -110,7 +110,7 @@ router.post('/login', async (req, res, next) => {
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
-          subscriptionTier: user.subscriptionTier,
+          subscriptionTier: user.subscriptionTier || 'basic',
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -198,7 +198,7 @@ router.get('/validate', async (req: Request, res: Response, next: NextFunction) 
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
-          subscriptionTier: user.subscriptionTier,
+          subscriptionTier: user.subscriptionTier || 'basic',
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }
@@ -241,7 +241,7 @@ router.patch('/profile', requireAuth, async (req: Request & { userId?: string },
           profilePic: user.profilePic,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
-          subscriptionTier: user.subscriptionTier,
+          subscriptionTier: user.subscriptionTier || 'basic',
           createdAt: user.createdAt,
           lastLogin: user.lastLogin
         }

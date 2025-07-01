@@ -143,15 +143,27 @@ businessPlanRouter.get('/', auth, async (req: AuthRequest, res: Response) => {
 
     const total = await BusinessPlan.countDocuments(filter);
 
-    res.json({
-      businessPlans,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit))
-      }
-    });
+    if (req.baseUrl.endsWith('/startup-plan')) {
+      res.json({
+        startupPlans: businessPlans,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit))
+        }
+      });
+    } else {
+      res.json({
+        businessPlans,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit))
+        }
+      });
+    }
   } catch (error: any) {
     console.error('Get business plans error:', error);
     res.status(500).json({ error: 'Failed to fetch business plans' });

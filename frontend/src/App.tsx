@@ -14,7 +14,7 @@ import { Login } from './components/auth/Login';
 import { Profile } from './components/auth/Profile';
 import { FaUserCircle } from 'react-icons/fa';
 import { ResetPassword } from './components/auth/ResetPassword';
-import { BrowserRouter as Router, Routes, Route, useParams, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation } from 'react-router-dom';
 import { DescribeCustomer } from './components/idea-flow/DescribeCustomer';
 import { DescribeProblem } from './components/idea-flow/DescribeProblem';
 import { DescribeSolution } from './components/idea-flow/DescribeSolution';
@@ -24,15 +24,17 @@ import { ProgressTracker } from './components/idea-flow/ProgressTracker';
 import type { BusinessArea } from './components/idea-flow/IdeaSelection';
 import type { CustomerOption } from './components/idea-flow/CustomerSelection';
 import type { JobOption } from './components/idea-flow/JobSelection';
-import { BusinessPlanPageDiscovery } from './components/idea-discovery/BusinessPlanPageDiscovery';
 import { MarketValidationPage } from './components/idea-flow/MarketValidationPage';
 import { MarketValidationScorePage } from './components/idea-flow/MarketValidationScorePage';
 import { NextStepsHub } from './components/idea-flow/NextStepsHub';
 import { SubscriptionPage } from './components/auth/SubscriptionPage';
 import { CoachMarketplace } from './components/learning/CoachMarketplace';
 import { CourseLibrary } from './components/learning/CourseLibrary';
-import BusinessPlanDashboard from './components/business-plan/BusinessPlanDashboard';
-import BusinessPlanEditPage from './components/business-plan/BusinessPlanEditPage';
+
+import WebLandingPage from './components/WebLandingPage';
+import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
+import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
+import { StartupPlanEditPage } from './components/business-plan/StartupPlanEditPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -223,7 +225,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketValidation' | 'validationScore' | 'nextStepsHub';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketValidation' | 'validationScore' | 'nextStepsHub' | 'startupPlan';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -317,7 +319,8 @@ function ResetPasswordRoute() {
 
 function AppContent() {
   const { isLoading, isAuthenticated, signup, login, user, requestPasswordReset, mockUpgradeToPremium } = useAuth();
-  console.log('USER OBJECT:', user); // Debug log for user object
+  console.log('USER OBJECT:', user);
+  const location = useLocation();
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -492,11 +495,18 @@ function AppContent() {
     setAppState(prev => ({ ...prev, currentStep: 'prematureJobDiscovery' }));
   }
 
+  const PLAN_DISPLAY_NAMES: Record<string, string> = {
+    free: 'Free',
+    basic: 'Basic',
+    pro: 'Pro',
+    elite: 'Elite',
+  };
+
   // Debug: log appState before rendering
   console.log('AppContent about to render, appState:', appState);
 
   return (
-    <Router>
+    <>
       {/* Always render the Profile modal/page when currentStep === 'profile' */}
       {currentStep === 'profile' && (
         <Profile 
@@ -506,6 +516,7 @@ function AppContent() {
         />
       )}
       <Routes>
+        <Route path="/" element={<WebLandingPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
         <Route path="/market-validation" element={<MarketValidationPage setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/validation-score" element={<MarketValidationScorePage setAppState={setAppState} currentStep={currentStep} />} />
@@ -513,8 +524,8 @@ function AppContent() {
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={<CoachMarketplace />} />
         <Route path="/courses" element={<CourseLibrary />} />
-        <Route path="/plans" element={<BusinessPlanDashboard setAppState={setAppState} />} />
-        <Route path="/business-plan/:id/edit" element={<BusinessPlanEditPage setAppState={setAppState} />} />
+        <Route path="/plans" element={<StartupPlanDashboard setAppState={setAppState} />} />
+        <Route path="/startup-plan/:id/edit" element={<StartupPlanEditPage setAppState={setAppState} />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
@@ -540,7 +551,7 @@ function AppContent() {
                       border: 'none',
                       fontWeight: 600
                     }}>
-                    My Business Plans
+                    My Startup Plans
                   </NavButton>
                   <AvatarButton onClick={() => {
                     setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
@@ -560,9 +571,12 @@ function AppContent() {
                       ) : (
                         <AvatarImg src={defaultAvatar} alt="Avatar" />
                       )}
-                      {user?.subscriptionTier && (
+                      {/* Only show PlanBadge if not on the landing page */}
+                      {user && location.pathname !== '/' && (
                         <PlanBadge>
-                          {user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1)}
+                          {!user?.isSubscribed
+                            ? PLAN_DISPLAY_NAMES['free']
+                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
                         </PlanBadge>
                       )}
                     </div>
@@ -620,7 +634,7 @@ function AppContent() {
                         }} 
                       /> )}
                     {currentStep === 'businessPlan' && job && (
-                      <BusinessPlanPageDiscovery
+                      <StartupPlanPageDiscovery
                         idea={idea}
                         customer={customer}
                         job={job}
@@ -702,7 +716,7 @@ function AppContent() {
           </AppContainer>
         } />
       </Routes>
-    </Router>
+    </>
   );
 }
 

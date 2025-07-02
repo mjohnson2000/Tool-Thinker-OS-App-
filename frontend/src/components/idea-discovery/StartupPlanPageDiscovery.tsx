@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { FiCopy } from 'react-icons/fi';
 import Confetti from 'react-confetti';
 import { useAuth } from '../../contexts/AuthContext';
-import MarketValidation from '../idea-flow/MarketValidation';
+import MarketEvaluation from '../idea-flow/MarketEvaluation';
 import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
@@ -182,7 +182,7 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showMarketValidation, setShowMarketValidation] = useState(false);
+  const [showMarketEvaluation, setShowMarketEvaluation] = useState(false);
   const prevPlanRef = useRef<StartupPlan | null>(null);
   const navigate = useNavigate();
 

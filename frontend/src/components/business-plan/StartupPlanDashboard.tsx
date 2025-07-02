@@ -356,13 +356,16 @@ interface StartupPlan {
     customerResearch: boolean;
     problemDefinition: boolean;
     solutionDesign: boolean;
-    marketValidation: boolean;
+    marketEvaluation: boolean;
     startupPlan: boolean;
     nextSteps: boolean;
   };
   views: number;
   createdAt: string;
   updatedAt: string;
+  marketEvaluation?: {
+    score: number;
+  };
 }
 
 interface StartupPlanDashboardProps {
@@ -464,10 +467,32 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       
       if (!response.ok) throw new Error('Failed to delete plan');
       
-      setPlans(plans.filter(p => p._id !== planId));
+      const updatedPlans = plans.filter(p => p._id !== planId);
+      setPlans(updatedPlans);
+      // Recalculate stats immediately
+      const total = updatedPlans.length;
+      const active = updatedPlans.filter((p) => p.status === 'active').length;
+      const draft = updatedPlans.filter((p) => p.status === 'draft').length;
+      const validated = updatedPlans.filter((p) => p.status === 'validated').length;
+      const totalProgress = updatedPlans.reduce((sum, plan) => {
+        const progressFields = Object.values(plan.progress);
+        const completed = progressFields.filter(Boolean).length;
+        return sum + (completed / progressFields.length) * 100;
+      }, 0);
+      setStats({
+        total,
+        active,
+        draft,
+        validated,
+        averageProgress: total > 0 ? Math.round(totalProgress / total) : 0
+      });
     } catch (err: any) {
       setError(err.message);
     }
+  };
+
+  const handleNextSteps = (plan: StartupPlan) => {
+    navigate('/next-steps-hub', { state: { businessPlan: plan } });
   };
 
   const filteredPlans = plans.filter(plan => 
@@ -606,7 +631,16 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                 </PlanHeader>
                 
                 <PlanSummary>{plan.summary}</PlanSummary>
-                
+                <div style={{
+                  fontWeight: 600,
+                  color: plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number'
+                    ? (plan.marketEvaluation.score >= 80 ? '#28a745' : plan.marketEvaluation.score >= 60 ? '#ffc107' : '#dc3545')
+                    : '#888',
+                  marginBottom: '0.5rem',
+                  fontSize: '1.1rem',
+                }}>
+                  Evaluation Score: {plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number' ? plan.marketEvaluation.score : 0}/100
+                </div>
                 <ProgressBar>
                   <ProgressFill percent={getProgressPercentage(plan)} />
                 </ProgressBar>
@@ -620,11 +654,11 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                   <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>
                     <FaEye /> View
                   </ActionButton>
-                  <ActionButton variant="secondary" onClick={() => handleEditPlan(plan)}>
-                    <FaEdit /> Edit
-                  </ActionButton>
                   <ActionButton variant="danger" onClick={() => handleDeletePlan(plan._id)}>
                     <FaTrash /> Delete
+                  </ActionButton>
+                  <ActionButton variant="secondary" onClick={() => handleNextSteps(plan)}>
+                    <FaCheckCircle /> Continue to Next Steps
                   </ActionButton>
                 </PlanActions>
               </PlanCard>

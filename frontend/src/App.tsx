@@ -24,17 +24,18 @@ import { ProgressTracker } from './components/idea-flow/ProgressTracker';
 import type { BusinessArea } from './components/idea-flow/IdeaSelection';
 import type { CustomerOption } from './components/idea-flow/CustomerSelection';
 import type { JobOption } from './components/idea-flow/JobSelection';
-import { MarketValidationPage } from './components/idea-flow/MarketValidationPage';
-import { MarketValidationScorePage } from './components/idea-flow/MarketValidationScorePage';
+import { MarketEvaluationPage } from './components/idea-flow/MarketEvaluationPage';
+import { MarketEvaluationScorePage } from './components/idea-flow/MarketEvaluationScorePage';
 import { NextStepsHub } from './components/idea-flow/NextStepsHub';
 import { SubscriptionPage } from './components/auth/SubscriptionPage';
 import { CoachMarketplace } from './components/learning/CoachMarketplace';
 import { CourseLibrary } from './components/learning/CourseLibrary';
 
 import WebLandingPage from './components/WebLandingPage';
-import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
 import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
 import { StartupPlanEditPage } from './components/business-plan/StartupPlanEditPage';
+import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
+import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -225,7 +226,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketValidation' | 'validationScore' | 'nextStepsHub' | 'startupPlan';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'signup' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -256,8 +257,8 @@ const steps = [
   { key: 'job', label: '3. Customer Job' },
   { key: 'summary', label: '4. Summary' },
   { key: 'businessPlan', label: '5. Business Plan' },
-  { key: 'marketValidation', label: '6. Market Validation', isPremium: true },
-  { key: 'validationScore', label: '7. Validation Score', isPremium: true },
+  { key: 'marketEvaluation', label: '6. Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: '7. Validation Score', isPremium: true },
   { key: 'nextStepsHub', label: '8. Next Steps Hub', isPremium: true },
 ];
 
@@ -269,8 +270,8 @@ const prematureIdeaFlowSteps = [
   { key: 'describeSolution', label: '5. The Solution' },
   { key: 'describeCompetition', label: '6. Your Advantage' },
   { key: 'businessPlan', label: '7. Business Plan' },
-  { key: 'marketValidation', label: '8. Market Validation', isPremium: true },
-  { key: 'validationScore', label: '9. Validation Score', isPremium: true },
+  { key: 'marketEvaluation', label: '8. Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: '9. Validation Score', isPremium: true },
   { key: 'nextStepsHub', label: '10. Next Steps Hub', isPremium: true },
 ];
 
@@ -518,14 +519,15 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<WebLandingPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/market-validation" element={<MarketValidationPage setAppState={setAppState} currentStep={currentStep} />} />
-        <Route path="/validation-score" element={<MarketValidationScorePage setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/market-evaluation" element={<MarketEvaluationPage setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/evaluation-score" element={<MarketEvaluationScorePage setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/next-steps-hub" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={<CoachMarketplace />} />
         <Route path="/courses" element={<CourseLibrary />} />
         <Route path="/plans" element={<StartupPlanDashboard setAppState={setAppState} />} />
         <Route path="/startup-plan/:id/edit" element={<StartupPlanEditPage setAppState={setAppState} />} />
+        <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {

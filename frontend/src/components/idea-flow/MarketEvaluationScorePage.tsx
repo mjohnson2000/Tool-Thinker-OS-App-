@@ -269,7 +269,7 @@ const PlanBadge = styled.div`
   user-select: none;
 `;
 
-export function MarketValidationScorePage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
+export function MarketEvaluationScorePage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -289,18 +289,18 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
           });
           if (!res.ok) throw new Error('Failed to fetch business plan');
           const data = await res.json();
-          if (data.businessPlan?.validationScore) {
+          if (data.businessPlan?.evaluationScore) {
             setResult({
-              validationScore: data.businessPlan.validationScore.score,
+              evaluationScore: data.businessPlan.evaluationScore.score,
               recommendations: [],
               risks: [],
               nextSteps: []
             });
           } else {
-            setError('No validation score found for this plan.');
+            setError('No evaluation score found for this plan.');
           }
         } catch (err: any) {
-          setError(err.message || 'Failed to fetch validation score.');
+          setError(err.message || 'Failed to fetch evaluation score.');
         } finally {
           setLoading(false);
         }
@@ -313,7 +313,7 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
     return <Navigate to='/' replace />;
   }
   if (loading) {
-    return <PageBackground><div style={{ textAlign: 'center', marginTop: '4rem' }}>Loading validation score…</div></PageBackground>;
+    return <PageBackground><div style={{ textAlign: 'center', marginTop: '4rem' }}>Loading evaluation score…</div></PageBackground>;
   }
   if (error) {
     return <PageBackground><div style={{ color: 'red', textAlign: 'center', marginTop: '4rem' }}>{error}</div></PageBackground>;
@@ -323,8 +323,8 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
   }
 
   let scoreColor = '#dc3545';
-  if (result.validationScore >= 80) scoreColor = '#28a745';
-  else if (result.validationScore >= 60) scoreColor = '#28a745';
+  if (result.evaluationScore >= 80) scoreColor = '#28a745';
+  else if (result.evaluationScore >= 60) scoreColor = '#28a745';
 
   return (
     <PageBackground>
@@ -351,9 +351,9 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
         </div>
       </TopBar>
       <Card>
-        <Title>Validation Score</Title>
+        <Title>Evaluation Score</Title>
         <Section>
-          <Score color={scoreColor}>{result.validationScore}/100</Score>
+          <Score color={scoreColor}>{result.evaluationScore}/100</Score>
         </Section>
         <Section>
           <SectionTitle>Recommendations:</SectionTitle>
@@ -374,7 +374,7 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
           </SectionList>
         </Section>
         <ButtonRow>
-          <OutlinedButton onClick={() => navigate(-1)}>Back to Market Validation</OutlinedButton>
+          <OutlinedButton onClick={() => navigate(-1)}>Back to Market Evaluation</OutlinedButton>
           <Button onClick={() => navigate('/next-steps-hub', { state: { result, businessPlan: location.state?.businessPlan } })}>Continue to Next Steps</Button>
         </ButtonRow>
       </Card>
@@ -382,4 +382,4 @@ export function MarketValidationScorePage({ setAppState, currentStep }: { setApp
   );
 }
 
-export default MarketValidationScorePage; 
+export default MarketEvaluationScorePage; 

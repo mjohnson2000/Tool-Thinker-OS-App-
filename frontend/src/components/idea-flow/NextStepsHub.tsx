@@ -4,7 +4,7 @@ import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png';
 import { FiTarget, FiCheckCircle, FiBook, FiAward, FiTrendingUp, FiUsers, FiDollarSign, FiCalendar, FiArrowRight, FiRefreshCw, FiChevronDown, FiChevronUp, FiPlay, FiStar, FiSearch, FiCode } from 'react-icons/fi';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FaInfoCircle, FaArrowLeft } from 'react-icons/fa';
 
 interface ValidationResult {
   validationScore: number;
@@ -1065,15 +1065,44 @@ const CategoryTagWrapper = styled.span`
   }
 `;
 
+const MyPlansButton = styled.button`
+  background: #181a1b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: #000; }
+`;
+
 export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const result = location.state?.result as ValidationResult;
-  const startupPlan = location.state?.startupPlan as StartupPlan;
+  let result = location.state?.result as ValidationResult | undefined;
+  let startupPlan = location.state?.startupPlan as StartupPlan | undefined;
+  // Support dashboard navigation
+  if (!result && location.state?.businessPlan) {
+    startupPlan = location.state.businessPlan;
+    result = {
+      validationScore: 0,
+      recommendations: [],
+      risks: [],
+      nextSteps: []
+    };
+  }
 
+  if (!startupPlan) {
+    return <Navigate to='/' replace />;
+  }
   const [progress, setProgress] = useState(mockProgress);
-  const [actionItems, setActionItems] = useState(getActionItems(result?.validationScore || 0, startupPlan));
+  const [actionItems, setActionItems] = useState(getActionItems(result.validationScore, startupPlan));
   const [showMilestone, setShowMilestone] = useState(false);
   const [openHelpItem, setOpenHelpItem] = useState<number | null>(null);
 
@@ -1126,28 +1155,31 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
           }} 
           onClick={() => navigate('/')} 
         />
-        {user && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-            {user.profilePic ? (
-              <Avatar 
-                src={user.profilePic} 
-                alt="Profile" 
-                onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} 
-              />
-            ) : user.email ? (
-              <Initials 
-                onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}
-              >
-                {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-              </Initials>
-            ) : null}
-            <PlanBadge>
-              {!user?.isSubscribed
-                ? PLAN_DISPLAY_NAMES['free']
-                : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-            </PlanBadge>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginLeft: 'auto' }}>
+          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Startup Plans</MyPlansButton>
+          {user && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+              {user.profilePic ? (
+                <Avatar 
+                  src={user.profilePic} 
+                  alt="Profile" 
+                  onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} 
+                />
+              ) : user.email ? (
+                <Initials 
+                  onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}
+                >
+                  {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
+                </Initials>
+              ) : null}
+              <PlanBadge>
+                {!user?.isSubscribed
+                  ? PLAN_DISPLAY_NAMES['free']
+                  : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+              </PlanBadge>
+            </div>
+          )}
+        </div>
       </TopBar>
 
       <Container>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import MarketValidation from './MarketValidation';
+import MarketEvaluation from './MarketEvaluation';
 import styled from 'styled-components';
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
@@ -41,7 +41,7 @@ const TopBar = styled.div`
   background: transparent;
 `;
 
-export function MarketValidationPage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
+export function MarketEvaluationPage({ setAppState, currentStep }: { setAppState: any, currentStep: string }) {
   const { user } = useAuth();
   const location = useLocation();
   const startupPlan = location.state?.startupPlan;
@@ -66,9 +66,9 @@ export function MarketValidationPage({ setAppState, currentStep }: { setAppState
           </div>
         )}
       </TopBar>
-      <MarketValidation startupPlan={startupPlan} setAppState={setAppState} currentStep={currentStep} />
+      <MarketEvaluation startupPlan={startupPlan} setAppState={setAppState} currentStep={currentStep} />
     </>
   );
 }
 
-export default MarketValidationPage; 
+export default MarketEvaluationPage; 

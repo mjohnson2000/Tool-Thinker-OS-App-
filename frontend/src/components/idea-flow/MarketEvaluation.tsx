@@ -11,7 +11,7 @@ interface StartupPlan {
   _id: string;
 }
 
-interface MarketValidationProps {
+interface MarketEvaluationProps {
   startupPlan: StartupPlan;
   onComplete?: (result: any) => void;
   setAppState: React.Dispatch<React.SetStateAction<any>>;
@@ -325,7 +325,7 @@ const MyPlansButton = styled.button`
   }
 `;
 
-export function MarketValidation({ startupPlan, onComplete, setAppState, currentStep }: MarketValidationProps) {
+export function MarketEvaluation({ startupPlan, onComplete, setAppState, currentStep }: MarketEvaluationProps) {
   const { user } = useAuth();
   const [competitors, setCompetitors] = useState('');
   const [marketSize, setMarketSize] = useState('');
@@ -362,7 +362,7 @@ export function MarketValidation({ startupPlan, onComplete, setAppState, current
     try {
       // Simulate validation result (replace with real logic as needed)
       const mockResult = {
-        validationScore: 75,
+        evaluationScore: 75,
         recommendations: [
           'Interview at least 10 potential customers.',
           'Research 3 more competitors.',
@@ -378,19 +378,19 @@ export function MarketValidation({ startupPlan, onComplete, setAppState, current
         ]
       };
       setResult(mockResult);
-      // Save validation score to backend
+      // Save evaluation score to backend
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-      await fetch(`${API_URL}/startup-plan/${startupPlan._id}/validation-score`, {
+      await fetch(`${API_URL}/startup-plan/${startupPlan._id}/evaluation-score`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ score: mockResult.validationScore })
+        body: JSON.stringify({ score: mockResult.evaluationScore })
       });
       setIsLoading(false);
       if (onComplete) onComplete(mockResult);
-      navigate('/validation-score', { state: { result: mockResult, startupPlanId: startupPlan._id } });
+      navigate('/evaluation-score', { state: { result: mockResult, startupPlanId: startupPlan._id } });
     } catch (err) {
       setError('Failed to validate and save score.');
       setIsLoading(false);
@@ -421,7 +421,7 @@ export function MarketValidation({ startupPlan, onComplete, setAppState, current
       </TopBar>
       <Card>
         <div>
-          <Title>Market Validation</Title>
+          <Title>Market Evaluation</Title>
           <Subtitle>Validate your business idea with AI-powered insights. Review competitors, estimate your market, and craft customer research questions—all in one place.</Subtitle>
         </div>
         <Section>
@@ -474,19 +474,19 @@ export function MarketValidation({ startupPlan, onComplete, setAppState, current
             </Section>
             {error && <ErrorMessage>{error}</ErrorMessage>}
             <Button onClick={handleValidate} disabled={isLoading}>
-              {isLoading ? 'Validating…' : 'Validate My Idea'}
+              {isLoading ? 'Evaluating…' : 'Evaluate My Plan'}
             </Button>
           </>
         )}
         {result && (
           <ResultBox>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>Validation Results</h3>
-            <div style={{ marginBottom: 8 }}><strong>Score:</strong> {result.validationScore}/100</div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>Evaluation Results</h3>
+            <div style={{ marginBottom: 8 }}><strong>Score:</strong> {result.evaluationScore}/100</div>
             <div style={{ marginBottom: 8 }}><strong>Recommendations:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>{result.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}</ul>
             </div>
             <div style={{ marginBottom: 8 }}><strong>Risks:</strong>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>{result.risks.map((risk: string, i: number) => <li key={i}>{risk}</li>)}</ul>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>{result.risks.map((risk: string, i: number) => <li key={i} className="risk">{risk}</li>)}</ul>
             </div>
             <div><strong>Next Steps:</strong>
               <ul style={{ margin: 0, paddingLeft: 18 }}>{result.nextSteps.map((step: string, i: number) => <li key={i}>{step}</li>)}</ul>
@@ -498,4 +498,4 @@ export function MarketValidation({ startupPlan, onComplete, setAppState, current
   );
 }
 
-export default MarketValidation; 
+export default MarketEvaluation; 

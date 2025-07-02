@@ -52,8 +52,8 @@ export interface IBusinessPlan extends Document {
     uniqueValue: string;
   };
   
-  // Market Validation Data
-  marketValidation?: {
+  // Market Evaluation Data
+  marketEvaluation?: {
     score: number;
     competitors: string[];
     marketSize: string;
@@ -68,7 +68,7 @@ export interface IBusinessPlan extends Document {
     customerResearch: boolean;
     problemDefinition: boolean;
     solutionDesign: boolean;
-    marketValidation: boolean;
+    marketEvaluation: boolean;
     businessPlan: boolean;
     nextSteps: boolean;
   };
@@ -220,8 +220,8 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
     }
   },
   
-  // Market Validation Data
-  marketValidation: {
+  // Market Evaluation Data
+  marketEvaluation: {
     score: {
       type: Number,
       min: 0,
@@ -252,7 +252,7 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
       type: Boolean,
       default: false
     },
-    marketValidation: {
+    marketEvaluation: {
       type: Boolean,
       default: false
     },

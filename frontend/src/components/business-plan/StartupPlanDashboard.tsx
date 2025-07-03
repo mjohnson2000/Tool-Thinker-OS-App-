@@ -433,13 +433,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   };
 
   const handleCreatePlan = () => {
-    if (setAppState) {
-      setAppState(prev => ({ ...prev, ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
-      navigate('/');
-    } else {
-      localStorage.removeItem('appState');
-      navigate('/');
-    }
+    navigate('/signup');
   };
 
   const handleViewPlan = (plan: StartupPlan) => {

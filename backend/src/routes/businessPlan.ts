@@ -18,14 +18,14 @@ export const businessPlanRouter = Router();
 // POST /api/business-plan/discovery - Generate initial business plan
 businessPlanRouter.post("/discovery", async (req: Request, res: Response) => {
   console.log("Received /api/business-plan/discovery request", req.body);
-  const { idea, customer, job } = req.body;
+  const { idea, customer, job, prompt: customPrompt } = req.body;
   if (!idea || !customer || !job) {
     return res
       .status(400)
       .json({ error: "Missing required fields: idea, customer, job" });
   }
 
-  const prompt = `
+  const prompt = customPrompt?.trim() || `
 You are a business strategist AI. Given:
 - Interests: ${idea.interests}
 - Customer Persona: ${customer.title} (${customer.description})

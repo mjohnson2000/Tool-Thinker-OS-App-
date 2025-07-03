@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { FiCopy } from 'react-icons/fi';
 import Confetti from 'react-confetti';
 import { useAuth } from '../../contexts/AuthContext';
-import MarketEvaluation from '../idea-flow/MarketEvaluation';
 import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
@@ -54,6 +53,17 @@ const SectionContent = styled.p`
   color: #333;
   font-size: 1.05rem;
   margin: 0;
+`;
+
+const ListContent = styled.ul`
+  color: #333;
+  font-size: 1.05rem;
+  margin: 0;
+  padding-left: 1.5rem;
+`;
+
+const ListItem = styled.li`
+  margin-bottom: 0.5rem;
 `;
 
 const Actions = styled.div`
@@ -163,6 +173,7 @@ interface StartupPlanPageDiscoveryProps {
   onSignup: () => void;
   onLogin: () => void;
   isAuthenticated: boolean;
+  isSubscribed?: boolean;
   onContinueToValidation?: () => void;
 }
 
@@ -171,12 +182,26 @@ interface StartupPlan {
   sections: { [key: string]: string };
 }
 
+interface NewStartupPlan {
+  businessIdeaSummary: string;
+  customerProfile: { description: string };
+  customerStruggle: string[];
+  valueProposition: string;
+  marketInformation: {
+    marketSize: string;
+    competitors: string[];
+    trends: string[];
+    validation: string;
+  };
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const { idea, customer, job, ...rest } = props;
   const { user, mockUpgradeToPremium } = useAuth();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
+  const [newPlan, setNewPlan] = useState<NewStartupPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -197,43 +222,127 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
+
+        // Build a detailed prompt for the AI using all user input
+        const aiPrompt = `
+You are a startup strategist AI. Given the following user input:
+- Interests: ${idea?.interests || ''}
+- Customer Persona: ${customer?.title || ''} (${customer?.description || ''})
+- Customer Job: ${job?.title || ''} (${job?.description || ''})
+
+Generate a concise Startup Plan with the following sections:
+- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
+- Customer Persona: 1-2 sentences describing the target customer.
+- Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
+- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
+- Market Size: 1-2 sentences estimating the size or opportunity of the target market.
+- Competitors: 2-3 bullet points listing main competitors or alternatives.
+- Market Trends: 2-3 bullet points describing relevant trends in the market.
+- Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
+
+Return as JSON:
+{
+  summary: string,
+  sections: {
+    Customer: string,
+    Struggles: string, // bullet points separated by newlines
+    Value: string,
+    MarketSize: string,
+    Competitors: string, // bullet points separated by newlines
+    Trends: string, // bullet points separated by newlines
+    Validation: string
+  }
+}
+No extra text, just valid JSON.`;
+
         const res = await fetch('/api/startup-plan/discovery', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idea, customer, job })
+          body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
         });
         if (!res.ok) throw new Error('Failed to generate startup plan');
         const data = await res.json();
         setPlan(data);
         setProgress(100);
 
+        // Map to new format for display and saving
+        const mappedPlan: NewStartupPlan = {
+          businessIdeaSummary: data.summary || `${idea?.interests ? `Business idea based on your interests: ${idea.interests}. ` : ''}${customer?.description ? `Targeting customer: ${customer.description}. ` : ''}${job?.description ? `Solving job: ${job.description}.` : ''}`,
+          customerProfile: { description: data.sections?.Customer || customer?.description || '' },
+          customerStruggle: (data.sections?.Struggles && data.sections.Struggles.split('\n').filter(Boolean))
+            || (job && job.description ? [job.description] : [])
+            || (customer?.painPoints ? customer.painPoints : []),
+          valueProposition: data.sections?.Value || idea?.valueProposition || '',
+          marketInformation: {
+            marketSize: data.sections?.MarketSize || idea?.marketSize || '',
+            competitors: (data.sections?.Competitors && data.sections.Competitors.split('\n').filter(Boolean))
+              || (idea && idea.competitors ? idea.competitors.split('\n').filter(Boolean) : [])
+              || (customer?.competitors ? customer.competitors : ['No competitors specified.']),
+            trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (idea?.trends ? idea.trends.split('\n').filter(Boolean) : []),
+            validation: data.sections?.Validation || idea?.validation || '',
+          }
+        };
+        setNewPlan(mappedPlan);
+
         // Save plan to backend if authenticated
         if (user && user.email) {
           try {
+            // Generate a short title from the first 6 to 8 words of the summary
+            function generateShortTitle(summary: string): string {
+              if (!summary) return 'Untitled Startup Plan';
+              const words = summary.split(/\s+/).filter(Boolean);
+              const shortTitle = words.slice(0, 8).join(' ');
+              return shortTitle + (words.length > 8 ? '…' : '');
+            }
+            const shortTitle = generateShortTitle(mappedPlan.businessIdeaSummary);
+            // Compose the correct payload for the backend
+            const payload = {
+              title: shortTitle,
+              summary: mappedPlan.businessIdeaSummary,
+              sections: {
+                'Customer Persona': mappedPlan.customerProfile.description,
+                'Customer Struggles': Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle.join('\n') : mappedPlan.customerStruggle,
+                'Value Proposition': mappedPlan.valueProposition,
+                'Market Size': mappedPlan.marketInformation.marketSize,
+                'Market Trends': Array.isArray(mappedPlan.marketInformation.trends) ? mappedPlan.marketInformation.trends.join('\n') : mappedPlan.marketInformation.trends,
+                'Competitors': Array.isArray(mappedPlan.marketInformation.competitors) ? mappedPlan.marketInformation.competitors.join('\n') : mappedPlan.marketInformation.competitors
+              },
+              // Add all nested fields for direct view rendering
+              businessIdeaSummary: mappedPlan.businessIdeaSummary,
+              customerProfile: mappedPlan.customerProfile,
+              customerStruggle: mappedPlan.customerStruggle,
+              valueProposition: mappedPlan.valueProposition,
+              marketInformation: mappedPlan.marketInformation,
+              idea: {
+                title: idea?.title || 'Untitled Idea',
+                description: idea?.interests || 'No idea description provided.'
+              },
+              customer: {
+                title: customer?.title || 'Customer',
+                description: customer?.description || 'No customer description provided.'
+              },
+              job: {
+                title: job?.title || 'Customer Job',
+                description: job?.description || 'No job description provided.'
+              },
+              problem: {
+                description: mappedPlan.customerStruggle && Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle[0] : (mappedPlan.customerStruggle || 'No problem description provided.'),
+                impact: 'High',
+                urgency: 'medium'
+              },
+              solution: {
+                description: mappedPlan.valueProposition || 'No solution description provided.',
+                keyFeatures: [mappedPlan.valueProposition || 'Key feature'],
+                uniqueValue: mappedPlan.valueProposition || 'Unique value'
+              }
+            };
             await fetch(`${API_URL}/startup-plan`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
               },
-              body: JSON.stringify({
-                title: 'Untitled Startup Plan',
-                summary: data.summary,
-                sections: data.sections,
-                idea,
-                customer,
-                job,
-                problem: {
-                  description: data.sections?.Problem || 'Problem description not provided.',
-                  impact: '',
-                  urgency: 'medium'
-                },
-                solution: {
-                  description: data.sections?.Product || 'Solution description not provided.',
-                  keyFeatures: [],
-                  uniqueValue: ''
-                }
-              })
+              body: JSON.stringify(payload)
             });
           } catch (saveErr) {
             // Optionally handle save error
@@ -262,11 +371,67 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
     }
   }, [plan]);
 
-  let displayedSections: [string, string][] = [];
-  if (plan) {
-    const entries = Object.entries(plan.sections) as [string, string][];
-    displayedSections = props.isAuthenticated ? entries : entries.slice(0, 2);
-  }
+  const renderNewPlanSections = () => {
+    if (!newPlan) return null;
+
+    const sections = [
+      {
+        title: 'Business Idea Summary',
+        content: newPlan.businessIdeaSummary,
+        type: 'text'
+      },
+      {
+        title: 'Customer Persona',
+        content: newPlan.customerProfile.description,
+        type: 'text'
+      },
+      {
+        title: 'Customer Struggles',
+        content: newPlan.customerStruggle,
+        type: 'list'
+      },
+      {
+        title: 'Value Proposition',
+        content: newPlan.valueProposition,
+        type: 'text'
+      },
+      {
+        title: 'Market Size',
+        content: newPlan.marketInformation.marketSize,
+        type: 'text'
+      },
+      {
+        title: 'Market Trends',
+        content: newPlan.marketInformation.trends,
+        type: 'list'
+      },
+      {
+        title: 'Competitors',
+        content: newPlan.marketInformation.competitors,
+        type: 'list'
+      }
+    ];
+
+    console.log('isSubscribed', props.isSubscribed);
+    console.log('sections.length', sections.length);
+
+    return sections
+      .slice(0, props.isSubscribed ? sections.length : 4)
+      .map((section, index) => (
+        <SectionCard key={index}>
+          <SectionTitle>{section.title}</SectionTitle>
+          {section.type === 'list' ? (
+            <ListContent>
+              {Array.isArray(section.content) && section.content.map((item, i) => (
+                <ListItem key={i}>{item}</ListItem>
+              ))}
+            </ListContent>
+          ) : (
+            <SectionContent>{section.content}</SectionContent>
+          )}
+        </SectionCard>
+      ));
+  };
 
   return (
     <Container>
@@ -280,19 +445,13 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {plan && !isLoading && (
+      {newPlan && !isLoading && (
         <>
           <CongratsWrapper>
             {showConfetti && <Confetti numberOfPieces={180} recycle={false} style={{ pointerEvents: 'none' }} />}
             <Congrats>Congratulations!</Congrats>
           </CongratsWrapper>
-          <Summary>{plan.summary}</Summary>
-          {displayedSections.map(([section, content]) => (
-            <SectionCard key={section}>
-              <SectionTitle>{section}</SectionTitle>
-              <SectionContent>{content}</SectionContent>
-            </SectionCard>
-          ))}
+          {renderNewPlanSections()}
           <Actions>
             <ActionButton className="centered" onClick={() => navigate('/plans')}>
               Manage Startup Plan

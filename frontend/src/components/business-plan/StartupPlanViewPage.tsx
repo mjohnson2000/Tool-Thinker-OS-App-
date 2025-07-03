@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes } from 'react-icons/fa';
 import logo from '../../assets/logo.png';
+import { evaluateStartupPlan } from '../../utils/evaluationRubric';
+import type { StartupPlanForEvaluation, EvaluationResult } from '../../utils/evaluationRubric';
+import { debugScore18 } from '../../utils/evaluationRubric';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -140,34 +143,80 @@ const OverlayClose = styled.button`
 
 interface StartupPlan {
   _id: string;
-  title: string;
-  summary: string;
-  sections: { [key: string]: string };
+  businessIdeaSummary: string;
+  customerProfile: { description: string };
+  customerStruggle: string[];
+  valueProposition: string;
+  marketInformation: {
+    marketSize: string;
+    competitors: string[];
+    trends: string[];
+    validation: string;
+  };
   status: string;
   version: number;
-  category: string;
-  tags: string[];
-  progress: any;
-  views: number;
   createdAt: string;
   updatedAt: string;
   marketEvaluation?: { score: number };
+}
+
+function mapPlanToView(plan: any): StartupPlan {
+  // Prefer nested fields, but fall back to legacy sections if missing
+  return {
+    _id: plan._id,
+    businessIdeaSummary: plan.businessIdeaSummary || plan.title || '',
+    customerProfile: { description: plan.customerProfile?.description || plan.sections?.['Customer Persona'] || plan.sections?.Customer || '' },
+    customerStruggle: plan.customerStruggle && plan.customerStruggle.length > 0
+      ? plan.customerStruggle
+      : (plan.sections?.['Customer Struggles'] ? plan.sections['Customer Struggles'].split('\n') : (plan.sections?.Struggles ? plan.sections.Struggles.split('\n') : [])),
+    valueProposition: plan.valueProposition || plan.sections?.['Value Proposition'] || plan.sections?.Value || '',
+    marketInformation: {
+      marketSize: plan.marketInformation?.marketSize || plan.sections?.['Market Size'] || plan.sections?.MarketSize || '',
+      competitors: plan.marketInformation?.competitors && plan.marketInformation.competitors.length > 0
+        ? plan.marketInformation.competitors
+        : (plan.sections?.Competitors ? plan.sections.Competitors.split('\n') : []),
+      trends: plan.marketInformation?.trends && plan.marketInformation.trends.length > 0
+        ? plan.marketInformation.trends
+        : (plan.sections?.['Market Trends'] ? plan.sections['Market Trends'].split('\n') : (plan.sections?.Trends ? plan.sections.Trends.split('\n') : [])),
+      validation: plan.marketInformation?.validation || plan.sections?.Validation || '',
+    },
+    status: plan.status,
+    version: plan.version,
+    createdAt: plan.createdAt,
+    updatedAt: plan.updatedAt,
+    marketEvaluation: plan.marketEvaluation,
+  };
 }
 
 export default function StartupPlanViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
+  const [rawPlan, setRawPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editSummary, setEditSummary] = useState('');
-  const [editSections, setEditSections] = useState<{ [key: string]: string }>({});
+  const [editPlan, setEditPlan] = useState<StartupPlan>({
+    _id: '',
+    businessIdeaSummary: '',
+    customerProfile: { description: '' },
+    customerStruggle: [],
+    valueProposition: '',
+    marketInformation: {
+      marketSize: '',
+      competitors: [],
+      trends: [],
+      validation: '',
+    },
+    status: '',
+    version: 0,
+    createdAt: '',
+    updatedAt: '',
+  });
   const [saving, setSaving] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [evaluationDetails, setEvaluationDetails] = useState<{ recommendations?: string[]; risks?: string[]; nextSteps?: string[] } | null>(null);
+  const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
 
   useEffect(() => {
     async function fetchPlan() {
@@ -181,7 +230,8 @@ export default function StartupPlanViewPage() {
         });
         if (!res.ok) throw new Error('Failed to fetch startup plan');
         const data = await res.json();
-        setPlan(data);
+        setRawPlan(data);
+        setPlan(mapPlanToView(data));
       } catch (err: any) {
         setError(err.message || 'Unknown error');
       } finally {
@@ -193,9 +243,23 @@ export default function StartupPlanViewPage() {
 
   useEffect(() => {
     if (plan && editMode) {
-      setEditTitle(plan.title);
-      setEditSummary(plan.summary);
-      setEditSections(plan.sections || {});
+      setEditPlan({
+        _id: plan._id,
+        businessIdeaSummary: plan.businessIdeaSummary,
+        customerProfile: { description: plan.customerProfile.description },
+        customerStruggle: plan.customerStruggle,
+        valueProposition: plan.valueProposition,
+        marketInformation: {
+          marketSize: plan.marketInformation.marketSize,
+          competitors: plan.marketInformation.competitors,
+          trends: plan.marketInformation.trends,
+          validation: plan.marketInformation.validation,
+        },
+        status: plan.status,
+        version: plan.version,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt,
+      });
     }
   }, [plan, editMode]);
 
@@ -211,17 +275,44 @@ export default function StartupPlanViewPage() {
     if (!plan) return;
     setSaving(true);
     try {
+      // Compose a complete payload with all required fields
+      const payload = {
+        ...editPlan,
+        idea: rawPlan?.idea || {
+          title: 'Untitled Idea',
+          description: ''
+        },
+        customer: rawPlan?.customer || {
+          title: 'Customer',
+          description: ''
+        },
+        job: rawPlan?.job || {
+          title: 'Customer Job',
+          description: ''
+        },
+        problem: rawPlan?.problem || {
+          description: editPlan.customerStruggle[0] || 'No problem description provided.',
+          impact: 'High',
+          urgency: 'medium'
+        },
+        solution: rawPlan?.solution || {
+          description: editPlan.valueProposition || 'No solution description provided.',
+          keyFeatures: [editPlan.valueProposition || 'Key feature'],
+          uniqueValue: editPlan.valueProposition || 'Unique value'
+        }
+      };
       const res = await fetch(`${API_URL}/startup-plan/${plan._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ title: editTitle, summary: editSummary, sections: editSections })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('Failed to save changes');
       const updated = await res.json();
-      setPlan(updated);
+      setPlan(mapPlanToView(updated));
+      setRawPlan(updated);
       setEditMode(false);
     } catch (err) {
       alert('Failed to save changes.');
@@ -235,23 +326,23 @@ export default function StartupPlanViewPage() {
     setEvaluating(true);
     setShowDetails(false);
     try {
-      // Simulate evaluation (replace with real API call as needed)
-      const mockResult = {
-        evaluationScore: Math.floor(Math.random() * 100) + 1,
-        recommendations: [
-          'Interview at least 10 potential customers.',
-          'Research 3 more competitors.',
-          'Refine your market size estimate.'
-        ],
-        risks: [
-          'Market size may be overestimated.',
-          'Competition is strong.'
-        ],
-        nextSteps: [
-          'Build a landing page.',
-          'Collect emails from interested users.'
-        ]
+      debugScore18(); // Debug what gives us 18/100
+      console.log('Original plan data:', plan);
+      // Use rubric-based evaluation
+      const planForEval: StartupPlanForEvaluation = {
+        businessIdeaSummary: plan.businessIdeaSummary,
+        customerProfile: plan.customerProfile,
+        customerStruggle: plan.customerStruggle,
+        valueProposition: plan.valueProposition,
+        marketInformation: {
+          marketSize: plan.marketInformation.marketSize,
+          competitors: plan.marketInformation.competitors,
+          trends: plan.marketInformation.trends,
+        }
       };
+      console.log('Plan data for evaluation:', planForEval);
+      const result = evaluateStartupPlan(planForEval);
+      console.log('Evaluation result:', result);
       // Save evaluation score to backend
       const res = await fetch(`${API_URL}/startup-plan/${plan._id}/evaluation-score`, {
         method: 'PUT',
@@ -259,15 +350,11 @@ export default function StartupPlanViewPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ score: mockResult.evaluationScore })
+        body: JSON.stringify({ score: result.totalScore })
       });
       if (!res.ok) throw new Error('Failed to save evaluation score');
-      setPlan(prev => prev ? { ...prev, marketEvaluation: { ...prev.marketEvaluation, score: mockResult.evaluationScore } } : prev);
-      setEvaluationDetails({
-        recommendations: mockResult.recommendations,
-        risks: mockResult.risks,
-        nextSteps: mockResult.nextSteps
-      });
+      setPlan(prev => prev ? { ...prev, marketEvaluation: { ...prev.marketEvaluation, score: result.totalScore } } : prev);
+      setEvaluationResult(result);
     } catch (err) {
       alert('Failed to evaluate plan.');
     } finally {
@@ -293,45 +380,105 @@ export default function StartupPlanViewPage() {
       </TopActions>
       {editMode ? (
         <>
-          <input value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 700, width: '100%', marginBottom: 12 }} />
-          <textarea value={editSummary} onChange={e => setEditSummary(e.target.value)} style={{ width: '100%', minHeight: 60, marginBottom: 16 }} />
-          {Object.entries(editSections).map(([key, value]) => (
-            <Section key={key}>
-              <SectionLabel>{key}</SectionLabel>
-              <textarea value={value} onChange={e => setEditSections(prev => ({ ...prev, [key]: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
-            </Section>
-          ))}
+          <Section>
+            <SectionLabel>Business Idea Summary</SectionLabel>
+            <textarea value={editPlan.businessIdeaSummary} onChange={e => setEditPlan(prev => ({ ...prev, businessIdeaSummary: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+          </Section>
+          <Section>
+            <SectionLabel>Customer Profile</SectionLabel>
+            <textarea value={editPlan.customerProfile.description} onChange={e => setEditPlan(prev => ({ ...prev, customerProfile: { ...prev.customerProfile, description: e.target.value } }))} style={{ width: '100%', minHeight: 40 }} />
+          </Section>
+          <Section>
+            <SectionLabel>Customer Struggle</SectionLabel>
+            <textarea value={editPlan.customerStruggle.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, customerStruggle: e.target.value.split('\n') }))} style={{ width: '100%', minHeight: 40 }} placeholder="One struggle per line" />
+          </Section>
+          <Section>
+            <SectionLabel>Value Proposition</SectionLabel>
+            <textarea value={editPlan.valueProposition} onChange={e => setEditPlan(prev => ({ ...prev, valueProposition: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+          </Section>
+          <Section>
+            <SectionLabel>Market Information</SectionLabel>
+            <div style={{ marginBottom: 8 }}>
+              <strong>Market Size</strong>
+              <input value={editPlan.marketInformation.marketSize} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, marketSize: e.target.value } }))} style={{ width: '100%', marginBottom: 8 }} />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <strong>Competitors</strong>
+              <textarea value={editPlan.marketInformation.competitors.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, competitors: e.target.value.split('\n') } }))} style={{ width: '100%', minHeight: 32, marginBottom: 8 }} placeholder="One competitor per line" />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <strong>Trends</strong>
+              <textarea value={editPlan.marketInformation.trends.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, trends: e.target.value.split('\n') } }))} style={{ width: '100%', minHeight: 32, marginBottom: 8 }} placeholder="One trend per line" />
+            </div>
+          </Section>
         </>
       ) : (
         <>
-          <Title>{plan.title}</Title>
+          <Title title={plan.businessIdeaSummary}>
+            {plan.businessIdeaSummary.length > 80
+              ? plan.businessIdeaSummary.slice(0, 80) + '…'
+              : plan.businessIdeaSummary}
+          </Title>
           <Meta>
             v{plan.version} &nbsp;|&nbsp; {new Date(plan.updatedAt).toLocaleDateString()} &nbsp;|&nbsp; Status: {plan.status}
           </Meta>
           <Score color={scoreColor} style={{ cursor: 'pointer' }} onClick={() => setShowDetails(true)}>
             Evaluation Score: {score}/100
           </Score>
-          {showDetails && evaluationDetails && (
+          {showDetails && (
             <OverlayBackdrop onClick={() => setShowDetails(false)}>
               <OverlayCard onClick={e => e.stopPropagation()}>
                 <OverlayClose onClick={() => setShowDetails(false)} aria-label="Close"><FaTimes /></OverlayClose>
                 <div style={{ fontWeight: 700, fontSize: '1.2rem', marginBottom: 16 }}>Evaluation Insights</div>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Recommendations:</div>
-                <ul>{evaluationDetails.recommendations?.map((rec, i) => <li key={i}>{rec}</li>)}</ul>
-                <div style={{ fontWeight: 600, margin: '16px 0 8px 0' }}>Risks:</div>
-                <ul>{evaluationDetails.risks?.map((risk, i) => <li key={i}>{risk}</li>)}</ul>
-                <div style={{ fontWeight: 600, margin: '16px 0 8px 0' }}>Next Steps:</div>
-                <ul>{evaluationDetails.nextSteps?.map((step, i) => <li key={i}>{step}</li>)}</ul>
+                {evaluationResult ? (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>Score: {evaluationResult.totalScore}/100</div>
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>Detailed Feedback:</div>
+                    <ul style={{ marginBottom: 16 }}>
+                      {evaluationResult.criteria.map((c, i) => (
+                        <li key={i} style={{ marginBottom: 4 }}>
+                          <strong>{c.key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}:</strong> {c.score}/5 – {c.feedback}
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>Strengths:</div>
+                    <ul>{evaluationResult.strengths.length > 0 ? evaluationResult.strengths.map((s, i) => <li key={i}>{s}</li>) : <li>No major strengths yet.</li>}</ul>
+                    <div style={{ fontWeight: 600, margin: '16px 0 8px 0' }}>Recommendations:</div>
+                    <ul>{evaluationResult.recommendations.length > 0 ? evaluationResult.recommendations.map((rec, i) => <li key={i}>{rec}</li>) : <li>No recommendations at this time.</li>}</ul>
+                    <div style={{ color: '#888', fontSize: '1rem', marginTop: 16 }}>{evaluationResult.summary}</div>
+                  </>
+                ) : (
+                  <div style={{ color: '#888', fontSize: '1rem', marginTop: 16 }}>
+                    No evaluation details available. Please run an evaluation to see insights.
+                  </div>
+                )}
               </OverlayCard>
             </OverlayBackdrop>
           )}
-          <Summary>{plan.summary}</Summary>
-          {Object.entries(plan.sections || {}).map(([key, value]) => (
-            <Section key={key}>
-              <SectionLabel>{key}</SectionLabel>
-              <SectionContent>{value}</SectionContent>
-            </Section>
-          ))}
+          <Section>
+            <SectionLabel>Business Idea Summary</SectionLabel>
+            <SectionContent>{plan.businessIdeaSummary}</SectionContent>
+          </Section>
+          <Section>
+            <SectionLabel>Customer Profile</SectionLabel>
+            <SectionContent>{plan.customerProfile.description}</SectionContent>
+          </Section>
+          <Section>
+            <SectionLabel>Customer Struggle</SectionLabel>
+            <SectionContent>
+              <ul>{plan.customerStruggle.map((struggle, i) => <li key={i}>{struggle}</li>)}</ul>
+            </SectionContent>
+          </Section>
+          <Section>
+            <SectionLabel>Value Proposition</SectionLabel>
+            <SectionContent>{plan.valueProposition}</SectionContent>
+          </Section>
+          <Section>
+            <SectionLabel>Market Information</SectionLabel>
+            <div><strong>Market Size:</strong> {plan.marketInformation.marketSize}</div>
+            <div><strong>Competitors:</strong> <ul>{plan.marketInformation.competitors.map((c, i) => <li key={i}>{c}</li>)}</ul></div>
+            <div><strong>Trends:</strong> <ul>{plan.marketInformation.trends.map((t, i) => <li key={i}>{t}</li>)}</ul></div>
+          </Section>
         </>
       )}
     </Container>

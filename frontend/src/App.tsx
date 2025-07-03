@@ -24,8 +24,6 @@ import { ProgressTracker } from './components/idea-flow/ProgressTracker';
 import type { BusinessArea } from './components/idea-flow/IdeaSelection';
 import type { CustomerOption } from './components/idea-flow/CustomerSelection';
 import type { JobOption } from './components/idea-flow/JobSelection';
-import { MarketEvaluationPage } from './components/idea-flow/MarketEvaluationPage';
-import { MarketEvaluationScorePage } from './components/idea-flow/MarketEvaluationScorePage';
 import { NextStepsHub } from './components/idea-flow/NextStepsHub';
 import { SubscriptionPage } from './components/auth/SubscriptionPage';
 import { CoachMarketplace } from './components/learning/CoachMarketplace';
@@ -252,14 +250,13 @@ const Sidebar = styled.aside`
 `;
 
 const steps = [
-  { key: 'idea', label: '1. Your Interests' },
-  { key: 'customer', label: '2. Customer Persona' },
-  { key: 'job', label: '3. Customer Job' },
-  { key: 'summary', label: '4. Summary' },
-  { key: 'businessPlan', label: '5. Business Plan' },
-  { key: 'marketEvaluation', label: '6. Market Evaluation', isPremium: true },
-  { key: 'evaluationScore', label: '7. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '8. Next Steps Hub', isPremium: true },
+  { key: 'idea', label: 'Your Interests' },
+  { key: 'customer', label: 'Customer Persona' },
+  { key: 'job', label: 'Customer Job' },
+  { key: 'businessPlan', label: 'Startup Plan' },
+  { key: 'marketEvaluation', label: 'Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: 'Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: 'Next Steps Hub', isPremium: true },
 ];
 
 const prematureIdeaFlowSteps = [
@@ -519,8 +516,6 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<WebLandingPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/market-evaluation" element={<MarketEvaluationPage setAppState={setAppState} currentStep={currentStep} />} />
-        <Route path="/evaluation-score" element={<MarketEvaluationScorePage setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/next-steps-hub" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={<CoachMarketplace />} />
@@ -647,6 +642,7 @@ function AppContent() {
                           setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
                         }}
                         isAuthenticated={isAuthenticated}
+                        isSubscribed={user?.isSubscribed}
                       />
                     )}
                     {currentStep === 'businessPlan' && !job && (

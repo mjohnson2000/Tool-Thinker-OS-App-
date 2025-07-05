@@ -71,6 +71,32 @@ const TopBarAvatarImg = styled.img`
   background: #e5e5e5;
 `;
 
+const PlanBadge = styled.div`
+  margin-top: -0.2rem;
+  background: #f3f4f6;
+  color: #181a1b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid #181a1b;
+  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.01em;
+  user-select: none;
+`;
+
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
+  elite: 'Elite',
+};
+
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
 const Container = styled.div`
@@ -539,22 +565,22 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     <>
       <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/app')} />
       <TopBar>
-        <AvatarButton onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} aria-label="Profile">
-          {user && user.profilePic ? (
-            <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-          ) : user && user.email ? (
-            <TopBarAvatar>
-              {user.email
-                .split('@')[0]
-                .split(/[._-]/)
-                .map(part => part[0]?.toUpperCase())
-                .join('')
-                .slice(0, 2) || 'U'}
-            </TopBarAvatar>
-          ) : (
-            <TopBarAvatarImg src={defaultAvatar} alt="Avatar" />
-          )}
-        </AvatarButton>
+        {user && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+            {user.profilePic ? (
+              <TopBarAvatarImg src={user.profilePic} alt="Profile" onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} />
+            ) : user.email ? (
+              <TopBarAvatar onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} >
+                {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
+              </TopBarAvatar>
+            ) : null}
+            <PlanBadge>
+              {!user?.isSubscribed
+                ? PLAN_DISPLAY_NAMES['free']
+                : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+            </PlanBadge>
+          </div>
+        )}
       </TopBar>
       <Container>
         <Header>

@@ -35,6 +35,8 @@ import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage'
 import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
 import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
 import { LaunchPreparationPage } from './components/idea-flow/LaunchPreparationPage';
+import { SolutionSelectionPage } from './components/idea-flow/SolutionSelectionPage';
+import type { SolutionOption } from './components/idea-flow/SolutionSelectionPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -225,7 +227,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -254,6 +256,7 @@ const steps = [
   { key: 'idea', label: 'Your Interests' },
   { key: 'customer', label: 'Customer Persona' },
   { key: 'job', label: 'Customer Job' },
+  { key: 'solution', label: 'The Solution' },
   { key: 'businessPlan', label: 'Manage Ideas', isPremium: true },
   { key: 'nextStepsHub', label: 'Business Roadmap', isPremium: true },
   { key: 'launch', label: 'Launch', isPremium: true },
@@ -265,12 +268,11 @@ const prematureIdeaFlowSteps = [
   { key: 'describeProblem', label: '3. The Problem' },
   { key: 'prematureJobDiscovery', label: '4. Customer Job' },
   { key: 'describeSolution', label: '5. The Solution' },
-  { key: 'describeCompetition', label: '6. Your Advantage' },
-  { key: 'businessPlan', label: '7. Manage Ideas', isPremium: true },
-  { key: 'marketEvaluation', label: '8. Market Evaluation', isPremium: true },
-  { key: 'evaluationScore', label: '9. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '10. Business Roadmap', isPremium: true },
-  { key: 'launch', label: '11. Launch', isPremium: true },
+  { key: 'businessPlan', label: '6. Manage Ideas', isPremium: true },
+  { key: 'marketEvaluation', label: '7. Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: '8. Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: '9. Business Roadmap', isPremium: true },
+  { key: 'launch', label: '10. Launch', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -403,7 +405,7 @@ function AppContent() {
   function handleJobSelect(selectedJob: JobOption) {
     console.log('Job selected:', selectedJob);
     setAppState(prev => {
-      const newState = { ...prev, job: selectedJob, currentStep: 'businessPlan' as Step };
+      const newState = { ...prev, job: selectedJob, currentStep: 'solution' as Step };
       console.log('Setting appState to:', newState);
       return newState;
     });
@@ -441,7 +443,7 @@ function AppContent() {
   }
 
   function handleDescribeSolutionSubmit(description: string) {
-    setAppState(prev => ({ ...prev, solutionDescription: description, currentStep: 'describeCompetition' }));
+    setAppState(prev => ({ ...prev, solutionDescription: description, currentStep: entryPoint === 'idea' ? 'solution' : 'businessPlan' }));
   }
 
   function handleDescribeCompetitionSubmit(description: string | null) {
@@ -515,6 +517,10 @@ function AppContent() {
 
   function handleProblemGuidanceContinue() {
     setAppState(prev => ({ ...prev, currentStep: 'prematureJobDiscovery' }));
+  }
+
+  function handleSolutionSelect(selectedSolution: SolutionOption) {
+    setAppState(prev => ({ ...prev, solutionDescription: selectedSolution.description, currentStep: 'businessPlan' }));
   }
 
   const PLAN_DISPLAY_NAMES: Record<string, string> = {
@@ -697,6 +703,12 @@ function AppContent() {
                       <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
                         This step is not available in the current version.
                       </div>
+                    )}
+                    {currentStep === 'solution' && (
+                      <SolutionSelectionPage
+                        job={job}
+                        onSelect={handleSolutionSelect}
+                      />
                     )}
                   </>
                 </MainContent>
@@ -938,6 +950,12 @@ function AppContent() {
                       <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
                         This step is not available in the current version.
                       </div>
+                    )}
+                    {currentStep === 'solution' && (
+                      <SolutionSelectionPage
+                        job={job}
+                        onSelect={handleSolutionSelect}
+                      />
                     )}
                   </>
                 </MainContent>

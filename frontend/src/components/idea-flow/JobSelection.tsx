@@ -142,8 +142,12 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
   }, [customer]);
 
   function handleSelect(job: JobOption) {
+    console.log('Job clicked in JobSelection:', job);
     setSelected(job.id);
-    setTimeout(() => onSelect(job), 150); // brief highlight for a11y
+    setTimeout(() => {
+      console.log('Calling onSelect with job:', job);
+      onSelect(job);
+    }, 150); // brief highlight for a11y
   }
 
   return (
@@ -157,19 +161,22 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
       )}
       {error && <Subtitle style={{ color: 'red' }}>{error}</Subtitle>}
       <JobGrid>
-        {options.map(job => (
-          <OptionCard
-            key={job.id}
-            isSelected={selected === job.id}
-            onClick={() => handleSelect(job)}
-            aria-pressed={selected === job.id}
-            tabIndex={0}
-          >
-            <Icon>{job.icon}</Icon>
-            <JobTitle>{job.title}</JobTitle>
-            <JobDescription>{job.description}</JobDescription>
-          </OptionCard>
-        ))}
+        {options.map(job => {
+          console.log('Rendering job option:', job);
+          return (
+            <OptionCard
+              key={job.id}
+              isSelected={selected === job.id}
+              onClick={() => handleSelect(job)}
+              aria-pressed={selected === job.id}
+              tabIndex={0}
+            >
+              <Icon>{job.icon}</Icon>
+              <JobTitle>{job.title}</JobTitle>
+              <JobDescription>{job.description}</JobDescription>
+            </OptionCard>
+          );
+        })}
       </JobGrid>
     </Container>
   );

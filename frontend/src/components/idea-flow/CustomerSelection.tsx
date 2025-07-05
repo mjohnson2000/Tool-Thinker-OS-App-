@@ -157,6 +157,7 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
   }, [businessArea]);
 
   function handleSelect(customer: CustomerOption) {
+    console.log('CustomerSelection handleSelect:', customer);
     setSelected(customer.id);
     setTimeout(() => onSelect(customer), 150); // brief highlight for a11y
   }

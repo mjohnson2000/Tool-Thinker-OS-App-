@@ -75,50 +75,6 @@ interface SignupProps {
 }
 
 export function Signup({ onSignup, onLogin }: SignupProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-    try {
-      await onSignup(email, password);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <Container>
-      <Title>Create Your Account</Title>
-      <form onSubmit={handleSubmit}>
-        <Input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Signing up...' : 'Sign Up'}
-        </Button>
-      </form>
-      <Subtext>
-        Already have an account? <Link onClick={onLogin}>Log in</Link>
-      </Subtext>
-    </Container>
-  );
+  // Render nothing so the /app page is just a blank entry point for unauthenticated users
+  return null;
 } 

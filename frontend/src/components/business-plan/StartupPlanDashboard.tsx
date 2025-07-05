@@ -401,6 +401,11 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
         }
       });
       
+      if (response.status === 401) {
+        // Redirect to login if not authenticated
+        window.location.href = '/login';
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch plans');
       
       const data = await response.json();
@@ -542,37 +547,37 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       </TopBar>
       <Container>
         <Header>
-          <Title>Startup Plans</Title>
+          <Title>Startup Ideas</Title>
           <CreateButton onClick={handleCreatePlan}>
-            <FaPlus /> Create New Plan
+            <FaPlus /> Create New Idea
           </CreateButton>
         </Header>
 
         <StatsGrid>
           <StatCard>
             <StatTitle>
-              <FaChartLine /> Total Plans
+              <FaChartLine /> Total Ideas
             </StatTitle>
             <StatValue>{stats.total}</StatValue>
-            <StatSubtitle>All startup plans</StatSubtitle>
+            <StatSubtitle>All startup ideas</StatSubtitle>
           </StatCard>
           <StatCard>
             <StatTitle>
-              <FaCheckCircle /> Active Plans
+              <FaCheckCircle /> Active Ideas
             </StatTitle>
             <StatValue>{stats.active}</StatValue>
             <StatSubtitle>Currently active</StatSubtitle>
           </StatCard>
           <StatCard>
             <StatTitle>
-              <FaClock /> Draft Plans
+              <FaClock /> Draft Ideas
             </StatTitle>
             <StatValue>{stats.draft}</StatValue>
             <StatSubtitle>In progress</StatSubtitle>
           </StatCard>
           <StatCard>
             <StatTitle>
-              <FaStar /> Validated Plans
+              <FaStar /> Validated Ideas
             </StatTitle>
             <StatValue>{stats.validated}</StatValue>
             <StatSubtitle>Market validated</StatSubtitle>
@@ -584,7 +589,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
             active={statusFilter === 'all'} 
             onClick={() => setStatusFilter('all')}
           >
-            All Plans
+            All Ideas
           </FilterButton>
           <FilterButton 
             active={statusFilter === 'active'} 
@@ -609,10 +614,10 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
         {plans.length === 0 ? (
           <EmptyState>
             <EmptyIcon>📋</EmptyIcon>
-            <EmptyTitle>No startup plans yet</EmptyTitle>
-            <EmptyText>Create your first startup plan to get started</EmptyText>
+            <EmptyTitle>No startup ideas yet</EmptyTitle>
+            <EmptyText>Create your first startup idea to get started</EmptyText>
             <CreateButton onClick={handleCreatePlan}>
-              <FaPlus /> Create Your First Plan
+              <FaPlus /> Create Your First Idea
             </CreateButton>
           </EmptyState>
         ) : (

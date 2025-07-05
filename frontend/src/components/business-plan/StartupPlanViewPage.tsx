@@ -370,10 +370,10 @@ export default function StartupPlanViewPage() {
     <Container>
       <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
       <TopActions>
-        <PrimaryButton onClick={() => navigate('/plans')}><FaArrowLeft /> Back to Plans</PrimaryButton>
+        <PrimaryButton onClick={() => navigate('/plans')}><FaArrowLeft /> Back to Ideas</PrimaryButton>
         {!editMode && <SecondaryButton onClick={handleEdit}><FaEdit /> Edit</SecondaryButton>}
         {!editMode && <SecondaryButton onClick={handleEvaluate} disabled={evaluating}>
-          {evaluating ? <FaSpinner className="fa-spin" /> : <FaCheckCircle />} Evaluate Plan
+          {evaluating ? <FaSpinner className="fa-spin" /> : <FaCheckCircle />} Evaluate Idea
         </SecondaryButton>}
         {editMode && <PrimaryButton onClick={handleSave} disabled={saving}><FaSave /> {saving ? 'Saving...' : 'Save'}</PrimaryButton>}
         {editMode && <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>}

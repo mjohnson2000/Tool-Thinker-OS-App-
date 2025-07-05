@@ -198,7 +198,20 @@ interface NewStartupPlan {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
+  console.log('StartupPlanPageDiscovery mounted');
+  console.log('Props:', props);
   const { idea, customer, job, ...rest } = props;
+  if (!idea || !customer || !job) {
+    return (
+      <Container>
+        <Title>Your Startup Idea</Title>
+        <CenteredText style={{ color: '#c00', marginTop: 40 }}>
+          Missing required information to generate a startup idea.<br />
+          Please complete all previous steps.
+        </CenteredText>
+      </Container>
+    );
+  }
   const { user, mockUpgradeToPremium } = useAuth();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [newPlan, setNewPlan] = useState<NewStartupPlan | null>(null);
@@ -212,8 +225,10 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('useEffect triggered', { idea, customer, job });
     let progressInterval: ReturnType<typeof setInterval> | null = null;
     async function fetchPlan() {
+      console.log('fetchPlan called');
       setIsLoading(true);
       setProgress(0);
       setError(null);
@@ -255,7 +270,8 @@ Return as JSON:
 }
 No extra text, just valid JSON.`;
 
-        const res = await fetch('/api/startup-plan/discovery', {
+        console.log('About to POST to /api/startup-plan/discovery', { idea, customer, job, prompt: aiPrompt });
+        const res = await fetch(`${API_URL}/startup-plan/discovery`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
@@ -351,6 +367,7 @@ No extra text, just valid JSON.`;
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setProgress(100);
+        console.error('Failed to generate startup plan:', err);
       } finally {
         setIsLoading(false);
         if (progressInterval) clearInterval(progressInterval);
@@ -412,36 +429,48 @@ No extra text, just valid JSON.`;
       }
     ];
 
-    console.log('isSubscribed', props.isSubscribed);
-    console.log('sections.length', sections.length);
+    // Only show first 2 sections for unauthenticated users
+    const visibleSections = props.isAuthenticated ? sections : sections.slice(0, 2);
 
-    return sections
-      .slice(0, props.isSubscribed ? sections.length : 4)
-      .map((section, index) => (
-        <SectionCard key={index}>
-          <SectionTitle>{section.title}</SectionTitle>
-          {section.type === 'list' ? (
-            <ListContent>
-              {Array.isArray(section.content) && section.content.map((item, i) => (
-                <ListItem key={i}>{item}</ListItem>
-              ))}
-            </ListContent>
-          ) : (
-            <SectionContent>{section.content}</SectionContent>
-          )}
-        </SectionCard>
-      ));
+    return (
+      <>
+        {visibleSections.map((section, index) => (
+          <SectionCard key={index}>
+            <SectionTitle>{section.title}</SectionTitle>
+            {section.type === 'list' ? (
+              <ListContent>
+                {Array.isArray(section.content) && section.content.map((item, i) => (
+                  <ListItem key={i}>{item}</ListItem>
+                ))}
+              </ListContent>
+            ) : (
+              <SectionContent>{section.content}</SectionContent>
+            )}
+          </SectionCard>
+        ))}
+        {!props.isAuthenticated && (
+          <SignupPrompt>
+            <SignupTitle>Unlock Your Full Startup Idea</SignupTitle>
+            <SignupText>Sign up or log in to see the full idea and save your progress!</SignupText>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+              <ActionButton onClick={props.onSignup}>Sign Up</ActionButton>
+              <ActionButton onClick={props.onLogin}>Log In</ActionButton>
+            </div>
+          </SignupPrompt>
+        )}
+      </>
+    );
   };
 
   return (
     <Container>
-      <Title>Your Startup Plan</Title>
+      <Title>Your Startup Idea</Title>
       {isLoading && (
         <>
           <ProgressBarContainer>
             <ProgressBarFill percent={progress} />
           </ProgressBarContainer>
-          <CenteredText>Generating your startup plan...</CenteredText>
+          <CenteredText>Generating your startup idea...</CenteredText>
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
@@ -452,12 +481,19 @@ No extra text, just valid JSON.`;
             <Congrats>Congratulations!</Congrats>
           </CongratsWrapper>
           {renderNewPlanSections()}
-          <Actions>
-            <ActionButton className="centered" onClick={() => navigate('/plans')}>
-              Manage Startup Plan
-            </ActionButton>
-          </Actions>
+          {props.isAuthenticated && (
+            <Actions>
+              <ActionButton className="centered" onClick={() => navigate('/plans')}>
+                Manage Startup Ideas
+              </ActionButton>
+            </Actions>
+          )}
         </>
+      )}
+      {!isLoading && !newPlan && !error && (
+        <CenteredText>
+          Sorry, we couldn't generate your startup idea. Please try again or contact support.
+        </CenteredText>
       )}
     </Container>
   );

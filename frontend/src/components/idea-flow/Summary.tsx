@@ -121,6 +121,19 @@ interface SummaryProps {
 }
 
 export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: SummaryProps) {
+  // Debug logging
+  console.log('Summary props:', { idea, customer, job });
+
+  // Fallback UI for missing data
+  if (!idea || !customer || !job) {
+    return (
+      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+        Missing required data for summary.<br />
+        Please complete all previous steps.
+      </div>
+    );
+  }
+
   return (
     <Container>
       <Title>Your Business Idea Summary</Title>

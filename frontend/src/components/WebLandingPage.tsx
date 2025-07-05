@@ -581,7 +581,11 @@ const WebLandingPage: React.FC = () => {
   const [demoOutputVisible, setDemoOutputVisible] = React.useState(false);
 
   function handleStartForFree() {
-    navigate('/signup');
+    // Reset app state in localStorage (if used)
+    window.localStorage.removeItem('appState');
+    // Optionally, dispatch a custom event or call a context reset if available
+    // window.dispatchEvent(new Event('resetAppState'));
+    navigate('/app');
   }
 
   function handleSeeHowItWorks() {

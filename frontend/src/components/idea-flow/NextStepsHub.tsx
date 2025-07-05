@@ -1156,7 +1156,7 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
           onClick={() => navigate('/')} 
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginLeft: 'auto' }}>
-          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Startup Plans</MyPlansButton>
+          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Startup Ideas</MyPlansButton>
           {user && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
               {user.profilePic ? (

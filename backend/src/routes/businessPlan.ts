@@ -20,6 +20,7 @@ businessPlanRouter.post("/discovery", async (req: Request, res: Response) => {
   console.log("Received /api/business-plan/discovery request", req.body);
   const { idea, customer, job, prompt: customPrompt } = req.body;
   if (!idea || !customer || !job) {
+    console.error("Missing required fields in /discovery:", { idea, customer, job });
     return res
       .status(400)
       .json({ error: "Missing required fields: idea, customer, job" });
@@ -41,8 +42,10 @@ No extra text, just valid JSON.
 
   try {
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey)
+    if (!apiKey) {
+      console.error("OpenAI API key not configured");
       return res.status(500).json({ error: "OpenAI API key not configured" });
+    }
 
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
@@ -68,6 +71,7 @@ No extra text, just valid JSON.
       console.log("OpenAI raw response:", content);
       plan = JSON.parse(content);
     } catch (err) {
+      console.error("Failed to parse AI response as JSON:", content, err);
       return res
         .status(500)
         .json({ error: "Failed to parse AI response", raw: content });
@@ -75,7 +79,7 @@ No extra text, just valid JSON.
 
     res.json(plan);
   } catch (error: any) {
-    console.error("OpenAI error:", error.response?.data || error.message);
+    console.error("OpenAI error in /discovery:", error.response?.data || error.message);
     res
       .status(500)
       .json({
@@ -138,12 +142,11 @@ businessPlanRouter.post("/", auth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/business-plan - Get user's business plans
+// GET /api/business-plan - Get user's business plans (auth required)
 businessPlanRouter.get("/", auth, async (req: AuthRequest, res: Response) => {
   try {
     const { status, category, page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
-
     const filter: any = { userId: req.user!.id };
     if (status) filter.status = status;
     if (category) filter.category = category;

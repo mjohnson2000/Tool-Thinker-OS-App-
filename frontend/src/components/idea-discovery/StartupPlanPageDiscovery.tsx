@@ -204,9 +204,9 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   if (!idea || !customer || !job) {
     return (
       <Container>
-        <Title>Your Startup Idea</Title>
+        <Title>Your Business Idea</Title>
         <CenteredText style={{ color: '#c00', marginTop: 40 }}>
-          Missing required information to generate a startup idea.<br />
+          Missing required information to generate a business idea.<br />
           Please complete all previous steps.
         </CenteredText>
       </Container>
@@ -245,7 +245,7 @@ You are a startup strategist AI. Given the following user input:
 - Customer Persona: ${customer?.title || ''} (${customer?.description || ''})
 - Customer Job: ${job?.title || ''} (${job?.description || ''})
 
-Generate a concise Startup Plan with the following sections:
+        Generate a concise Business Plan with the following sections:
 - Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
 - Customer Persona: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
@@ -276,7 +276,7 @@ No extra text, just valid JSON.`;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
         });
-        if (!res.ok) throw new Error('Failed to generate startup plan');
+        if (!res.ok) throw new Error('Failed to generate business plan');
         const data = await res.json();
         setPlan(data);
         setProgress(100);
@@ -305,7 +305,7 @@ No extra text, just valid JSON.`;
           try {
             // Generate a short title from the first 6 to 8 words of the summary
             function generateShortTitle(summary: string): string {
-              if (!summary) return 'Untitled Startup Plan';
+              if (!summary) return 'Untitled Business Plan';
               const words = summary.split(/\s+/).filter(Boolean);
               const shortTitle = words.slice(0, 8).join(' ');
               return shortTitle + (words.length > 8 ? '…' : '');
@@ -367,7 +367,7 @@ No extra text, just valid JSON.`;
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setProgress(100);
-        console.error('Failed to generate startup plan:', err);
+        console.error('Failed to generate business plan:', err);
       } finally {
         setIsLoading(false);
         if (progressInterval) clearInterval(progressInterval);
@@ -450,7 +450,7 @@ No extra text, just valid JSON.`;
         ))}
         {!props.isAuthenticated && (
           <SignupPrompt>
-            <SignupTitle>Unlock Your Full Startup Idea</SignupTitle>
+            <SignupTitle>Unlock Your Full Business Idea</SignupTitle>
             <SignupText>Sign up or log in to see the full idea and save your progress!</SignupText>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
               <ActionButton onClick={props.onSignup}>Sign Up</ActionButton>
@@ -464,13 +464,13 @@ No extra text, just valid JSON.`;
 
   return (
     <Container>
-      <Title>Your Startup Idea</Title>
+      <Title>Your Business Idea</Title>
       {isLoading && (
         <>
           <ProgressBarContainer>
             <ProgressBarFill percent={progress} />
           </ProgressBarContainer>
-          <CenteredText>Generating your startup idea...</CenteredText>
+          <CenteredText>Generating your business idea...</CenteredText>
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
@@ -484,7 +484,7 @@ No extra text, just valid JSON.`;
           {props.isAuthenticated && (
             <Actions>
               <ActionButton className="centered" onClick={() => navigate('/plans')}>
-                Manage Startup Ideas
+                Manage Business Ideas
               </ActionButton>
             </Actions>
           )}
@@ -492,7 +492,7 @@ No extra text, just valid JSON.`;
       )}
       {!isLoading && !newPlan && !error && (
         <CenteredText>
-          Sorry, we couldn't generate your startup idea. Please try again or contact support.
+          Sorry, we couldn't generate your business idea. Please try again or contact support.
         </CenteredText>
       )}
     </Container>

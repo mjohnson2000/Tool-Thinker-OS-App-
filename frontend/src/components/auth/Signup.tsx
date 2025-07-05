@@ -75,6 +75,69 @@ interface SignupProps {
 }
 
 export function Signup({ onSignup, onLogin }: SignupProps) {
-  // Render nothing so the /app page is just a blank entry point for unauthenticated users
-  return null;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await onSignup(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Container>
+      <Title>Create Account</Title>
+      <form onSubmit={handleSubmit}>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Creating Account...' : 'Sign Up'}
+        </Button>
+      </form>
+      <Subtext>
+        Already have an account? <Link onClick={onLogin}>Log in</Link>
+      </Subtext>
+    </Container>
+  );
 } 

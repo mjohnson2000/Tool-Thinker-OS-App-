@@ -187,7 +187,7 @@ export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        if (!res.ok) throw new Error('Failed to fetch startup plan');
+        if (!res.ok) throw new Error('Failed to fetch business plan');
         const data = await res.json();
         setPlan(data);
         setSections(data.sections || {});
@@ -242,7 +242,7 @@ export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
         },
         body: JSON.stringify({ sections })
       });
-      if (!res.ok) throw new Error('Failed to save startup plan');
+              if (!res.ok) throw new Error('Failed to save business plan');
       navigate('/plans');
     } catch (err: any) {
       setError(err.message || 'Unknown error');
@@ -255,7 +255,7 @@ export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
     navigate('/plans');
   };
 
-  if (loading) return <Container><LoadingMsg>Loading startup plan...</LoadingMsg></Container>;
+        if (loading) return <Container><LoadingMsg>Loading business plan...</LoadingMsg></Container>;
   if (error) return <Container><ErrorMsg>{error}</ErrorMsg></Container>;
   if (!plan) return null;
 
@@ -281,7 +281,7 @@ export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
         </AvatarButton>
       </TopBar>
       <Container>
-        <Title>Edit Startup Plan</Title>
+        <Title>Edit Business Plan</Title>
         {Object.entries(sections).map(([key, value]) => (
           <Section key={key}>
             <SectionLabel>{key}</SectionLabel>

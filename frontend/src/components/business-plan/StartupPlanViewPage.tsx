@@ -228,7 +228,7 @@ export default function StartupPlanViewPage() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        if (!res.ok) throw new Error('Failed to fetch startup plan');
+        if (!res.ok) throw new Error('Failed to fetch business plan');
         const data = await res.json();
         setRawPlan(data);
         setPlan(mapPlanToView(data));
@@ -362,7 +362,7 @@ export default function StartupPlanViewPage() {
     }
   };
 
-  if (loading) return <Container>Loading startup plan...</Container>;
+        if (loading) return <Container>Loading business plan...</Container>;
   if (error) return <Container style={{ color: '#dc3545' }}>{error}</Container>;
   if (!plan) return null;
 

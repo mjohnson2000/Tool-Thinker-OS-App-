@@ -14,7 +14,7 @@ import { Login } from './components/auth/Login';
 import { Profile } from './components/auth/Profile';
 import { FaUserCircle } from 'react-icons/fa';
 import { ResetPassword } from './components/auth/ResetPassword';
-import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { DescribeCustomer } from './components/idea-flow/DescribeCustomer';
 import { DescribeProblem } from './components/idea-flow/DescribeProblem';
 import { DescribeSolution } from './components/idea-flow/DescribeSolution';
@@ -34,6 +34,7 @@ import StartupPlanDashboard from './components/business-plan/StartupPlanDashboar
 import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage';
 import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
 import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
+import { LaunchPreparationPage } from './components/idea-flow/LaunchPreparationPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -224,7 +225,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan';
+type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -253,10 +254,9 @@ const steps = [
   { key: 'idea', label: 'Your Interests' },
   { key: 'customer', label: 'Customer Persona' },
   { key: 'job', label: 'Customer Job' },
-  { key: 'businessPlan', label: 'Startup Idea' },
-  { key: 'marketEvaluation', label: 'Market Evaluation', isPremium: true },
-  { key: 'evaluationScore', label: 'Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: 'Next Steps Hub', isPremium: true },
+  { key: 'businessPlan', label: 'Manage Ideas', isPremium: true },
+  { key: 'nextStepsHub', label: 'Business Roadmap', isPremium: true },
+  { key: 'launch', label: 'Launch', isPremium: true },
 ];
 
 const prematureIdeaFlowSteps = [
@@ -266,10 +266,11 @@ const prematureIdeaFlowSteps = [
   { key: 'prematureJobDiscovery', label: '4. Customer Job' },
   { key: 'describeSolution', label: '5. The Solution' },
   { key: 'describeCompetition', label: '6. Your Advantage' },
-  { key: 'businessPlan', label: '7. Business Plan' },
+  { key: 'businessPlan', label: '7. Manage Ideas', isPremium: true },
   { key: 'marketEvaluation', label: '8. Market Evaluation', isPremium: true },
   { key: 'evaluationScore', label: '9. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '10. Next Steps Hub', isPremium: true },
+  { key: 'nextStepsHub', label: '10. Business Roadmap', isPremium: true },
+  { key: 'launch', label: '11. Launch', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -316,12 +317,10 @@ function ResetPasswordRoute() {
 }
 
 function AppContent() {
+  // All hooks must be at the top, before any conditional returns
   const { isLoading, isAuthenticated, signup, login, user, requestPasswordReset, mockUpgradeToPremium } = useAuth();
-  console.log('USER OBJECT:', user);
   const location = useLocation();
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const navigate = useNavigate();
   const [appState, setAppState] = useState<AppState>(() => {
     try {
       const storedState = window.localStorage.getItem('appState');
@@ -342,6 +341,27 @@ function AppContent() {
     }
   }, [appState]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('profile') === '1') {
+      setAppState(prev => ({ ...prev, currentStep: 'profile', stepBeforeAuth: prev.currentStep }));
+      // Remove ?profile=1 from the URL after opening
+      params.delete('profile');
+      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (isAuthenticated && appState.currentStep === 'summary') {
+      setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
+    }
+  }, [isAuthenticated, appState.currentStep]);
+
+  // Now safe to do conditional returns
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   const { 
     currentStep, entryPoint, idea, customer, job, problemDescription, 
     solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
@@ -356,14 +376,10 @@ function AppContent() {
     isAuthenticated
   });
 
-  useEffect(() => {
-    if (isAuthenticated && appState.currentStep === 'summary') {
-      setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
-    }
-  }, [isAuthenticated, appState.currentStep]);
-
   const isFlowStep = flowStepKeys.includes(currentStep);
   const activeFlowSteps = entryPoint === 'idea' ? steps : prematureIdeaFlowSteps;
+
+  const stepsToHidePremature = ['marketEvaluation', 'evaluationScore'];
 
   function handleStepClick(step: string) {
     if (activeFlowSteps.some(s => s.key === step)) {
@@ -534,6 +550,7 @@ function AppContent() {
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
               setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              navigate('/app');
             }} />
             <TopBar>
               {!isAuthenticated ? (
@@ -541,7 +558,7 @@ function AppContent() {
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
                     Log in
                   </LoginButton>
-                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'app'}))} aria-label="Sign up for free">
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
                     Sign up for free
                   </SignupFreeButton>
                 </>
@@ -555,7 +572,7 @@ function AppContent() {
                       border: 'none',
                       fontWeight: 600
                     }}>
-                    My Startup Ideas
+                    My Business Ideas
                   </NavButton>
                   <AvatarButton onClick={() => {
                     setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
@@ -593,7 +610,11 @@ function AppContent() {
                 {isTrackerVisible && (
                   <Sidebar>
                       <ProgressTracker 
-                        steps={entryPoint === 'idea' ? steps : prematureIdeaFlowSteps} 
+                        steps={
+                          entryPoint === 'idea'
+                            ? steps
+                            : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                        }
                         currentStepKey={currentStep}
                         onStepClick={handleStepClick}
                         isSubscribed={user?.isSubscribed}
@@ -686,17 +707,18 @@ function AppContent() {
           </AppContainer>
         } />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/next-steps-hub" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/next-steps-hub/:planId" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={<CoachMarketplace />} />
         <Route path="/courses" element={<CourseLibrary />} />
         <Route path="/plans" element={<StartupPlanDashboard setAppState={setAppState} />} />
         <Route path="/startup-plan/:id/edit" element={<StartupPlanEditPage setAppState={setAppState} />} />
         <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
-        <Route path="*" element={
+        <Route path="/launch" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
               setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              navigate('/app');
             }} />
             <TopBar>
               {!isAuthenticated ? (
@@ -704,7 +726,7 @@ function AppContent() {
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
                     Log in
                   </LoginButton>
-                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'app'}))} aria-label="Sign up for free">
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
                     Sign up for free
                   </SignupFreeButton>
                 </>
@@ -718,7 +740,80 @@ function AppContent() {
                       border: 'none',
                       fontWeight: 600
                     }}>
-                    My Startup Ideas
+                    My Business Ideas
+                  </NavButton>
+                  <AvatarButton onClick={() => {
+                    setAppState(prev => ({ ...prev, stepBeforeAuth: 'launch', currentStep: 'profile' }));
+                  }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                      {user && (
+                        <PlanBadge>
+                          {!user?.isSubscribed
+                            ? PLAN_DISPLAY_NAMES['free']
+                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                        </PlanBadge>
+                      )}
+                    </div>
+                  </AvatarButton>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <PageLayout>
+              <Sidebar>
+                <ProgressTracker 
+                  steps={steps} 
+                  currentStepKey={'launch'}
+                  onStepClick={handleStepClick}
+                  isSubscribed={user?.isSubscribed}
+                />
+              </Sidebar>
+              <MainContent isExpanded={false}>
+                <LaunchPreparationPage />
+              </MainContent>
+            </PageLayout>
+          </AppContainer>
+        } />
+        <Route path="*" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
                   </NavButton>
                   <AvatarButton onClick={() => {
                     setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
@@ -756,7 +851,11 @@ function AppContent() {
                 {isTrackerVisible && (
                   <Sidebar>
                       <ProgressTracker 
-                        steps={entryPoint === 'idea' ? steps : prematureIdeaFlowSteps} 
+                        steps={
+                          entryPoint === 'idea'
+                            ? steps
+                            : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                        }
                         currentStepKey={currentStep}
                         onStepClick={handleStepClick}
                         isSubscribed={user?.isSubscribed}
@@ -857,8 +956,23 @@ function AppContent() {
                           alert(err.message || 'Failed to log in. Please try again.');
                         }
                       }}
-                      onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'app' }))}
+                      onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
                       onRequestPasswordReset={requestPasswordReset}
+                    />
+                  </React.Suspense>
+                )}
+                {currentStep === 'signup' && (
+                  <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading signup form...</div>}>
+                    <Signup
+                      onSignup={async (email, password) => {
+                        try {
+                          await signup(email, password);
+                          setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                        } catch (err: any) {
+                          alert(err.message || 'Failed to sign up. Please try again.');
+                        }
+                      }}
+                      onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
                     />
                   </React.Suspense>
                 )}

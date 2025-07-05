@@ -155,7 +155,7 @@ export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: S
 
       <ButtonContainer>
         <SecondaryButton onClick={onLogin}>Log in to Continue</SecondaryButton>
-        <PrimaryButton onClick={onSignup}>Sign Up & View Startup Plan</PrimaryButton>
+        <PrimaryButton onClick={onSignup}>Sign Up & View Business Plan</PrimaryButton>
       </ButtonContainer>
       
       <div style={{textAlign: 'center'}}>

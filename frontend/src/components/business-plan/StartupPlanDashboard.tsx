@@ -373,6 +373,8 @@ interface StartupPlanDashboardProps {
   setAppState?: (fn: (prev: any) => any) => void;
 }
 
+const MINIMUM_SCORE = 60;
+
 export default function StartupPlanDashboard({ onSelectPlan, setAppState }: StartupPlanDashboardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -387,6 +389,8 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     validated: 0,
     averageProgress: 0
   });
+  const [showScorePrompt, setShowScorePrompt] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<StartupPlan | null>(null);
 
   useEffect(() => {
     fetchPlans();
@@ -454,7 +458,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   };
 
   const handleDeletePlan = async (planId: string) => {
-    if (!confirm('Are you sure you want to delete this startup plan?')) return;
+            if (!confirm('Are you sure you want to delete this business plan?')) return;
     
     try {
       const response = await fetch(`${API_URL}/startup-plan/${planId}`, {
@@ -491,7 +495,14 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   };
 
   const handleNextSteps = (plan: StartupPlan) => {
-    navigate('/next-steps-hub', { state: { businessPlan: plan } });
+    const score = plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number' ? plan.marketEvaluation.score : 0;
+    if (score < MINIMUM_SCORE) {
+      setSelectedPlan(plan);
+      setShowScorePrompt(true);
+      return;
+    }
+    console.log('Navigating to:', `/next-steps-hub/${plan._id}`);
+    navigate(`/next-steps-hub/${plan._id}`);
   };
 
   const filteredPlans = plans.filter(plan => 
@@ -508,7 +519,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     return (
       <Container>
         <div style={{ textAlign: 'center', padding: '4rem' }}>
-          <div>Loading your startup plans...</div>
+                      <div>Loading your business plans...</div>
         </div>
       </Container>
     );
@@ -526,7 +537,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
 
   return (
     <>
-      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
+      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/app')} />
       <TopBar>
         <AvatarButton onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} aria-label="Profile">
           {user && user.profilePic ? (
@@ -547,7 +558,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       </TopBar>
       <Container>
         <Header>
-          <Title>Startup Ideas</Title>
+          <Title>Business Ideas</Title>
           <CreateButton onClick={handleCreatePlan}>
             <FaPlus /> Create New Idea
           </CreateButton>
@@ -559,7 +570,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
               <FaChartLine /> Total Ideas
             </StatTitle>
             <StatValue>{stats.total}</StatValue>
-            <StatSubtitle>All startup ideas</StatSubtitle>
+            <StatSubtitle>All business ideas</StatSubtitle>
           </StatCard>
           <StatCard>
             <StatTitle>
@@ -614,8 +625,8 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
         {plans.length === 0 ? (
           <EmptyState>
             <EmptyIcon>📋</EmptyIcon>
-            <EmptyTitle>No startup ideas yet</EmptyTitle>
-            <EmptyText>Create your first startup idea to get started</EmptyText>
+            <EmptyTitle>No business ideas yet</EmptyTitle>
+            <EmptyText>Create your first business idea to get started</EmptyText>
             <CreateButton onClick={handleCreatePlan}>
               <FaPlus /> Create Your First Idea
             </CreateButton>
@@ -665,6 +676,71 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
           </PlansGrid>
         )}
       </Container>
+      {showScorePrompt && selectedPlan && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.45)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: '2.5rem 2rem',
+            maxWidth: 420,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            textAlign: 'center',
+            position: 'relative',
+          }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#dc3545' }}>Score Too Low</h2>
+            <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: '#444' }}>
+              Your business idea needs a minimum evaluation score of <b>{MINIMUM_SCORE}</b> to continue to the Next Steps Hub.<br /><br />
+              Your current score is <b>{selectedPlan.marketEvaluation?.score ?? 0}</b>.<br /><br />
+              To improve your score, click <b>View</b> on your idea and edit your responses.
+            </p>
+            <button
+              style={{
+                background: '#181a1b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '0.7rem 1.5rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginRight: 12,
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                setShowScorePrompt(false);
+                navigate(`/startup-plan/${selectedPlan._id}`);
+              }}
+            >
+              View & Edit Idea
+            </button>
+            <button
+              style={{
+                background: '#fff',
+                color: '#181a1b',
+                border: '1.5px solid #e5e5e5',
+                borderRadius: 8,
+                padding: '0.7rem 1.5rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowScorePrompt(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 } 

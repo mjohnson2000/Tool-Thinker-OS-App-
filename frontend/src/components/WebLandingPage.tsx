@@ -618,7 +618,7 @@ const WebLandingPage: React.FC = () => {
             <Tagline>No Time? No MBA? No Problem.</Tagline>
             <SubTagline>Your Startup Journey Copilot</SubTagline>
             <HeroText>
-              Turn your ideas into a Startup Plan—fast, simple, and guided by AI. Tool Thinker helps aspiring entrepreneurs with little time, no formal training, and many ideas get clarity and take action.
+              Turn your ideas into a Business Plan—fast, simple, and guided by AI. Tool Thinker helps aspiring entrepreneurs with little time, no formal training, and many ideas get clarity and take action.
             </HeroText>
             <CTAButton onClick={handleStartForFree}>Start for Free</CTAButton>
             <SecondaryButton onClick={handleSeeHowItWorks}>See How It Works</SecondaryButton>
@@ -671,7 +671,7 @@ const WebLandingPage: React.FC = () => {
             <Step>
               <StepNumber>1</StepNumber>
               <StepTitle>Describe Your Idea</StepTitle>
-              <StepText>Share your startup idea in plain English—no business jargon required.</StepText>
+              <StepText>Share your business idea in plain English—no business jargon required.</StepText>
             </Step>
             <Step>
               <StepNumber>2</StepNumber>
@@ -680,8 +680,8 @@ const WebLandingPage: React.FC = () => {
             </Step>
             <Step>
               <StepNumber>3</StepNumber>
-              <StepTitle>Your Startup Plan</StepTitle>
-              <StepText>Get a shareable, actionable Startup Plan you can use to move forward or share with others.</StepText>
+              <StepTitle>Your Business Plan</StepTitle>
+              <StepText>Get a shareable, actionable Business Plan you can use to move forward or share with others.</StepText>
             </Step>
           </Steps>
         </HowItWorks>
@@ -730,7 +730,7 @@ const WebLandingPage: React.FC = () => {
         <VideoSection>
           <h2>See Tool Thinker in Action</h2>
           <VideoPlaceholder>Video Demo Coming Soon</VideoPlaceholder>
-          <p>Watch how easy it is to turn your idea into a Startup Plan in minutes.</p>
+                          <p>Watch how easy it is to turn your idea into a Business Plan in minutes.</p>
         </VideoSection>
 
         {/* Testimonials */}

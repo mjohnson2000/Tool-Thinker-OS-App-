@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useLocation, Navigate, useNavigate } from 'react-router-dom';
+import { useLocation, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png';
 import { FiTarget, FiCheckCircle, FiBook, FiAward, FiTrendingUp, FiUsers, FiDollarSign, FiCalendar, FiArrowRight, FiRefreshCw, FiChevronDown, FiChevronUp, FiPlay, FiStar, FiSearch, FiCode } from 'react-icons/fi';
 import { FaInfoCircle, FaArrowLeft } from 'react-icons/fa';
+import axios from 'axios';
+import { ProgressTracker } from './ProgressTracker';
 
 interface ValidationResult {
   validationScore: number;
@@ -16,6 +18,12 @@ interface ValidationResult {
 interface StartupPlan {
   summary: string;
   sections: { [key: string]: string };
+  marketEvaluation?: {
+    score: number;
+    competitors?: any[];
+    customerResearch?: any[];
+    insights?: any[];
+  };
 }
 
 interface NextStepsHubProps {
@@ -115,7 +123,7 @@ const Subtitle = styled.p`
 
 const DashboardGrid = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 320px 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
   
@@ -632,13 +640,13 @@ const mockCoaches: Coach[] = [
 const getActionItems = (validationScore: number, startupPlan: StartupPlan): ActionItem[] => {
   const baseItems: ActionItem[] = [
     {
-      id: 1,
-      title: "Create a landing page",
-      description: "Build a simple landing page to test your idea and collect leads",
-      estimatedTime: "2-3 hours",
-      priority: "High",
+      id: 3,
+      title: "Create a simple MVP",
+      description: "Build a minimal version of your product or service",
+      estimatedTime: "1-2 weeks",
+      priority: "Medium",
       completed: false,
-      category: "Validation"
+      category: "Development"
     },
     {
       id: 2,
@@ -648,15 +656,6 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       priority: "High",
       completed: false,
       category: "Research"
-    },
-    {
-      id: 3,
-      title: "Create a simple MVP",
-      description: "Build a minimal version of your product or service",
-      estimatedTime: "1-2 weeks",
-      priority: "Medium",
-      completed: false,
-      category: "Development"
     }
   ];
 
@@ -744,44 +743,33 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
   } 
   // Low Score (<60): Re-evaluate market and pivot
   else {
-    baseItems.push(
-      {
-        id: 4,
-        title: "Re-evaluate your market",
-        description: "Consider pivoting based on validation results and market feedback",
-        estimatedTime: "4-6 hours",
-        priority: "High",
-        completed: false,
-        category: "Strategy"
-      },
-      {
-        id: 5,
-        title: "Conduct deeper market research",
-        description: "Investigate alternative markets or customer segments",
-        estimatedTime: "6-8 hours",
-        priority: "High",
-        completed: false,
-        category: "Research"
-      },
-      {
-        id: 6,
-        title: "Explore pivot opportunities",
-        description: "Identify potential new directions for your business idea",
-        estimatedTime: "3-4 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Strategy"
-      },
-      {
-        id: 7,
-        title: "Validate new assumptions",
-        description: "Test new hypotheses about market and customer needs",
-        estimatedTime: "2-3 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Validation"
-      }
-    );
+    baseItems.splice(2, 0, {
+      id: 6,
+      title: "Explore pivot opportunities",
+      description: "Identify potential new directions for your business idea",
+      estimatedTime: "3-4 hours",
+      priority: "Medium",
+      completed: false,
+      category: "Strategy"
+    });
+    baseItems.splice(3, 0, {
+      id: 7,
+      title: "Validate new assumptions",
+      description: "Test new hypotheses about market and customer needs",
+      estimatedTime: "2-3 hours",
+      priority: "Medium",
+      completed: false,
+      category: "Validation"
+    });
+    baseItems.splice(4, 0, {
+      id: 8,
+      title: "Iterate or exit",
+      description: "Decide whether to pivot, iterate, or exit based on your new findings and validation results.",
+      estimatedTime: "1-2 hours",
+      priority: "High",
+      completed: false,
+      category: "Strategy"
+    });
   }
 
   return baseItems;
@@ -1081,37 +1069,83 @@ const MyPlansButton = styled.button`
   &:hover { background: #000; }
 `;
 
+const ProceedButton = styled.button`
+  display: block;
+  margin: 2.5rem auto 0 auto;
+  background: #181a1b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s;
+  &:hover {
+    background: #000;
+  }
+`;
+
+const steps = [
+  { key: 'idea', label: 'Your Interests' },
+  { key: 'customer', label: 'Customer Persona' },
+  { key: 'job', label: 'Customer Job' },
+  { key: 'businessPlan', label: 'Business Idea' },
+  { key: 'nextStepsHub', label: 'Business Discovery', isPremium: true },
+  { key: 'launch', label: 'Launch', isPremium: true },
+];
+
 export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
   const { user } = useAuth();
-  const location = useLocation();
+  const { planId } = useParams();
   const navigate = useNavigate();
-  let result = location.state?.result as ValidationResult | undefined;
-  let startupPlan = location.state?.startupPlan as StartupPlan | undefined;
-  // Support dashboard navigation
-  if (!result && location.state?.businessPlan) {
-    startupPlan = location.state.businessPlan;
-    result = {
-      validationScore: 0,
-      recommendations: [],
-      risks: [],
-      nextSteps: []
-    };
-  }
-
-  if (!startupPlan) {
-    return <Navigate to='/' replace />;
-  }
+  console.log('NextStepsHub mounted, planId:', planId);
+  const [startupPlan, setStartupPlan] = useState<StartupPlan | null>(null);
+  const [result, setResult] = useState<ValidationResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(mockProgress);
-  const [actionItems, setActionItems] = useState(getActionItems(result.validationScore, startupPlan));
+  const [actionItems, setActionItems] = useState(getActionItems(result?.validationScore || 0, startupPlan || { summary: '', sections: {} }));
   const [showMilestone, setShowMilestone] = useState(false);
   const [openHelpItem, setOpenHelpItem] = useState<number | null>(null);
 
-  if (!user?.isSubscribed) {
-    return <Navigate to='/' replace />;
-  }
-  if (!result) {
-    return <Navigate to='/' replace />;
-  }
+  useEffect(() => {
+    async function fetchPlan() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get<StartupPlan>(`/api/business-plan/${planId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const plan: StartupPlan = res.data;
+        console.log('Fetched plan:', plan);
+        setStartupPlan(plan);
+        if (plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number') {
+          setResult({
+            validationScore: plan.marketEvaluation.score,
+            recommendations: [],
+            risks: [],
+            nextSteps: []
+          });
+        } else {
+          setResult(null);
+        }
+      } catch (err) {
+        console.error('Error fetching plan:', err);
+        setError('Failed to load business plan.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (planId) fetchPlan();
+  }, [planId]);
+
+  if (loading) return <div style={{textAlign:'center',marginTop:'2rem'}}>Loading...</div>;
+  if (error) return <div style={{color:'red',textAlign:'center',marginTop:'2rem'}}>{error}</div>;
+  if (!startupPlan || !result) return <div style={{color:'red',textAlign:'center',marginTop:'2rem'}}>Business plan or evaluation result not found.</div>;
 
   const handleActionComplete = (actionId: number) => {
     setActionItems(prev => prev.map(item => 
@@ -1130,11 +1164,13 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
   };
 
   const handleCourseClick = (courseId: string) => {
-    navigate(`/courses/${courseId}`);
+    // In real app, this would navigate to the course page
+    console.log(`Opening course ${courseId}`);
   };
 
   const handleCoachClick = (coachId: string) => {
-    navigate(`/coaches/${coachId}`);
+    // In real app, this would navigate to the coach page
+    console.log(`Opening coach ${coachId}`);
   };
 
   const completedActions = actionItems.filter(item => item.completed).length;
@@ -1153,10 +1189,10 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
             cursor: 'pointer', 
             boxShadow: '0 2px 8px rgba(0,0,0,0.04)' 
           }} 
-          onClick={() => navigate('/')} 
+          onClick={() => navigate('/app')} 
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginLeft: 'auto' }}>
-          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Startup Ideas</MyPlansButton>
+          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Business Ideas</MyPlansButton>
           {user && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
               {user.profilePic ? (
@@ -1184,47 +1220,25 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
 
       <Container>
         <Header>
-          <Title>Your Business Mission Control</Title>
+          <Title>Business Discovery Roadmap</Title>
           <Subtitle>
             Let's get you to your first {progress.targetSales} sales or ${progress.targetRevenue} in revenue
           </Subtitle>
         </Header>
 
-        <DashboardGrid>
+        <DashboardGrid style={{ gridTemplateColumns: '320px 1fr' }}>
+          <div>
+            <ProgressTracker steps={steps} currentStepKey={'nextStepsHub'} onStepClick={() => {}} />
+          </div>
           <MainSection>
             {/* Progress Tracker */}
-            <Card>
-              <CardTitle>
-                <FiTarget />
-                Progress Tracker
-              </CardTitle>
-              <ProgressSection>
-                <GoalDisplay>
-                  <GoalInfo>
-                    <GoalIcon>
-                      <FiDollarSign />
-                    </GoalIcon>
-                    <GoalText>
-                      <h3>Revenue Goal</h3>
-                      <p>${progress.currentRevenue} / ${progress.targetRevenue}</p>
-                    </GoalText>
-                  </GoalInfo>
-                </GoalDisplay>
-                <ProgressBar>
-                  <ProgressFill percent={progress.progressPercent} />
-                </ProgressBar>
-                <ProgressText>
-                  <span>0% Complete</span>
-                  <span>Goal: ${progress.targetRevenue}</span>
-                </ProgressText>
-              </ProgressSection>
-            </Card>
+            {/* Removed horizontal Progress Tracker section */}
 
             {/* Action Roadmap */}
             <Card>
               <CardTitle>
                 <FiCheckCircle />
-                Action Roadmap ({completedActions}/{totalActions} Complete)
+                Roadmap Actions ({completedActions}/{totalActions} Complete)
               </CardTitle>
               <StrategySummary score={result.validationScore}>
                 <StrategyIcon score={result.validationScore}>
@@ -1258,17 +1272,6 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
                       <ActionContent>
                         <ActionHeader>
                           <ActionTitle completed={item.completed}>{item.title}</ActionTitle>
-                          <PriorityBadgeWrapper tabIndex={0} aria-label={`Priority info: ${item.priority}`}>
-                            <PriorityBadge priority={item.priority}>
-                              {item.priority}
-                              <InfoIcon style={{ marginLeft: 8 }} />
-                            </PriorityBadge>
-                            <Tooltip>
-                              {item.priority === 'High' && 'Critical or urgent—do this first.'}
-                              {item.priority === 'Medium' && 'Important, but not urgent—do after high-priority items.'}
-                              {item.priority !== 'High' && item.priority !== 'Medium' && 'Other priority'}
-                            </Tooltip>
-                          </PriorityBadgeWrapper>
                         </ActionHeader>
                         <ActionDescription>{item.description}</ActionDescription>
                         <ActionMeta>
@@ -1348,75 +1351,12 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
                   </div>
                 ))}
               </ActionRoadmapContainer>
-            </Card>
-
-            {/* Resource Library */}
-            <Card>
-              <CardTitle>
-                <FiBook />
-                Resource Library
-              </CardTitle>
-              <ResourceGrid>
-                {resources.map(resource => (
-                  <ResourceCard 
-                    key={resource.id}
-                    onClick={() => handleResourceClick(resource.id)}
-                  >
-                    <ResourceIcon>{resource.icon}</ResourceIcon>
-                    <ResourceTitle>{resource.title}</ResourceTitle>
-                    <ResourceDescription>{resource.description}</ResourceDescription>
-                  </ResourceCard>
-                ))}
-              </ResourceGrid>
+              <ProceedButton onClick={() => navigate('/launch')}>Proceed To Launch</ProceedButton>
             </Card>
           </MainSection>
 
           <SideSection>
-            {/* Milestone Celebrations */}
-            <Card>
-              <CardTitle>
-                <FiAward />
-                Milestones
-              </CardTitle>
-              {milestones.map(milestone => (
-                <MilestoneCard key={milestone.id}>
-                  <MilestoneIcon>🏆</MilestoneIcon>
-                  <MilestoneTitle>{milestone.title}</MilestoneTitle>
-                  <MilestoneDescription>{milestone.description}</MilestoneDescription>
-                </MilestoneCard>
-              ))}
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardTitle>
-                <FiTarget />
-                Quick Actions
-              </CardTitle>
-              <QuickActionsContainer>
-                <QuickActionButton onClick={() => navigate('/coaches')}>
-                  <FiUsers />
-                  <div>
-                    <h4>Find a Coach</h4>
-                    <p>Get personalized guidance from experts</p>
-                  </div>
-                </QuickActionButton>
-                <QuickActionButton onClick={() => navigate('/courses')}>
-                  <FiBook />
-                  <div>
-                    <h4>Take a Course</h4>
-                    <p>Learn new skills to grow your business</p>
-                  </div>
-                </QuickActionButton>
-                <QuickActionButton onClick={() => navigate('/market-validation', { state: { startupPlan } })}>
-                  <FiTrendingUp />
-                  <div>
-                    <h4>Re-validate Market</h4>
-                    <p>Test your idea with new insights</p>
-                  </div>
-                </QuickActionButton>
-              </QuickActionsContainer>
-            </Card>
+            {/* Remove Milestone Celebrations and Quick Actions cards */}
           </SideSection>
         </DashboardGrid>
       </Container>

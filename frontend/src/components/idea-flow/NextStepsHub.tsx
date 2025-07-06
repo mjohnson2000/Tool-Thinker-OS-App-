@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useLocation, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/logo.png';
-import { FiTarget, FiCheckCircle, FiBook, FiAward, FiTrendingUp, FiUsers, FiDollarSign, FiCalendar, FiArrowRight, FiRefreshCw, FiChevronDown, FiChevronUp, FiPlay, FiStar, FiSearch, FiCode } from 'react-icons/fi';
+import { FiTarget, FiCheckCircle, FiBook, FiAward, FiTrendingUp, FiUsers, FiDollarSign, FiCalendar, FiArrowRight, FiRefreshCw, FiChevronDown, FiChevronUp, FiPlay, FiStar, FiSearch, FiCode, FiClock, FiSkipForward, FiCircle } from 'react-icons/fi';
 import { FaInfoCircle, FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { ProgressTracker } from './ProgressTracker';
@@ -24,6 +24,32 @@ interface StartupPlan {
     customerResearch?: any[];
     insights?: any[];
   };
+  mvp?: {
+    problem?: string;
+    solution?: string;
+    assumptions?: string;
+    test?: string;
+    lastUpdated?: Date;
+    isComplete?: boolean;
+    userProgress?: {
+      [stepKey: string]: {
+        status: 'pending' | 'completed' | 'skipped';
+        progress: { [key: string]: boolean };
+        feedback: string;
+        completedAt?: Date;
+      };
+    };
+  };
+  progress?: {
+    ideaDiscovery?: boolean;
+    customerResearch?: boolean;
+    problemDefinition?: boolean;
+    solutionDesign?: boolean;
+    marketEvaluation?: boolean;
+    businessPlan?: boolean;
+    nextSteps?: boolean;
+    mvp?: boolean;
+  };
 }
 
 interface NextStepsHubProps {
@@ -39,6 +65,13 @@ interface ActionItem {
   priority: string;
   completed: boolean;
   category: string;
+  progress?: number; // 0-100 percentage
+  status?: 'not_started' | 'in_progress' | 'completed' | 'skipped';
+  subtasks?: {
+    id: string;
+    title: string;
+    completed: boolean;
+  }[];
 }
 
 interface Course {
@@ -220,36 +253,51 @@ const GoalText = styled.div`
 
 const ProgressBar = styled.div`
   width: 100%;
-  height: 12px;
+  height: 6px;
   background: #e9ecef;
-  border-radius: 6px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 `;
 
-const ProgressFill = styled.div<{ percent: number }>`
+const ProgressFill = styled.div<{ percent: number; status?: string }>`
   height: 100%;
-  background: linear-gradient(90deg, #28a745, #20c997);
+  background: ${props => {
+    if (props.status === 'completed') return '#28a745';
+    if (props.status === 'in_progress') return '#fd7e14';
+    if (props.status === 'skipped') return '#6c757d';
+    return '#007aff';
+  }};
   width: ${props => Math.min(props.percent, 100)}%;
   transition: width 0.5s ease;
-  border-radius: 6px;
+  border-radius: 3px;
 `;
 
 const ProgressText = styled.div`
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #6c757d;
 `;
 
-const ActionItem = styled.div<{ completed?: boolean }>`
+const ActionItem = styled.div<{ completed?: boolean; status?: string }>`
   display: flex;
   align-items: flex-start;
   gap: 1rem;
   padding: 1.5rem;
   border-radius: 12px;
-  background: ${props => props.completed ? '#f8fff9' : '#fff'};
-  border: 1px solid ${props => props.completed ? '#d4edda' : '#e9ecef'};
+  background: ${props => {
+    if (props.completed) return '#f8fff9';
+    if (props.status === 'in_progress') return '#fff8f0';
+    if (props.status === 'skipped') return '#f8f9fa';
+    return '#fff';
+  }};
+  border: 1px solid ${props => {
+    if (props.completed) return '#d4edda';
+    if (props.status === 'in_progress') return '#ffeaa7';
+    if (props.status === 'skipped') return '#e9ecef';
+    return '#e9ecef';
+  }};
   margin-bottom: 1rem;
   transition: all 0.2s;
   cursor: pointer;
@@ -637,7 +685,89 @@ const mockCoaches: Coach[] = [
   }
 ];
 
+const ActionProgress = styled.div`
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e9ecef;
+`;
+
+const StatusBadge = styled.span<{ status: string }>`
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  background: ${props => {
+    switch (props.status) {
+      case 'completed': return '#d4edda';
+      case 'in_progress': return '#fff3cd';
+      case 'skipped': return '#f8d7da';
+      default: return '#e9ecef';
+    }
+  }};
+  color: ${props => {
+    switch (props.status) {
+      case 'completed': return '#155724';
+      case 'in_progress': return '#856404';
+      case 'skipped': return '#721c24';
+      default: return '#6c757d';
+    }
+  }};
+`;
+
+function calculateMvpProgress(mvpData: any): { progress: number; status: 'not_started' | 'in_progress' | 'completed' | 'skipped'; subtasks: any[] } {
+  console.log('calculateMvpProgress called with:', mvpData);
+  
+  if (!mvpData || !mvpData.userProgress) {
+    console.log('No MVP data or userProgress found, returning not_started');
+    return { progress: 0, status: 'not_started', subtasks: [] };
+  }
+
+  const steps = ['validate', 'define', 'build', 'launch'];
+  let completedSteps = 0;
+  let skippedSteps = 0;
+  let totalSubtasks = 0;
+  let completedSubtasks = 0;
+  const subtasks: any[] = [];
+
+  steps.forEach(stepKey => {
+    const stepProgress = mvpData.userProgress[stepKey];
+    console.log(`Step ${stepKey}:`, stepProgress);
+    if (stepProgress) {
+      if (stepProgress.status === 'completed') {
+        completedSteps++;
+        // Count subtasks for completed steps
+        Object.values(stepProgress.progress || {}).forEach((completed: any) => {
+          totalSubtasks++;
+          if (completed) completedSubtasks++;
+        });
+      } else if (stepProgress.status === 'skipped') {
+        skippedSteps++;
+      }
+    }
+  });
+
+  const progress = steps.length > 0 ? (completedSteps / steps.length) * 100 : 0;
+  
+  let status: 'not_started' | 'in_progress' | 'completed' | 'skipped' = 'not_started';
+  if (completedSteps === steps.length) status = 'completed';
+  else if (completedSteps > 0 || skippedSteps > 0) status = 'in_progress';
+
+  console.log(`MVP Progress calculation: completedSteps=${completedSteps}, skippedSteps=${skippedSteps}, progress=${progress}%, status=${status}`);
+  
+  return { progress, status, subtasks };
+}
+
 const getActionItems = (validationScore: number, startupPlan: StartupPlan): ActionItem[] => {
+  console.log('getActionItems called with validationScore:', validationScore, 'startupPlan:', startupPlan);
+  
+  const mvpProgress = calculateMvpProgress(startupPlan.mvp);
+  console.log('MVP Progress result:', mvpProgress);
+  
+  // Check if MVP is actually complete based on both isComplete flag and progress
+  const isMvpComplete = startupPlan.mvp?.isComplete || mvpProgress.status === 'completed';
+  console.log('MVP completion check:', { isComplete: startupPlan.mvp?.isComplete, progressStatus: mvpProgress.status, finalResult: isMvpComplete });
+  
   const baseItems: ActionItem[] = [
     {
       id: 3,
@@ -645,8 +775,16 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       description: "Build a minimal version of your product or service",
       estimatedTime: "1-2 weeks",
       priority: "Medium",
-      completed: false,
-      category: "Development"
+      completed: isMvpComplete,
+      category: "Development",
+      progress: mvpProgress.progress,
+      status: mvpProgress.status,
+      subtasks: [
+        { id: 'validate', title: 'Validate assumptions', completed: startupPlan.mvp?.userProgress?.validate?.status === 'completed' },
+        { id: 'define', title: 'Define MVP scope', completed: startupPlan.mvp?.userProgress?.define?.status === 'completed' },
+        { id: 'build', title: 'Build MVP', completed: startupPlan.mvp?.userProgress?.build?.status === 'completed' },
+        { id: 'launch', title: 'Launch and test', completed: startupPlan.mvp?.userProgress?.launch?.status === 'completed' }
+      ]
     },
     {
       id: 2,
@@ -655,9 +793,13 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       estimatedTime: "1-2 hours",
       priority: "High",
       completed: false,
-      category: "Research"
+      category: "Research",
+      progress: 0,
+      status: 'not_started'
     }
   ];
+
+  console.log('MVP Action Item created:', baseItems[0]);
 
   // High Score (80+): Focus on marketing and scaling
   if (validationScore >= 80) {
@@ -669,7 +811,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "3-5 hours",
         priority: "High",
         completed: false,
-        category: "Marketing"
+        category: "Marketing",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 5,
@@ -678,7 +822,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "1-2 hours",
         priority: "Medium",
         completed: false,
-        category: "Analytics"
+        category: "Analytics",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 6,
@@ -687,7 +833,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "4-6 hours",
         priority: "Medium",
         completed: false,
-        category: "Operations"
+        category: "Operations",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 7,
@@ -696,7 +844,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "2-3 hours",
         priority: "Medium",
         completed: false,
-        category: "Strategy"
+        category: "Strategy",
+        progress: 0,
+        status: 'not_started'
       }
     );
   } 
@@ -710,7 +860,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "2-3 hours",
         priority: "High",
         completed: false,
-        category: "Strategy"
+        category: "Strategy",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 5,
@@ -719,7 +871,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "3-4 hours",
         priority: "Medium",
         completed: false,
-        category: "Research"
+        category: "Research",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 6,
@@ -728,7 +882,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "2-3 hours",
         priority: "Medium",
         completed: false,
-        category: "Strategy"
+        category: "Strategy",
+        progress: 0,
+        status: 'not_started'
       },
       {
         id: 7,
@@ -737,7 +893,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
         estimatedTime: "1-2 hours",
         priority: "Medium",
         completed: false,
-        category: "Research"
+        category: "Research",
+        progress: 0,
+        status: 'not_started'
       }
     );
   } 
@@ -750,7 +908,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       estimatedTime: "3-4 hours",
       priority: "Medium",
       completed: false,
-      category: "Strategy"
+      category: "Strategy",
+      progress: 0,
+      status: 'not_started'
     });
     baseItems.splice(3, 0, {
       id: 7,
@@ -759,7 +919,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       estimatedTime: "2-3 hours",
       priority: "Medium",
       completed: false,
-      category: "Validation"
+      category: "Validation",
+      progress: 0,
+      status: 'not_started'
     });
     baseItems.splice(4, 0, {
       id: 8,
@@ -768,7 +930,9 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       estimatedTime: "1-2 hours",
       priority: "High",
       completed: false,
-      category: "Strategy"
+      category: "Strategy",
+      progress: 0,
+      status: 'not_started'
     });
   }
 
@@ -1087,11 +1251,27 @@ const ProceedButton = styled.button`
   }
 `;
 
+const RefreshButton = styled.button`
+  background: #f8f9fa;
+  color: #181a1b;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+`;
+
 const steps = [
   { key: 'idea', label: 'Your Interests' },
   { key: 'customer', label: 'Customer Persona' },
   { key: 'job', label: 'Customer Job' },
-  { key: 'businessPlan', label: 'Business Idea' },
+  { key: 'businessPlan', label: 'Manage Ideas', isPremium: true },
   { key: 'nextStepsHub', label: 'Business Discovery', isPremium: true },
   { key: 'launch', label: 'Launch', isPremium: true },
 ];
@@ -1106,7 +1286,7 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(mockProgress);
-  const [actionItems, setActionItems] = useState(getActionItems(result?.validationScore || 0, startupPlan || { summary: '', sections: {} }));
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [showMilestone, setShowMilestone] = useState(false);
   const [openHelpItem, setOpenHelpItem] = useState<number | null>(null);
 
@@ -1121,7 +1301,6 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
           }
         });
         const plan: StartupPlan = res.data;
-        console.log('Fetched plan:', plan);
         setStartupPlan(plan);
         if (plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number') {
           setResult({
@@ -1130,17 +1309,62 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
             risks: [],
             nextSteps: []
           });
+          setActionItems(getActionItems(plan.marketEvaluation.score, plan));
         } else {
           setResult(null);
+          setActionItems(getActionItems(0, plan));
         }
       } catch (err) {
-        console.error('Error fetching plan:', err);
         setError('Failed to load business plan.');
       } finally {
         setLoading(false);
       }
     }
     if (planId) fetchPlan();
+  }, [planId]);
+
+  // Add a refresh function that can be called when returning from MVP Builder
+  const refreshPlan = async () => {
+    if (!planId) return;
+    
+    try {
+      const res = await axios.get<StartupPlan>(`/api/business-plan/${planId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const plan: StartupPlan = res.data;
+      console.log('Refreshed plan:', plan);
+      setStartupPlan(plan);
+      
+      if (plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number') {
+        const validationResult = {
+          validationScore: plan.marketEvaluation.score,
+          recommendations: [],
+          risks: [],
+          nextSteps: []
+        };
+        setResult(validationResult);
+        const items = getActionItems(plan.marketEvaluation.score, plan);
+        setActionItems(items);
+      } else {
+        setResult(null);
+        const items = getActionItems(0, plan);
+        setActionItems(items);
+      }
+    } catch (err) {
+      console.error('Error refreshing plan:', err);
+    }
+  };
+
+  // Refresh data when component mounts or when returning from other pages
+  useEffect(() => {
+    const handleFocus = () => {
+      refreshPlan();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [planId]);
 
   if (loading) return <div style={{textAlign:'center',marginTop:'2rem'}}>Loading...</div>;
@@ -1175,6 +1399,7 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
 
   const completedActions = actionItems.filter(item => item.completed).length;
   const totalActions = actionItems.length;
+  const overallProgress = totalActions > 0 ? (completedActions / totalActions) * 100 : 0;
 
   return (
     <PageBackground>
@@ -1224,6 +1449,9 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
           <Subtitle>
             Let's get you to your first {progress.targetSales} sales or ${progress.targetRevenue} in revenue
           </Subtitle>
+          <RefreshButton onClick={refreshPlan} style={{ marginTop: '1rem' }}>
+            🔄 Refresh Progress
+          </RefreshButton>
         </Header>
 
         <DashboardGrid style={{ gridTemplateColumns: '320px 1fr' }}>
@@ -1231,8 +1459,20 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
             <ProgressTracker steps={steps} currentStepKey={'nextStepsHub'} onStepClick={() => {}} />
           </div>
           <MainSection>
-            {/* Progress Tracker */}
-            {/* Removed horizontal Progress Tracker section */}
+            {/* Overall Progress */}
+            <Card style={{ marginBottom: '2rem' }}>
+              <CardTitle>
+                <FiTrendingUp />
+                Overall Progress
+              </CardTitle>
+              <ProgressBar>
+                <ProgressFill percent={overallProgress} />
+              </ProgressBar>
+              <ProgressText>
+                <span>{completedActions} of {totalActions} actions completed</span>
+                <span>{Math.round(overallProgress)}%</span>
+              </ProgressText>
+            </Card>
 
             {/* Action Roadmap */}
             <Card>
@@ -1264,30 +1504,66 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
                   <div key={item.id}>
                     <ActionItem 
                       completed={item.completed}
-                      onClick={() => handleActionComplete(item.id)}
+                      status={item.status}
+                      onClick={() => {
+                        if (item.title === 'Create a simple MVP') {
+                          navigate(`/mvp/${planId}`);
+                        } else {
+                          handleActionComplete(item.id);
+                        }
+                      }}
                     >
                       <ActionIcon completed={item.completed}>
-                        {item.completed ? <FiCheckCircle /> : <FiArrowRight />}
+                        {item.completed ? <FiCheckCircle /> : 
+                         item.status === 'in_progress' ? <FiClock /> :
+                         item.status === 'skipped' ? <FiSkipForward /> : <FiArrowRight />}
                       </ActionIcon>
                       <ActionContent>
                         <ActionHeader>
                           <ActionTitle completed={item.completed}>{item.title}</ActionTitle>
+                          <StatusBadge status={item.status || 'not_started'}>
+                            {item.status || 'not_started'}
+                          </StatusBadge>
                         </ActionHeader>
                         <ActionDescription>{item.description}</ActionDescription>
+                        
+                        {/* Progress Bar for each action */}
+                        {item.progress !== undefined && (
+                          <ActionProgress>
+                            <ProgressBar>
+                              <ProgressFill 
+                                percent={item.progress} 
+                                status={item.status}
+                              />
+                            </ProgressBar>
+                            <ProgressText>
+                              <span>{Math.round(item.progress)}% complete</span>
+                              <span>{item.estimatedTime}</span>
+                            </ProgressText>
+                            
+                            {/* Subtasks for MVP */}
+                            {item.subtasks && item.subtasks.length > 0 && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                {item.subtasks.map(subtask => (
+                                  <div key={subtask.id} style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '0.5rem',
+                                    fontSize: '0.8rem',
+                                    color: '#666',
+                                    marginBottom: '0.2rem'
+                                  }}>
+                                    {subtask.completed ? <FiCheckCircle size={12} /> : <FiCircle size={12} />}
+                                    {subtask.title}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </ActionProgress>
+                        )}
+                        
                         <ActionMeta>
                           <ActionMetaLeft>
-                            <CategoryTagWrapper tabIndex={0}>
-                              <CategoryTag>
-                                {item.category}
-                                <CategoryInfoIcon tabIndex={0} aria-label={`Info about ${item.category}`} />
-                                <CategoryTooltip>
-                                  {item.category === 'Research' && 'Activities to gather information about your market or customers.'}
-                                  {item.category === 'Strategy' && 'Planning and decision-making to guide your business direction.'}
-                                  {item.category === 'Validation' && 'Tasks to test and confirm your business assumptions.'}
-                                  {item.category === 'Development' && 'Building and improving your product or service.'}
-                                </CategoryTooltip>
-                              </CategoryTag>
-                            </CategoryTagWrapper>
                             <TimeEstimate>
                               <FiCalendar />
                               {item.estimatedTime}

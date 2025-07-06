@@ -37,6 +37,7 @@ import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPla
 import { LaunchPreparationPage } from './components/idea-flow/LaunchPreparationPage';
 import { SolutionSelectionPage } from './components/idea-flow/SolutionSelectionPage';
 import type { SolutionOption } from './components/idea-flow/SolutionSelectionPage';
+import { MvpBuilderPage } from './components/idea-flow/MvpBuilderPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -799,6 +800,7 @@ function AppContent() {
             </PageLayout>
           </AppContainer>
         } />
+        <Route path="/mvp/:planId" element={<MvpBuilderPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {

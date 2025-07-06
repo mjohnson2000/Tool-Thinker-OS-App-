@@ -158,8 +158,9 @@ export function ExploreOpportunitiesPage() {
           }
         });
         setBusinessPlan(res.data);
-        // Load progress from backend if available
-        const userProgress = res.data?.mvp?.userProgress?.explore;
+        // Safely access mvp property
+        const mvp = res.data && typeof res.data === 'object' && 'mvp' in res.data ? (res.data as any).mvp : undefined;
+        const userProgress = mvp?.userProgress?.explore;
         if (userProgress) {
           setCompleted(userProgress.status === 'completed');
           setFeedback(userProgress.feedback || '');

@@ -14,6 +14,7 @@ import coachesRouter from './routes/coaches';
 import coursesRouter from './routes/courses';
 const stripeRouter = require('./routes/stripe');
 const stripeWebhookRouter = require('./routes/stripeWebhook');
+import logRoute from './routes/log';
 
 // Import models to ensure they're registered
 import './models/User';
@@ -48,6 +49,7 @@ app.use('/api/startup-plan', businessPlanRouter);
 app.use('/api/coaches', coachesRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/stripe', stripeRouter);
+app.use('/api/log', logRoute);
 
 // Error handling
 app.use(errorHandler);

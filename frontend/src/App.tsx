@@ -42,6 +42,7 @@ import { ValidateAssumptionsPage } from './components/idea-flow/ValidateAssumpti
 import { ExploreOpportunitiesPage } from './components/idea-flow/ExploreOpportunitiesPage';
 import { CustomerValidationPage } from './components/idea-flow/CustomerValidationPage';
 import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage';
+import AdminLogsPage from './components/business-plan/AdminLogsPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -809,6 +810,7 @@ function AppContent() {
         <Route path="/explore-opportunities/:planId" element={<ExploreOpportunitiesPage />} />
         <Route path="/customer-validation/:planId" element={<CustomerValidationPage />} />
         <Route path="/iterate-or-launch/:planId" element={<IterateOrLaunchPage />} />
+        <Route path="/admin/logs" element={<AdminLogsPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {

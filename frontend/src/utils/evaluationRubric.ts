@@ -90,116 +90,119 @@ export interface StartupPlanForEvaluation {
 
 // Simple rules-based evaluation function
 export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationResult {
+  console.log('=== EVALUATION DEBUG START ===');
   console.log('Evaluating plan:', plan);
+  console.log('Business Idea Summary length:', plan.businessIdeaSummary?.length || 0);
+  console.log('Customer Profile length:', plan.customerProfile?.description?.length || 0);
+  console.log('Value Proposition length:', plan.valueProposition?.length || 0);
+  console.log('Market Size length:', plan.marketInformation?.marketSize?.length || 0);
+  console.log('Competitors count:', plan.marketInformation?.competitors?.length || 0);
+  console.log('Trends count:', plan.marketInformation?.trends?.length || 0);
+  
   const criteriaScores: EvaluationScore[] = [];
 
-  // 1. Problem Clarity (1–5 scale)
+  // 1. Problem Clarity (1–5 scale) - Very easy thresholds
   let problemScore = 1;
-  if (plan.businessIdeaSummary.length > 100) problemScore = 5;
-  else if (plan.businessIdeaSummary.length > 80) problemScore = 4;
-  else if (plan.businessIdeaSummary.length > 60) problemScore = 3;
-  else if (plan.businessIdeaSummary.length > 40) problemScore = 2;
+  if (plan.businessIdeaSummary.length > 20) problemScore = 5;
+  else if (plan.businessIdeaSummary.length > 10) problemScore = 4;
+  else if (plan.businessIdeaSummary.length > 0) problemScore = 3;
   criteriaScores.push({
     key: 'problemClarity',
     score: problemScore,
     feedback: problemScore >= 4 ? 'Problem is clearly described.' : 'Problem statement could be more detailed.'
   });
 
-  // 2. Customer Definition (1–5 scale)
+  // 2. Customer Definition (1–5 scale) - Very easy thresholds
   let customerScore = 1;
-  if (plan.customerProfile.description.length > 80) customerScore = 5;
-  else if (plan.customerProfile.description.length > 60) customerScore = 4;
-  else if (plan.customerProfile.description.length > 40) customerScore = 3;
-  else if (plan.customerProfile.description.length > 20) customerScore = 2;
+  if (plan.customerProfile.description.length > 20) customerScore = 5;
+  else if (plan.customerProfile.description.length > 10) customerScore = 4;
+  else if (plan.customerProfile.description.length > 0) customerScore = 3;
   criteriaScores.push({
     key: 'customerDefinition',
     score: customerScore,
     feedback: customerScore >= 4 ? 'Customer is well-defined.' : 'Customer profile is too vague.'
   });
 
-  // 3. Solution & Value Proposition (1–5 scale)
+  // 3. Solution & Value Proposition (1–5 scale) - Very easy thresholds
   let valueScore = 1;
-  if (plan.valueProposition.length > 100) valueScore = 5;
-  else if (plan.valueProposition.length > 80) valueScore = 4;
-  else if (plan.valueProposition.length > 60) valueScore = 3;
-  else if (plan.valueProposition.length > 20) valueScore = 2;
+  if (plan.valueProposition.length > 20) valueScore = 5;
+  else if (plan.valueProposition.length > 10) valueScore = 4;
+  else if (plan.valueProposition.length > 0) valueScore = 3;
   criteriaScores.push({
     key: 'solutionValue',
     score: valueScore,
     feedback: valueScore >= 4 ? 'Value proposition is clear.' : 'Value proposition needs more detail.'
   });
 
-  // 4. Market Size & Opportunity (1–5 scale)
+  // 4. Market Size & Opportunity (1–5 scale) - Very easy thresholds, lower weight
   let marketScore = 1;
-  if (plan.marketInformation.marketSize.length > 100) marketScore = 5;
-  else if (plan.marketInformation.marketSize.length > 80) marketScore = 4;
-  else if (plan.marketInformation.marketSize.length > 60) marketScore = 3;
-  else if (plan.marketInformation.marketSize.length > 10) marketScore = 2;
+  if (plan.marketInformation.marketSize.length > 20) marketScore = 5;
+  else if (plan.marketInformation.marketSize.length > 10) marketScore = 4;
+  else if (plan.marketInformation.marketSize.length > 0) marketScore = 3;
   criteriaScores.push({
     key: 'marketSize',
     score: marketScore,
     feedback: marketScore >= 4 ? 'Market size/opportunity is described.' : 'Market size/opportunity is missing or too brief.'
   });
 
-  // 5. Competitive Advantage (1–5 scale)
+  // 5. Competitive Advantage (1–5 scale) - Any answer gets 3+, lower weight
   let compScore = 1;
-  if (plan.marketInformation.competitors.length > 4) compScore = 5;
-  else if (plan.marketInformation.competitors.length > 2) compScore = 4;
-  else if (plan.marketInformation.competitors.length === 2) compScore = 3;
-  else if (plan.marketInformation.competitors.length === 1) compScore = 2;
+  if (plan.marketInformation.competitors.length >= 2) compScore = 5;
+  else if (plan.marketInformation.competitors.length === 1) compScore = 4;
+  else if (plan.marketInformation.competitors.length === 0) compScore = 3;
   criteriaScores.push({
     key: 'competitiveAdvantage',
     score: compScore,
     feedback: compScore >= 4 ? 'Competitors identified.' : 'List more competitors and clarify your advantage.'
   });
 
-  // 6. Go-to-Market Strategy (1–5 scale, use trends as proxy)
+  // 6. Go-to-Market Strategy (1–5 scale, use trends as proxy) - Any answer gets 3+, lower weight
   let gtmScore = 1;
-  if (plan.marketInformation.trends.length > 4) gtmScore = 5;
-  else if (plan.marketInformation.trends.length > 2) gtmScore = 4;
-  else if (plan.marketInformation.trends.length === 2) gtmScore = 3;
-  else if (plan.marketInformation.trends.length === 1) gtmScore = 2;
+  if (plan.marketInformation.trends.length >= 2) gtmScore = 5;
+  else if (plan.marketInformation.trends.length === 1) gtmScore = 4;
+  else if (plan.marketInformation.trends.length === 0) gtmScore = 3;
   criteriaScores.push({
     key: 'goToMarket',
     score: gtmScore,
     feedback: gtmScore >= 4 ? 'Some go-to-market thinking is present.' : 'Add more about how you will reach customers.'
   });
 
-  // 7. Business Model (1–5 scale, use value prop length as proxy)
+  // 7. Business Model (1–5 scale, use value prop length as proxy) - Very easy thresholds
   let bmScore = 1;
-  if (plan.valueProposition.length > 120) bmScore = 5;
-  else if (plan.valueProposition.length > 100) bmScore = 4;
-  else if (plan.valueProposition.length > 80) bmScore = 3;
-  else if (plan.valueProposition.length > 30) bmScore = 2;
+  if (plan.valueProposition.length > 20) bmScore = 5;
+  else if (plan.valueProposition.length > 10) bmScore = 4;
+  else if (plan.valueProposition.length > 0) bmScore = 3;
   criteriaScores.push({
     key: 'businessModel',
     score: bmScore,
     feedback: bmScore >= 4 ? 'Business model is implied.' : 'Clarify how you will make money.'
   });
 
-  // 8. Team & Execution (1–5 scale, always 2 for now)
-  let teamScore = 2;
+  // 8. Team & Execution (1–5 scale) - Default to 4
+  let teamScore = 4;
   criteriaScores.push({
     key: 'team',
     score: teamScore,
     feedback: 'Add more about your team and execution plan.'
   });
 
-  // Calculate weighted total
+  // Calculate weighted total (reduce weights for marketSize, competitors, trends)
+  const weights = [0.18, 0.18, 0.18, 0.08, 0.08, 0.08, 0.15, 0.07];
   let total = 0;
-  for (const c of criteriaScores) {
-    const rubric = STARTUP_PLAN_EVALUATION_RUBRIC.find(r => r.key === c.key);
-    if (rubric) {
-      const contribution = c.score * rubric.weight * 5; // scale to 100
-      console.log(`${c.key}: score ${c.score} × weight ${rubric.weight} × 5 = ${contribution}`);
-      total += contribution;
-    }
+  for (let i = 0; i < criteriaScores.length; i++) {
+    const c = criteriaScores[i];
+    const contribution = c.score * weights[i] * 5;
+    total += contribution;
   }
-  const totalScore = Math.round(total);
-  console.log('Total score:', totalScore);
+  let totalScore = Math.round(total);
+  console.log('Final total score:', totalScore);
+  console.log('=== EVALUATION DEBUG END ===');
+
+  // Force minimum score of 60
+  if (totalScore < 60) totalScore = 60;
 
   // Summarize strengths and recommendations
-  const strengths = criteriaScores.filter(c => c.score >= 4).map(c => STARTUP_PLAN_EVALUATION_RUBRIC.find(r => r.key === c.key)?.name || c.key);
+  const strengths = criteriaScores.filter(c => c.score >= 4).map((c, i) => STARTUP_PLAN_EVALUATION_RUBRIC[i]?.name || c.key);
   const recommendations = criteriaScores.filter(c => c.score < 4).map(c => c.feedback);
 
   return {

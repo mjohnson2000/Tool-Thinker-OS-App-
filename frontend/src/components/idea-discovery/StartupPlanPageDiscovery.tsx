@@ -215,7 +215,7 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const { user, mockUpgradeToPremium } = useAuth();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [newPlan, setNewPlan] = useState<NewStartupPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -223,29 +223,46 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const [showMarketEvaluation, setShowMarketEvaluation] = useState(false);
   const prevPlanRef = useRef<StartupPlan | null>(null);
   const navigate = useNavigate();
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    console.log('useEffect triggered', { idea, customer, job });
-    let progressInterval: ReturnType<typeof setInterval> | null = null;
-    async function fetchPlan() {
-      console.log('fetchPlan called');
-      setIsLoading(true);
-      setProgress(0);
-      setError(null);
-      try {
-        // Animate progress bar to 90% while loading
-        progressInterval = setInterval(() => {
-          setProgress(prev => (prev < 90 ? prev + 5 : 90));
-        }, 200);
+    let cancelled = false;
+    async function safeFetchPlan() {
+      if (!cancelled) {
+        await fetchPlan();
+      }
+    }
+    safeFetchPlan();
+    return () => { 
+      cancelled = true;
+      if (progressInterval.current) clearInterval(progressInterval.current);
+    };
+  }, [idea, customer, job]);
 
-        // Build a detailed prompt for the AI using all user input
-        const aiPrompt = `
+  async function fetchPlan() {
+    console.log('fetchPlan called');
+    if (isLoading) return; // Prevent duplicate triggers
+    setIsLoading(true);
+    setProgress(0);
+    setError(null);
+    // Animate progress bar to 90% while loading
+    progressInterval.current = setInterval(() => {
+      setProgress(prev => {
+        const next = prev < 90 ? prev + 5 : 90;
+        console.log('Progress:', next);
+        return next;
+      });
+    }, 200);
+    console.log('Progress interval started');
+    try {
+      // Build a detailed prompt for the AI using all user input
+      const aiPrompt = `
 You are a startup strategist AI. Given the following user input:
 - Interests: ${idea?.interests || ''}
 - Customer Persona: ${customer?.title || ''} (${customer?.description || ''})
 - Customer Job: ${job?.title || ''} (${job?.description || ''})
 
-        Generate a concise Business Plan with the following sections:
+      Generate a concise Business Plan with the following sections:
 - Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
 - Customer Persona: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
@@ -270,115 +287,111 @@ Return as JSON:
 }
 No extra text, just valid JSON.`;
 
-        console.log('About to POST to /api/startup-plan/discovery', { idea, customer, job, prompt: aiPrompt });
-        const res = await fetch(`${API_URL}/startup-plan/discovery`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
-        });
-        if (!res.ok) throw new Error('Failed to generate business plan');
-        const data = await res.json();
-        setPlan(data);
-        setProgress(100);
+      console.log('About to POST to /api/startup-plan/discovery', { idea, customer, job, prompt: aiPrompt });
+      const res = await fetch(`${API_URL}/startup-plan/discovery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
+      });
+      if (!res.ok) throw new Error('Failed to generate business plan');
+      const data = await res.json();
+      console.log('API response', data);
+      setPlan(data);
+      setProgress(100);
 
-        // Map to new format for display and saving
-        const mappedPlan: NewStartupPlan = {
-          businessIdeaSummary: data.summary || `${idea?.interests ? `Business idea based on your interests: ${idea.interests}. ` : ''}${customer?.description ? `Targeting customer: ${customer.description}. ` : ''}${job?.description ? `Solving job: ${job.description}.` : ''}`,
-          customerProfile: { description: data.sections?.Customer || customer?.description || '' },
-          customerStruggle: (data.sections?.Struggles && data.sections.Struggles.split('\n').filter(Boolean))
-            || (job && job.description ? [job.description] : [])
-            || (customer?.painPoints ? customer.painPoints : []),
-          valueProposition: data.sections?.Value || idea?.valueProposition || '',
-          marketInformation: {
-            marketSize: data.sections?.MarketSize || idea?.marketSize || '',
-            competitors: (data.sections?.Competitors && data.sections.Competitors.split('\n').filter(Boolean))
-              || (idea && idea.competitors ? idea.competitors.split('\n').filter(Boolean) : [])
-              || (customer?.competitors ? customer.competitors : ['No competitors specified.']),
-            trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (idea?.trends ? idea.trends.split('\n').filter(Boolean) : []),
-            validation: data.sections?.Validation || idea?.validation || '',
-          }
-        };
-        setNewPlan(mappedPlan);
-
-        // Save plan to backend if authenticated
-        if (user && user.email) {
-          try {
-            // Generate a short title from the first 6 to 8 words of the summary
-            function generateShortTitle(summary: string): string {
-              if (!summary) return 'Untitled Business Plan';
-              const words = summary.split(/\s+/).filter(Boolean);
-              const shortTitle = words.slice(0, 8).join(' ');
-              return shortTitle + (words.length > 8 ? '…' : '');
-            }
-            const shortTitle = generateShortTitle(mappedPlan.businessIdeaSummary);
-            // Compose the correct payload for the backend
-            const payload = {
-              title: shortTitle,
-              summary: mappedPlan.businessIdeaSummary,
-              sections: {
-                'Customer Persona': mappedPlan.customerProfile.description,
-                'Customer Struggles': Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle.join('\n') : mappedPlan.customerStruggle,
-                'Value Proposition': mappedPlan.valueProposition,
-                'Market Size': mappedPlan.marketInformation.marketSize,
-                'Market Trends': Array.isArray(mappedPlan.marketInformation.trends) ? mappedPlan.marketInformation.trends.join('\n') : mappedPlan.marketInformation.trends,
-                'Competitors': Array.isArray(mappedPlan.marketInformation.competitors) ? mappedPlan.marketInformation.competitors.join('\n') : mappedPlan.marketInformation.competitors
-              },
-              // Add all nested fields for direct view rendering
-              businessIdeaSummary: mappedPlan.businessIdeaSummary,
-              customerProfile: mappedPlan.customerProfile,
-              customerStruggle: mappedPlan.customerStruggle,
-              valueProposition: mappedPlan.valueProposition,
-              marketInformation: mappedPlan.marketInformation,
-              idea: {
-                title: idea?.title || 'Untitled Idea',
-                description: idea?.interests || 'No idea description provided.'
-              },
-              customer: {
-                title: customer?.title || 'Customer',
-                description: customer?.description || 'No customer description provided.'
-              },
-              job: {
-                title: job?.title || 'Customer Job',
-                description: job?.description || 'No job description provided.'
-              },
-              problem: {
-                description: mappedPlan.customerStruggle && Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle[0] : (mappedPlan.customerStruggle || 'No problem description provided.'),
-                impact: 'High',
-                urgency: 'medium'
-              },
-              solution: {
-                description: mappedPlan.valueProposition || 'No solution description provided.',
-                keyFeatures: [mappedPlan.valueProposition || 'Key feature'],
-                uniqueValue: mappedPlan.valueProposition || 'Unique value'
-              }
-            };
-            await fetch(`${API_URL}/startup-plan`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              },
-              body: JSON.stringify(payload)
-            });
-          } catch (saveErr) {
-            // Optionally handle save error
-          }
+      // Map to new format for display and saving
+      const mappedPlan: NewStartupPlan = {
+        businessIdeaSummary: data.summary || `${idea?.interests ? `Business idea based on your interests: ${idea.interests}. ` : ''}${customer?.description ? `Targeting customer: ${customer.description}. ` : ''}${job?.description ? `Solving job: ${job.description}.` : ''}`,
+        customerProfile: { description: data.sections?.Customer || customer?.description || '' },
+        customerStruggle: (data.sections?.Struggles && data.sections.Struggles.split('\n').filter(Boolean))
+          || (job && job.description ? [job.description] : [])
+          || (customer?.painPoints ? customer.painPoints : []),
+        valueProposition: data.sections?.Value || idea?.valueProposition || '',
+        marketInformation: {
+          marketSize: data.sections?.MarketSize || idea?.marketSize || '',
+          competitors: (data.sections?.Competitors && data.sections.Competitors.split('\n').filter(Boolean))
+            || (idea && idea.competitors ? idea.competitors.split('\n').filter(Boolean) : [])
+            || (customer?.competitors ? customer.competitors : ['No competitors specified.']),
+          trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (idea?.trends ? idea.trends.split('\n').filter(Boolean) : []),
+          validation: data.sections?.Validation || idea?.validation || '',
         }
-      } catch (err: any) {
-        setError(err.message || 'Unknown error');
-        setProgress(100);
-        console.error('Failed to generate business plan:', err);
-      } finally {
-        setIsLoading(false);
-        if (progressInterval) clearInterval(progressInterval);
-        setTimeout(() => setProgress(0), 800);
+      };
+      setNewPlan(mappedPlan);
+
+      // Save plan to backend if authenticated
+      if (user && user.email) {
+        try {
+          // Generate a short title from the first 6 to 8 words of the summary
+          function generateShortTitle(summary: string): string {
+            if (!summary) return 'Untitled Business Plan';
+            const words = summary.split(/\s+/).filter(Boolean);
+            const shortTitle = words.slice(0, 8).join(' ');
+            return shortTitle + (words.length > 8 ? '…' : '');
+          }
+          const shortTitle = generateShortTitle(mappedPlan.businessIdeaSummary);
+          // Compose the correct payload for the backend
+          const payload = {
+            title: shortTitle,
+            summary: mappedPlan.businessIdeaSummary,
+            sections: {
+              'Customer Persona': mappedPlan.customerProfile.description,
+              'Customer Struggles': Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle.join('\n') : mappedPlan.customerStruggle,
+              'Value Proposition': mappedPlan.valueProposition,
+              'Market Size': mappedPlan.marketInformation.marketSize,
+              'Market Trends': Array.isArray(mappedPlan.marketInformation.trends) ? mappedPlan.marketInformation.trends.join('\n') : mappedPlan.marketInformation.trends,
+              'Competitors': Array.isArray(mappedPlan.marketInformation.competitors) ? mappedPlan.marketInformation.competitors.join('\n') : mappedPlan.marketInformation.competitors
+            },
+            // Add all nested fields for direct view rendering
+            businessIdeaSummary: mappedPlan.businessIdeaSummary,
+            customerProfile: mappedPlan.customerProfile,
+            customerStruggle: mappedPlan.customerStruggle,
+            valueProposition: mappedPlan.valueProposition,
+            marketInformation: mappedPlan.marketInformation,
+            idea: {
+              title: idea?.title || 'Untitled Idea',
+              description: idea?.interests || 'No idea description provided.'
+            },
+            customer: {
+              title: customer?.title || 'Customer',
+              description: customer?.description || 'No customer description provided.'
+            },
+            job: {
+              title: job?.title || 'Customer Job',
+              description: job?.description || 'No job description provided.'
+            },
+            problem: {
+              description: mappedPlan.customerStruggle && Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle[0] : (mappedPlan.customerStruggle || 'No problem description provided.'),
+              impact: 'High',
+              urgency: 'medium'
+            },
+            solution: {
+              description: mappedPlan.valueProposition || 'No solution description provided.',
+              keyFeatures: [mappedPlan.valueProposition || 'Key feature'],
+              uniqueValue: mappedPlan.valueProposition || 'Unique value'
+            }
+          };
+          await fetch(`${API_URL}/startup-plan`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(payload)
+          });
+        } catch (saveErr) {
+          // Optionally handle save error
+        }
       }
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+      setProgress(100);
+      console.error('API error', err);
+    } finally {
+      setIsLoading(false);
+      if (progressInterval.current) clearInterval(progressInterval.current);
+      setTimeout(() => setProgress(0), 800);
     }
-    fetchPlan();
-    return () => {
-      if (progressInterval) clearInterval(progressInterval);
-    };
-  }, [idea, customer, job]);
+  }
 
   useEffect(() => {
     if (plan && plan !== prevPlanRef.current) {

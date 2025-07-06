@@ -158,6 +158,13 @@ export function CustomerValidationPage() {
           }
         });
         setBusinessPlan(res.data);
+        // Load progress from backend if available
+        const userProgress = res.data?.mvp?.userProgress?.customer_validation;
+        if (userProgress) {
+          setCompleted(userProgress.status === 'completed');
+          setFeedback(userProgress.feedback || '');
+          setProgress(userProgress.progress || {});
+        }
       } catch (err) {
         // Optionally handle error
       } finally {
@@ -167,18 +174,49 @@ export function CustomerValidationPage() {
     fetchPlan();
   }, [planId]);
 
+  async function saveMvpData(isComplete: boolean, progressOverride?: { [key: string]: boolean }, feedbackOverride?: string) {
+    if (!planId) return;
+    const plan: any = businessPlan;
+    const userProgress = plan?.mvp?.userProgress || {};
+    const updatedProgress = {
+      ...userProgress,
+      customer_validation: {
+        status: isComplete ? 'completed' : 'pending',
+        progress: progressOverride || progress,
+        feedback: feedbackOverride !== undefined ? feedbackOverride : feedback,
+        completedAt: isComplete ? new Date() : undefined
+      }
+    };
+    await axios.put(`/api/business-plan/${planId}/mvp`, {
+      mvpData: {
+        ...plan?.mvp,
+        userProgress: updatedProgress
+      },
+      isComplete: plan?.mvp?.isComplete || false
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+  }
+
   function handleProgressChange(key: string, checked: boolean) {
-    setProgress(prev => ({ ...prev, [key]: checked }));
+    setProgress(prev => {
+      const updated = { ...prev, [key]: checked };
+      saveMvpData(completed, updated);
+      return updated;
+    });
   }
 
   function handleMarkComplete() {
     setCompleted(true);
-    // TODO: Save to backend
+    saveMvpData(true);
   }
 
   function handleMarkIncomplete() {
     setCompleted(false);
-    // TODO: Save to backend
+    saveMvpData(false);
   }
 
   if (loading) {
@@ -238,7 +276,11 @@ export function CustomerValidationPage() {
           <TextArea
             placeholder="Share what you've learned, challenges you've faced, or insights you've gained from this stage..."
             value={feedback}
-            onChange={e => setFeedback(e.target.value)}
+            onChange={e => {
+              const newFeedback = e.target.value;
+              setFeedback(newFeedback);
+              saveMvpData(completed, progress, newFeedback);
+            }}
           />
         </FeedbackSection>
         <ButtonRow>

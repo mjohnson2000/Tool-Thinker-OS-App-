@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { FaCheck } from 'react-icons/fa';
 
 const TrackerContainer = styled.div`
   display: flex;
@@ -29,6 +30,8 @@ const StepItem = styled.button<{ $status: string; $isClickable: boolean }>`
 const StepCircle = styled.div<{ $status: string }>`
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
   background: ${({ $status }) =>
     $status === 'completed' ? '#181a1b' : $status === 'current' ? '#888888' : '#e9ecef'};
@@ -45,6 +48,17 @@ const StepCircle = styled.div<{ $status: string }>`
     $status === 'current' ? '#888888' : $status === 'completed' ? '#181a1b' : '#e9ecef'};
   transition: background 0.2s, border 0.2s;
   margin-right: 1rem;
+  /* Prevent font-size inheritance for icon */
+  & svg {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    max-width: 18px;
+    max-height: 18px;
+    font-size: 18px;
+    display: block;
+  }
 `;
 
 const StepLabel = styled.div<{ $status: string }>`
@@ -53,6 +67,8 @@ const StepLabel = styled.div<{ $status: string }>`
   color: ${({ $status }) => ($status === 'current' ? '#222' : '#6c757d')};
   display: flex;
   align-items: center;
+  gap: 0.4rem;
+  line-height: 1;
 `;
 
 const Connector = styled.div<{ $active: boolean }>`
@@ -74,6 +90,9 @@ const PremiumBadge = styled.span`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-left: 0.3rem;
+  display: flex;
+  align-items: center;
+  height: 18px;
 `;
 
 const LockIcon = styled.span`
@@ -121,7 +140,7 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
             >
               <StepCircle className="circle" $status={status}>
                 {status === 'completed' ? (
-                  <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1 }}>✓</span>
+                  <FaCheck color="#fff" size={18} style={{ display: 'block' }} />
                 ) : (
                   index + 1
                 )}

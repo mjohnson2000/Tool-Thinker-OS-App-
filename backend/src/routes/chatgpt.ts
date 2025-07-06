@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import axios from 'axios';
 import { AppError } from '../middleware/errorHandler';
+import { jsonrepair } from 'jsonrepair';
 
 const router = Router();
 
@@ -36,7 +37,21 @@ router.post('/', async (req, res) => {
     );
 
     const message = response.data.choices?.[0]?.message?.content || '';
-    res.json({ status: 'success', message });
+    let repaired = message;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(message);
+    } catch (err) {
+      try {
+        repaired = jsonrepair(message);
+        parsed = JSON.parse(repaired);
+        console.warn('JSON repaired for OpenAI response:', repaired);
+      } catch (repairErr) {
+        // If repair fails, fallback to original message
+        console.error('Failed to repair/parse OpenAI response:', repairErr, message);
+      }
+    }
+    res.json({ status: 'success', message: parsed || repaired });
   } catch (error: any) {
     let errorMsg = 'Unknown error';
     if (error.response) {

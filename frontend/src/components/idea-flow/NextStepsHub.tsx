@@ -773,6 +773,11 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
   const isExploreComplete = exploreStep?.status === 'completed';
   const exploreProgress = exploreStep ? 100 : 0;
 
+  // Customer validation progress
+  const customerValidationStep = startupPlan.mvp?.userProgress?.customer_validation;
+  const isCustomerValidationComplete = customerValidationStep?.status === 'completed';
+  const customerValidationProgress = customerValidationStep ? 100 : 0;
+
   const iterateStep = startupPlan.mvp?.userProgress?.iterate;
   const isIterateComplete = iterateStep?.status === 'completed';
   const iterateProgress = iterateStep ? 100 : 0;
@@ -824,10 +829,10 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       description: "Validate your solution and business model with real customers through interviews, surveys, and feedback.",
       estimatedTime: "1-2 hours",
       priority: "High",
-      completed: false,
+      completed: isCustomerValidationComplete,
       category: "Research",
-      progress: 0,
-      status: 'not_started',
+      progress: customerValidationProgress,
+      status: isCustomerValidationComplete ? 'completed' : 'not_started',
       subtasks: []
     },
     {

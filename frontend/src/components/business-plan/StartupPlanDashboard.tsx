@@ -119,9 +119,9 @@ const Title = styled.h1`
   margin: 0;
 `;
 
-const CreateButton = styled.button`
-  background: #181a1b;
-  color: #fff;
+const CreateButton = styled.button<{ disabled?: boolean }>`
+  background: ${({ disabled }) => disabled ? '#ccc' : '#181a1b'};
+  color: ${({ disabled }) => disabled ? '#666' : '#fff'};
   border: none;
   border-radius: 12px;
   padding: 0.8rem 1.5rem;
@@ -134,8 +134,8 @@ const CreateButton = styled.button`
   transition: all 0.2s;
   
   &:hover {
-    background: #000;
-    transform: translateY(-1px);
+    background: ${({ disabled }) => disabled ? '#ccc' : '#000'};
+    transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-1px)'};
   }
 `;
 
@@ -417,15 +417,17 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   });
   const [showScorePrompt, setShowScorePrompt] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<StartupPlan | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchPlans();
+    fetchPlans(1);
   }, []);
 
-  const fetchPlans = async () => {
+  const fetchPlans = async (pageNum = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/startup-plan`, {
+      const response = await fetch(`${API_URL}/startup-plan?page=${pageNum}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -440,9 +442,11 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       
       const data = await response.json();
       setPlans(data.startupPlans);
+      setTotalPages(data.pagination.pages || 1);
+      setPage(data.pagination.page || 1);
       
-      // Calculate stats
-      const total = data.startupPlans.length;
+      // Use pagination.total for the true total
+      const total = data.pagination.total || data.startupPlans.length;
       const active = data.startupPlans.filter((p: StartupPlan) => p.status === 'active').length;
       const draft = data.startupPlans.filter((p: StartupPlan) => p.status === 'draft').length;
       const validated = data.startupPlans.filter((p: StartupPlan) => p.status === 'validated').length;
@@ -468,7 +472,9 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   };
 
   const handleCreatePlan = () => {
-    navigate('/signup');
+    window.localStorage.removeItem('appState');
+    navigate('/app');
+    window.location.reload();
   };
 
   const handleViewPlan = (plan: StartupPlan) => {
@@ -585,10 +591,15 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       <Container>
         <Header>
           <Title>Business Ideas</Title>
-          <CreateButton onClick={handleCreatePlan}>
+          <CreateButton onClick={handleCreatePlan} disabled={stats.total >= 10}>
             <FaPlus /> Create New Idea
           </CreateButton>
         </Header>
+        {stats.total >= 10 && (
+          <div style={{ color: '#dc3545', textAlign: 'center', marginBottom: '1rem', fontWeight: 500 }}>
+            You have reached the maximum of 10 business ideas. Please delete an idea to create a new one.
+          </div>
+        )}
 
         <StatsGrid>
           <StatCard>
@@ -658,48 +669,55 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
             </CreateButton>
           </EmptyState>
         ) : (
-          <PlansGrid>
-            {filteredPlans.map((plan) => (
-              <PlanCard key={plan._id} onClick={() => handleViewPlan(plan)}>
-                <PlanHeader>
-                  <PlanTitle>{plan.title}</PlanTitle>
-                  <PlanStatus status={plan.status}>{plan.status}</PlanStatus>
-                </PlanHeader>
-                
-                <PlanSummary>{plan.summary}</PlanSummary>
-                <div style={{
-                  fontWeight: 600,
-                  color: plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number'
-                    ? (plan.marketEvaluation.score >= 80 ? '#28a745' : plan.marketEvaluation.score >= 60 ? '#ffc107' : '#dc3545')
-                    : '#888',
-                  marginBottom: '0.5rem',
-                  fontSize: '1.1rem',
-                }}>
-                  Evaluation Score: {plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number' ? plan.marketEvaluation.score : 0}/100
-                </div>
-                <ProgressBar>
-                  <ProgressFill percent={getProgressPercentage(plan)} />
-                </ProgressBar>
-                
-                <PlanMeta>
-                  <span>v{plan.version}</span>
-                  <span>{new Date(plan.updatedAt).toLocaleDateString()}</span>
-                </PlanMeta>
-                
-                <PlanActions onClick={(e) => e.stopPropagation()}>
-                  <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>
-                    <FaEye /> View
-                  </ActionButton>
-                  <ActionButton variant="danger" onClick={() => handleDeletePlan(plan._id)}>
-                    <FaTrash /> Delete
-                  </ActionButton>
-                  <ActionButton variant="secondary" onClick={() => handleNextSteps(plan)}>
-                    <FaCheckCircle /> Continue to Next Steps
-                  </ActionButton>
-                </PlanActions>
-              </PlanCard>
-            ))}
-          </PlansGrid>
+          <>
+            <PlansGrid>
+              {filteredPlans.map((plan) => (
+                <PlanCard key={plan._id} onClick={() => handleViewPlan(plan)}>
+                  <PlanHeader>
+                    <PlanTitle>{plan.title}</PlanTitle>
+                    <PlanStatus status={plan.status}>{plan.status}</PlanStatus>
+                  </PlanHeader>
+                  
+                  <PlanSummary>{plan.summary}</PlanSummary>
+                  <div style={{
+                    fontWeight: 600,
+                    color: plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number'
+                      ? (plan.marketEvaluation.score >= 80 ? '#28a745' : plan.marketEvaluation.score >= 60 ? '#ffc107' : '#dc3545')
+                      : '#888',
+                    marginBottom: '0.5rem',
+                    fontSize: '1.1rem',
+                  }}>
+                    Evaluation Score: {plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number' ? plan.marketEvaluation.score : 0}/100
+                  </div>
+                  <ProgressBar>
+                    <ProgressFill percent={getProgressPercentage(plan)} />
+                  </ProgressBar>
+                  
+                  <PlanMeta>
+                    <span>v{plan.version}</span>
+                    <span>{new Date(plan.updatedAt).toLocaleDateString()}</span>
+                  </PlanMeta>
+                  
+                  <PlanActions onClick={(e) => e.stopPropagation()}>
+                    <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>
+                      <FaEye /> View
+                    </ActionButton>
+                    <ActionButton variant="danger" onClick={() => handleDeletePlan(plan._id)}>
+                      <FaTrash /> Delete
+                    </ActionButton>
+                    <ActionButton variant="secondary" onClick={() => handleNextSteps(plan)}>
+                      <FaCheckCircle /> Continue to Next Steps
+                    </ActionButton>
+                  </PlanActions>
+                </PlanCard>
+              ))}
+            </PlansGrid>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+              <button onClick={() => fetchPlans(page - 1)} disabled={page <= 1} style={{ marginRight: '1rem' }}>Previous</button>
+              <span>Page {page} of {totalPages}</span>
+              <button onClick={() => fetchPlans(page + 1)} disabled={page >= totalPages} style={{ marginLeft: '1rem' }}>Next</button>
+            </div>
+          </>
         )}
       </Container>
       {showScorePrompt && selectedPlan && (
@@ -728,7 +746,10 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
             <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: '#444' }}>
               Your business idea needs a minimum evaluation score of <b>{MINIMUM_SCORE}</b> to continue to the Next Steps Hub.<br /><br />
               Your current score is <b>{selectedPlan.marketEvaluation?.score ?? 0}</b>.<br /><br />
-              To improve your score, click <b>View</b> on your idea and edit your responses.
+              To improve your score, click <b>View</b> on your idea and edit your responses.<br />
+              <span style={{ fontWeight: 500 }}>
+                After editing, be sure to click the <b>Evaluate Idea</b> button on the View page to update your evaluation score.
+              </span>
             </p>
             <button
               style={{

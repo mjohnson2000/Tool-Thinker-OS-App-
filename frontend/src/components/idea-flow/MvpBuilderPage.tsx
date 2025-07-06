@@ -63,8 +63,8 @@ const ActionItem = styled.div`
   transition: all 0.2s;
   
   &:hover {
-    border-color: #007aff;
-    box-shadow: 0 2px 8px rgba(0,122,255,0.1);
+    border-color: #181a1b;
+    box-shadow: 0 2px 8px rgba(24,26,27,0.1);
   }
 `;
 
@@ -105,11 +105,12 @@ const DetailText = styled.p`
 `;
 
 const ProgressSection = styled.div`
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 1.5rem;
+  background: #f6f8fa;
+  border: 1.5px solid #e9ecef;
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 `;
 
 const ProgressTitle = styled.h4`
@@ -121,22 +122,36 @@ const ProgressTitle = styled.h4`
 
 const ProgressItem = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.1rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border-color: #181a1b;
+  }
 `;
 
 const Checkbox = styled.input`
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  accent-color: #181a1b;
+  margin-top: 2px;
   cursor: pointer;
 `;
 
 const ProgressLabel = styled.label`
-  font-size: 0.9rem;
-  color: #444;
+  font-size: 1rem;
+  color: #222;
   cursor: pointer;
   flex: 1;
+  line-height: 1.6;
+  font-weight: 500;
 `;
 
 const FeedbackSection = styled.div`
@@ -166,7 +181,7 @@ const TextArea = styled.textarea`
   
   &:focus {
     outline: none;
-    border-color: #007aff;
+    border-color: #181a1b;
   }
 `;
 
@@ -889,20 +904,14 @@ export function MvpBuilderPage() {
       </h1>
       
       {businessPlan && (
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: '1.5rem', 
-          borderRadius: '8px', 
-          marginBottom: '1.5rem',
-          border: '1px solid #e9ecef'
-        }}>
+        <StepCard style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#181a1b' }}>
             Based on: {businessPlan.title}
           </h3>
           <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
             {businessPlan.summary}
           </p>
-        </div>
+        </StepCard>
       )}
 
       {!completed ? (

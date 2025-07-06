@@ -38,6 +38,10 @@ import { LaunchPreparationPage } from './components/idea-flow/LaunchPreparationP
 import { SolutionSelectionPage } from './components/idea-flow/SolutionSelectionPage';
 import type { SolutionOption } from './components/idea-flow/SolutionSelectionPage';
 import { MvpBuilderPage } from './components/idea-flow/MvpBuilderPage';
+import { ValidateAssumptionsPage } from './components/idea-flow/ValidateAssumptionsPage';
+import { ExploreOpportunitiesPage } from './components/idea-flow/ExploreOpportunitiesPage';
+import { CustomerValidationPage } from './components/idea-flow/CustomerValidationPage';
+import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -801,6 +805,10 @@ function AppContent() {
           </AppContainer>
         } />
         <Route path="/mvp/:planId" element={<MvpBuilderPage />} />
+        <Route path="/validate-assumptions/:planId" element={<ValidateAssumptionsPage />} />
+        <Route path="/explore-opportunities/:planId" element={<ExploreOpportunitiesPage />} />
+        <Route path="/customer-validation/:planId" element={<CustomerValidationPage />} />
+        <Route path="/iterate-or-launch/:planId" element={<IterateOrLaunchPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {

@@ -150,7 +150,7 @@ const PersonaCard = styled.div`
   transition: all 0.2s;
 
   &:hover {
-    border-color: #007aff;
+    border-color: #181a1b;
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }

@@ -71,6 +71,25 @@ export interface IBusinessPlan extends Document {
     marketEvaluation: boolean;
     businessPlan: boolean;
     nextSteps: boolean;
+    mvp: boolean;
+  };
+  
+  // MVP Data
+  mvp?: {
+    problem?: string;
+    solution?: string;
+    assumptions?: string;
+    test?: string;
+    lastUpdated?: Date;
+    isComplete?: boolean;
+    userProgress?: {
+      [stepKey: string]: {
+        status: 'pending' | 'completed' | 'skipped';
+        progress: { [key: string]: boolean };
+        feedback: string;
+        completedAt?: Date;
+      };
+    };
   };
   
   // Metadata
@@ -263,6 +282,27 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
     nextSteps: {
       type: Boolean,
       default: false
+    },
+    mvp: {
+      type: Boolean,
+      default: false
+    }
+  },
+  
+  // MVP Data
+  mvp: {
+    problem: String,
+    solution: String,
+    assumptions: String,
+    test: String,
+    lastUpdated: Date,
+    isComplete: {
+      type: Boolean,
+      default: false
+    },
+    userProgress: {
+      type: Schema.Types.Mixed,
+      default: {}
     }
   },
   

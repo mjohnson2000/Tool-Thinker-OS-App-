@@ -108,7 +108,7 @@ const StrategicSuggestion = styled.div`
   transition: all 0.2s;
   
   &:hover {
-    border-color: #007AFF;
+    border-color: #181a1b;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
 `;

@@ -30,7 +30,7 @@ const TextArea = styled.textarea`
   resize: none;
   &:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #181a1b;
   }
 `;
 
@@ -127,12 +127,12 @@ const InputContainer = styled.div`
 
   &:focus-within {
     outline: none;
-    border-color: #007AFF;
+    border-color: #181a1b;
   }
 `;
 
 const SelectedTypeTag = styled.div`
-  background-color: #007AFF;
+  background-color: #181a1b;
   color: white;
   border-radius: 8px;
   padding: 0.5rem 0.8rem;

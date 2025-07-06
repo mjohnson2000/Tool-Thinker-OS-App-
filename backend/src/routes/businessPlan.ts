@@ -373,15 +373,27 @@ businessPlanRouter.delete(
   auth,
   async (req: AuthRequest, res: Response) => {
     try {
+      console.log('Attempting to delete business plan', {
+        userId: req.user?.id,
+        planId: req.params.id
+      });
       const businessPlan = await BusinessPlan.findOneAndDelete({
         _id: req.params.id,
         userId: req.user!.id,
       });
 
       if (!businessPlan) {
+        console.warn('Business plan not found or not owned by user', {
+          userId: req.user?.id,
+          planId: req.params.id
+        });
         return res.status(404).json({ error: "Business plan not found" });
       }
 
+      console.log('Business plan deleted successfully', {
+        userId: req.user?.id,
+        planId: req.params.id
+      });
       res.json({ message: "Business plan deleted successfully" });
     } catch (error: any) {
       console.error("Delete business plan error:", error);
@@ -596,3 +608,40 @@ businessPlanRouter.put(
     }
   },
 );
+
+// PUT /api/business-plan/:id/mvp - Save MVP data
+businessPlanRouter.put(
+  "/:id/mvp",
+  auth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { mvpData, isComplete } = req.body;
+      const plan = await BusinessPlan.findOne({
+        _id: req.params.id,
+        userId: req.user!.id,
+      });
+      if (!plan) {
+        return res.status(404).json({ error: "Business plan not found" });
+      }
+      // Save MVP data
+      plan.mvp = {
+        ...plan.mvp,
+        ...mvpData,
+        lastUpdated: new Date(),
+        isComplete: isComplete || false
+      };
+      // Update progress if MVP is complete
+      if (isComplete) {
+        plan.progress.mvp = true;
+      }
+      await plan.save();
+      // Always return the updated plan with MVP field
+      res.json({ status: "success", plan });
+    } catch (error: any) {
+      console.error("Save MVP error:", error);
+      res.status(500).json({ error: "Failed to save MVP data" });
+    }
+  }
+);
+
+export default businessPlanRouter;

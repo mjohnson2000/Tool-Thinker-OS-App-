@@ -54,7 +54,11 @@ router.post('/signup', async (req, res, next) => {
     await user.save();
 
     // Send verification email
-    await sendVerificationEmail(email, verificationToken);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DEV] Skipping verification email for', email);
+    } else {
+      await sendVerificationEmail(email, verificationToken);
+    }
 
     // Generate auth token
     const token = user.generateAuthToken();

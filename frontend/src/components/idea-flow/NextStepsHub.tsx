@@ -266,7 +266,7 @@ const ProgressFill = styled.div<{ percent: number; status?: string }>`
     if (props.status === 'completed') return '#28a745';
     if (props.status === 'in_progress') return '#fd7e14';
     if (props.status === 'skipped') return '#6c757d';
-    return '#007aff';
+    return '#181a1b';
   }};
   width: ${props => Math.min(props.percent, 100)}%;
   transition: width 0.5s ease;
@@ -445,7 +445,7 @@ const HelpItemMeta = styled.div`
 `;
 
 const HelpItemAction = styled.button`
-  background: #007AFF;
+  background: #181a1b;
   color: white;
   border: none;
   border-radius: 4px;
@@ -456,7 +456,7 @@ const HelpItemAction = styled.button`
   transition: background 0.2s;
   
   &:hover {
-    background: #0056b3;
+    background: #222;
   }
 `;
 
@@ -759,16 +759,37 @@ function calculateMvpProgress(mvpData: any): { progress: number; status: 'not_st
 }
 
 const getActionItems = (validationScore: number, startupPlan: StartupPlan): ActionItem[] => {
-  console.log('getActionItems called with validationScore:', validationScore, 'startupPlan:', startupPlan);
-  
+  // Calculate progress for validation, MVP, and explore separately
   const mvpProgress = calculateMvpProgress(startupPlan.mvp);
-  console.log('MVP Progress result:', mvpProgress);
-  
-  // Check if MVP is actually complete based on both isComplete flag and progress
   const isMvpComplete = startupPlan.mvp?.isComplete || mvpProgress.status === 'completed';
-  console.log('MVP completion check:', { isComplete: startupPlan.mvp?.isComplete, progressStatus: mvpProgress.status, finalResult: isMvpComplete });
-  
+
+  // Validation progress
+  const validationStep = startupPlan.mvp?.userProgress?.validate;
+  const isValidationComplete = validationStep?.status === 'completed';
+  const validationProgress = validationStep ? 100 : 0;
+
+  // Explore for opportunities progress
+  const exploreStep = startupPlan.mvp?.userProgress?.explore;
+  const isExploreComplete = exploreStep?.status === 'completed';
+  const exploreProgress = exploreStep ? 100 : 0;
+
+  const iterateStep = startupPlan.mvp?.userProgress?.iterate;
+  const isIterateComplete = iterateStep?.status === 'completed';
+  const iterateProgress = iterateStep ? 100 : 0;
+
   const baseItems: ActionItem[] = [
+    {
+      id: 1,
+      title: 'Validate Assumptions',
+      description: 'Test your core business assumptions with real customers before building your MVP.',
+      estimatedTime: '2-4 days',
+      priority: 'High',
+      completed: isValidationComplete,
+      category: 'Validation',
+      progress: validationProgress,
+      status: isValidationComplete ? 'completed' : 'not_started',
+      subtasks: []
+    },
     {
       id: 3,
       title: "Create a simple MVP",
@@ -780,163 +801,56 @@ const getActionItems = (validationScore: number, startupPlan: StartupPlan): Acti
       progress: mvpProgress.progress,
       status: mvpProgress.status,
       subtasks: [
-        { id: 'validate', title: 'Validate assumptions', completed: startupPlan.mvp?.userProgress?.validate?.status === 'completed' },
         { id: 'define', title: 'Define MVP scope', completed: startupPlan.mvp?.userProgress?.define?.status === 'completed' },
         { id: 'build', title: 'Build MVP', completed: startupPlan.mvp?.userProgress?.build?.status === 'completed' },
         { id: 'launch', title: 'Launch and test', completed: startupPlan.mvp?.userProgress?.launch?.status === 'completed' }
       ]
     },
     {
-      id: 2,
-      title: "Set up customer interviews",
-      description: "Schedule 5-10 customer interviews to validate your solution",
+      id: 4,
+      title: 'Explore for opportunities',
+      description: 'Analyze your MVP results and market feedback to identify new growth or pivot opportunities.',
+      estimatedTime: '2-3 days',
+      priority: 'Medium',
+      completed: isExploreComplete,
+      category: 'Strategy',
+      progress: exploreProgress,
+      status: isExploreComplete ? 'completed' : 'not_started',
+      subtasks: []
+    },
+    {
+      id: 5,
+      title: "Customer Validation",
+      description: "Validate your solution and business model with real customers through interviews, surveys, and feedback.",
       estimatedTime: "1-2 hours",
       priority: "High",
       completed: false,
       category: "Research",
       progress: 0,
-      status: 'not_started'
+      status: 'not_started',
+      subtasks: []
+    },
+    {
+      id: 6,
+      title: "Iterate or Launch",
+      description: "Based on customer validation, either iterate on your MVP or prepare to launch to a wider audience.",
+      estimatedTime: "2-5 days",
+      priority: "High",
+      completed: isIterateComplete,
+      category: "Strategy",
+      progress: iterateProgress,
+      status: isIterateComplete ? 'completed' : 'not_started',
+      subtasks: []
     }
   ];
-
-  console.log('MVP Action Item created:', baseItems[0]);
-
-  // High Score (80+): Focus on marketing and scaling
-  if (validationScore >= 80) {
-    baseItems.push(
-      {
-        id: 4,
-        title: "Launch marketing campaign",
-        description: "Start promoting your validated solution across multiple channels",
-        estimatedTime: "3-5 hours",
-        priority: "High",
-        completed: false,
-        category: "Marketing",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 5,
-        title: "Set up analytics tracking",
-        description: "Implement conversion tracking to measure campaign performance",
-        estimatedTime: "1-2 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Analytics",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 6,
-        title: "Create customer onboarding process",
-        description: "Design a smooth experience for new customers",
-        estimatedTime: "4-6 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Operations",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 7,
-        title: "Plan scaling strategy",
-        description: "Outline how to grow from 5 to 50 customers",
-        estimatedTime: "2-3 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Strategy",
-        progress: 0,
-        status: 'not_started'
-      }
-    );
-  } 
-  // Medium Score (60-79): Refine value proposition
-  else if (validationScore >= 60) {
-    baseItems.push(
-      {
-        id: 4,
-        title: "Refine your value proposition",
-        description: "Based on validation feedback, improve your messaging and positioning",
-        estimatedTime: "2-3 hours",
-        priority: "High",
-        completed: false,
-        category: "Strategy",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 5,
-        title: "Conduct competitor analysis",
-        description: "Deep dive into what competitors are doing well and poorly",
-        estimatedTime: "3-4 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Research",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 6,
-        title: "Test different pricing models",
-        description: "Experiment with pricing to find the sweet spot",
-        estimatedTime: "2-3 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Strategy",
-        progress: 0,
-        status: 'not_started'
-      },
-      {
-        id: 7,
-        title: "Improve customer targeting",
-        description: "Refine your ideal customer profile based on feedback",
-        estimatedTime: "1-2 hours",
-        priority: "Medium",
-        completed: false,
-        category: "Research",
-        progress: 0,
-        status: 'not_started'
-      }
-    );
-  } 
-  // Low Score (<60): Re-evaluate market and pivot
-  else {
-    baseItems.splice(2, 0, {
-      id: 6,
-      title: "Explore pivot opportunities",
-      description: "Identify potential new directions for your business idea",
-      estimatedTime: "3-4 hours",
-      priority: "Medium",
-      completed: false,
-      category: "Strategy",
-      progress: 0,
-      status: 'not_started'
-    });
-    baseItems.splice(3, 0, {
-      id: 7,
-      title: "Validate new assumptions",
-      description: "Test new hypotheses about market and customer needs",
-      estimatedTime: "2-3 hours",
-      priority: "Medium",
-      completed: false,
-      category: "Validation",
-      progress: 0,
-      status: 'not_started'
-    });
-    baseItems.splice(4, 0, {
-      id: 8,
-      title: "Iterate or exit",
-      description: "Decide whether to pivot, iterate, or exit based on your new findings and validation results.",
-      estimatedTime: "1-2 hours",
-      priority: "High",
-      completed: false,
-      category: "Strategy",
-      progress: 0,
-      status: 'not_started'
-    });
-  }
-
-  return baseItems;
+  // Only keep actions up to and including 'Customer Validation'
+  return baseItems.filter(item =>
+    item.title === 'Validate Assumptions' ||
+    item.title === 'Create a simple MVP' ||
+    item.title === 'Explore for opportunities' ||
+    item.title === 'Customer Validation' ||
+    item.title === 'Iterate or Launch'
+  );
 };
 
 const getRelevantCourses = (category: string): Course[] => {
@@ -1506,8 +1420,16 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
                       completed={item.completed}
                       status={item.status}
                       onClick={() => {
-                        if (item.title === 'Create a simple MVP') {
+                        if (item.title === 'Validate Assumptions') {
+                          navigate(`/validate-assumptions/${planId}`);
+                        } else if (item.title === 'Create a simple MVP') {
                           navigate(`/mvp/${planId}`);
+                        } else if (item.title === 'Explore for opportunities') {
+                          navigate(`/explore-opportunities/${planId}`);
+                        } else if (item.title === 'Customer Validation') {
+                          navigate(`/customer-validation/${planId}`);
+                        } else if (item.title === 'Iterate or Launch') {
+                          navigate(`/iterate-or-launch/${planId}`);
                         } else {
                           handleActionComplete(item.id);
                         }

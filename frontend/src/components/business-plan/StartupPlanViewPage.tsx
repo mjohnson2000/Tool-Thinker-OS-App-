@@ -141,6 +141,19 @@ const OverlayClose = styled.button`
   cursor: pointer;
 `;
 
+const IndentedList = styled.ul`
+  padding-left: 1.5rem;
+  margin: 0;
+`;
+
+// Add a styled component for sub-bullets:
+const SubBulletList = styled.ul`
+  padding-left: 1.5rem;
+  margin: 0;
+  list-style-type: circle;
+  color: #888;
+`;
+
 interface StartupPlan {
   _id: string;
   businessIdeaSummary: string;
@@ -153,6 +166,7 @@ interface StartupPlan {
     trends: string[];
     validation: string;
   };
+  financialSummary: string;
   status: string;
   version: number;
   createdAt: string;
@@ -161,27 +175,21 @@ interface StartupPlan {
 }
 
 function mapPlanToView(plan: any): StartupPlan {
-  // Prefer nested fields, but fall back to legacy sections if missing
   return {
     _id: plan._id,
-    businessIdeaSummary: plan.businessIdeaSummary || plan.title || '',
-    customerProfile: { description: plan.customerProfile?.description || plan.sections?.['Customer Persona'] || plan.sections?.Customer || '' },
-    customerStruggle: plan.customerStruggle && plan.customerStruggle.length > 0
-      ? plan.customerStruggle
-      : (plan.sections?.['Customer Struggles'] ? plan.sections['Customer Struggles'].split('\n') : (plan.sections?.Struggles ? plan.sections.Struggles.split('\n') : [])),
-    valueProposition: plan.valueProposition || plan.sections?.['Value Proposition'] || plan.sections?.Value || '',
+    businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
+    customerProfile: plan.customerProfile || { description: plan.sections?.['Customer Profile'] || plan.sections?.['Customer Persona'] || '' },
+    customerStruggle: plan.customerStruggle || (plan.sections?.['Customer Struggles'] ? plan.sections['Customer Struggles'].split('\n').filter(Boolean) : []),
+    valueProposition: plan.valueProposition || plan.sections?.['Value Proposition'] || '',
     marketInformation: {
-      marketSize: plan.marketInformation?.marketSize || plan.sections?.['Market Size'] || plan.sections?.MarketSize || '',
-      competitors: plan.marketInformation?.competitors && plan.marketInformation.competitors.length > 0
-        ? plan.marketInformation.competitors
-        : (plan.sections?.Competitors ? plan.sections.Competitors.split('\n') : []),
-      trends: plan.marketInformation?.trends && plan.marketInformation.trends.length > 0
-        ? plan.marketInformation.trends
-        : (plan.sections?.['Market Trends'] ? plan.sections['Market Trends'].split('\n') : (plan.sections?.Trends ? plan.sections.Trends.split('\n') : [])),
-      validation: plan.marketInformation?.validation || plan.sections?.Validation || '',
+      marketSize: plan.marketInformation?.marketSize || plan.sections?.['Market Size'] || '',
+      competitors: plan.marketInformation?.competitors || (plan.sections?.['Competitors'] ? plan.sections['Competitors'].split('\n').filter(Boolean) : []),
+      trends: plan.marketInformation?.trends || (plan.sections?.['Market Trends'] ? plan.sections['Market Trends'].split('\n').filter(Boolean) : []),
+      validation: plan.marketInformation?.validation || plan.sections?.['Market Validation'] || '',
     },
-    status: plan.status,
-    version: plan.version,
+    financialSummary: plan.financialSummary || plan.sections?.['Financial Summary'] || '',
+    status: plan.status || 'draft',
+    version: plan.version || 1,
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
     marketEvaluation: plan.marketEvaluation,
@@ -208,6 +216,7 @@ export default function StartupPlanViewPage() {
       trends: [],
       validation: '',
     },
+    financialSummary: '',
     status: '',
     version: 0,
     createdAt: '',
@@ -255,6 +264,7 @@ export default function StartupPlanViewPage() {
           trends: plan.marketInformation.trends,
           validation: plan.marketInformation.validation,
         },
+        financialSummary: plan.financialSummary,
         status: plan.status,
         version: plan.version,
         createdAt: plan.createdAt,
@@ -411,6 +421,10 @@ export default function StartupPlanViewPage() {
               <textarea value={editPlan.marketInformation.trends.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, trends: e.target.value.split('\n') } }))} style={{ width: '100%', minHeight: 32, marginBottom: 8 }} placeholder="One trend per line" />
             </div>
           </Section>
+          <Section>
+            <SectionLabel>Financial Summary</SectionLabel>
+            <textarea value={editPlan.financialSummary} onChange={e => setEditPlan(prev => ({ ...prev, financialSummary: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+          </Section>
         </>
       ) : (
         <>
@@ -466,7 +480,7 @@ export default function StartupPlanViewPage() {
           <Section>
             <SectionLabel>Customer Struggle</SectionLabel>
             <SectionContent>
-              <ul>{plan.customerStruggle.map((struggle, i) => <li key={i}>{struggle}</li>)}</ul>
+              <ul>{plan.customerStruggle.map((struggle, i) => <li key={i}>{struggle.replace(/^[-–—]\s*/, '')}</li>)}</ul>
             </SectionContent>
           </Section>
           <Section>
@@ -475,9 +489,25 @@ export default function StartupPlanViewPage() {
           </Section>
           <Section>
             <SectionLabel>Market Information</SectionLabel>
-            <div><strong>Market Size:</strong> {plan.marketInformation.marketSize}</div>
-            <div><strong>Competitors:</strong> <ul>{plan.marketInformation.competitors.map((c, i) => <li key={i}>{c}</li>)}</ul></div>
-            <div><strong>Trends:</strong> <ul>{plan.marketInformation.trends.map((t, i) => <li key={i}>{t}</li>)}</ul></div>
+            <SectionContent>
+              <div><strong>Market Size:</strong> {plan.marketInformation.marketSize}</div>
+            </SectionContent>
+            <SectionContent>
+              <div><strong>Competitors:</strong></div>
+              <SubBulletList>
+                {plan.marketInformation.competitors.map((c, i) => <li key={i}>{c.replace(/^[-–—]\s*/, '')}</li>)}
+              </SubBulletList>
+            </SectionContent>
+            <SectionContent>
+              <div><strong>Trends:</strong></div>
+              <SubBulletList>
+                {plan.marketInformation.trends.map((t, i) => <li key={i}>{t.replace(/^[-–—]\s*/, '')}</li>)}
+              </SubBulletList>
+            </SectionContent>
+          </Section>
+          <Section>
+            <SectionLabel>Financial Summary</SectionLabel>
+            <SectionContent>{plan.financialSummary}</SectionContent>
           </Section>
         </>
       )}

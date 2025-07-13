@@ -14,7 +14,8 @@ interface Persona {
 
 const STAGES = [
   'Problem Validation',
-  'Customer Persona',
+  'Customer Profile',
+  'Customer Struggle',
   'Solution Fit',
   'Business Model',
   'Market Validation',
@@ -66,7 +67,6 @@ export function AutomatedDiscoveryPage() {
         updated[personaIdx] = feedbackIdx + 1;
         return updated;
       });
-      console.log(`Revealing bubble: persona ${personaIdx}, feedback ${feedbackIdx}`);
       if (feedbackIdx + 1 < (personas[personaIdx].feedback?.length || 0)) {
         feedbackIdx++;
       } else {
@@ -79,7 +79,7 @@ export function AutomatedDiscoveryPage() {
     }
     setTimeout(revealNext, 400);
     return () => { isCancelled = true; };
-  }, [personas.map(p => p.feedback?.length).join(',')]);
+  }, [currentStage, personas.map(p => p.feedback?.length).join(',')]);
 
   // Auto-scroll log area to bottom
   React.useEffect(() => {
@@ -223,7 +223,7 @@ export function AutomatedDiscoveryPage() {
   }, [currentStage, personas, collectiveSummary, businessIdea, customerDescription, logs, id]);
 
   // Handlers for Launch stage buttons
-  function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial') {
+  function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
     // TODO: Replace with actual generation logic or API call
     alert(`Generate: ${type}`);
   }
@@ -241,7 +241,11 @@ export function AutomatedDiscoveryPage() {
               width: 28,
               height: 28,
               borderRadius: '50%',
-              background: idx < currentStage ? '#232323' : idx === currentStage ? '#bdbdbd' : '#e5e5e5',
+              background: idx < currentStage
+                ? '#232323'
+                : idx === currentStage
+                  ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
+                  : '#e5e5e5',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -249,6 +253,7 @@ export function AutomatedDiscoveryPage() {
               fontWeight: 700,
               fontSize: 16,
               marginBottom: 4,
+              boxShadow: idx === currentStage ? '0 2px 8px #5ad6ff44' : undefined,
             }}>{idx < currentStage ? '✓' : idx + 1}</div>
             <span style={{ fontSize: 12, color: idx === currentStage ? '#181a1b' : '#888', textAlign: 'center', maxWidth: 80 }}>{stage}</span>
           </div>
@@ -436,14 +441,17 @@ export function AutomatedDiscoveryPage() {
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('summary')}>
               Business Summary
             </button>
-            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('plan')}>
-              Business Plan
-            </button>
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('pitch')}>
               Pitch Deck
             </button>
+            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('plan')}>
+              Business Plan
+            </button>
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('financial')}>
               Financial Plan
+            </button>
+            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('businessModel')}>
+              Business Model
             </button>
           </div>
         ) : (

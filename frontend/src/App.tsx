@@ -55,6 +55,21 @@ const AppContainer = styled.div`
   padding: 2.5rem 1.5rem 2.5rem 1.5rem;
 `;
 
+const Footer = styled.footer`
+  width: 100%;
+  text-align: center;
+  padding: 1.2rem 0 1.2rem 0;
+  color: #888;
+  font-size: 1rem;
+  background: #f7f7fa;
+  letter-spacing: 0.01em;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+`;
+
 const NavBar = styled.div`
   width: 100%;
   max-width: 480px;
@@ -260,26 +275,25 @@ const Sidebar = styled.aside`
 `;
 
 const steps = [
-  { key: 'idea', label: 'Your Interests' },
-  { key: 'customer', label: 'Customer Persona' },
-  { key: 'job', label: 'Customer Job' },
-  { key: 'solution', label: 'The Solution' },
-  { key: 'businessPlan', label: 'Manage Ideas', isPremium: true },
-  { key: 'nextStepsHub', label: 'Business Roadmap', isPremium: true },
+  { key: 'idea', label: 'Interest' },
+  { key: 'customer', label: 'Customer' },
+  { key: 'job', label: 'Problem' },
+  { key: 'solution', label: 'Solution' },
+  { key: 'businessPlan', label: 'Ideas', isPremium: true },
+  { key: 'nextStepsHub', label: 'Discovery', isPremium: true },
   { key: 'launch', label: 'Launch', isPremium: true },
 ];
 
 const prematureIdeaFlowSteps = [
   { key: 'existingIdea', label: '1. Your Idea' },
-  { key: 'describeCustomer', label: '2. Your Customer' },
-  { key: 'describeProblem', label: '3. The Problem' },
-  { key: 'prematureJobDiscovery', label: '4. Customer Job' },
-  { key: 'describeSolution', label: '5. The Solution' },
-  { key: 'businessPlan', label: '6. Manage Ideas', isPremium: true },
-  { key: 'marketEvaluation', label: '7. Market Evaluation', isPremium: true },
-  { key: 'evaluationScore', label: '8. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '9. Business Roadmap', isPremium: true },
-  { key: 'launch', label: '10. Launch', isPremium: true },
+  { key: 'describeCustomer', label: '2. Customer' },
+  { key: 'describeProblem', label: '3. Problem' },
+  { key: 'describeSolution', label: '4. Solution' },
+  { key: 'businessPlan', label: '5. New Idea', isPremium: true },
+  { key: 'marketEvaluation', label: '6. Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: '7. Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: '8. Discovery', isPremium: true },
+  { key: 'launch', label: '9. Launch', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -1086,6 +1100,9 @@ function AppContent() {
           </AppContainer>
         } />
       </Routes>
+      <Footer>
+        &copy; {new Date().getFullYear()} Tool Thinker. All rights reserved.
+      </Footer>
     </>
   );
 }

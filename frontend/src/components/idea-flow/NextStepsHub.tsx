@@ -1188,8 +1188,8 @@ const RefreshButton = styled.button`
 
 const steps = [
   { key: 'idea', label: 'Your Interests' },
-  { key: 'customer', label: 'Customer Persona' },
-  { key: 'job', label: 'Customer Job' },
+  { key: 'customer', label: 'Customer Profile' },
+  { key: 'job', label: 'Customer Struggle' },
   { key: 'businessPlan', label: 'Manage Ideas', isPremium: true },
   { key: 'nextStepsHub', label: 'Business Discovery', isPremium: true },
   { key: 'launch', label: 'Launch', isPremium: true },

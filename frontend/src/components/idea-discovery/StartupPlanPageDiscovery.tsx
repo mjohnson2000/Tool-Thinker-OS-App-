@@ -147,7 +147,11 @@ const CongratsWrapper = styled.div`
 const Congrats = styled.div`
   font-size: 2.2rem;
   font-weight: 800;
-  color: #28a745;
+  background: linear-gradient(180deg, #5ad6ff 0%, #5a6ee6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
   text-align: center;
   margin-bottom: 0.5rem;
   animation: pulsePop 1s cubic-bezier(0.23, 1, 0.32, 1) 0s 3;
@@ -193,6 +197,7 @@ interface NewStartupPlan {
     trends: string[];
     validation: string;
   };
+  financialSummary: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -264,13 +269,14 @@ You are a startup strategist AI. Given the following user input:
 
       Generate a concise Business Plan with the following sections:
 - Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
-- Customer Persona: 1-2 sentences describing the target customer.
+- Customer Profile: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
 - Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
 - Market Size: 1-2 sentences estimating the size or opportunity of the target market.
 - Competitors: 2-3 bullet points listing main competitors or alternatives.
 - Market Trends: 2-3 bullet points describing relevant trends in the market.
 - Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
+- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this business idea.
 
 Return as JSON:
 {
@@ -282,7 +288,8 @@ Return as JSON:
     MarketSize: string,
     Competitors: string, // bullet points separated by newlines
     Trends: string, // bullet points separated by newlines
-    Validation: string
+    Validation: string,
+    Financial: string
   }
 }
 No extra text, just valid JSON.`;
@@ -314,7 +321,8 @@ No extra text, just valid JSON.`;
             || (customer?.competitors ? customer.competitors : ['No competitors specified.']),
           trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (idea?.trends ? idea.trends.split('\n').filter(Boolean) : []),
           validation: data.sections?.Validation || idea?.validation || '',
-        }
+        },
+        financialSummary: data.sections?.Financial || '',
       };
       setNewPlan(mappedPlan);
 
@@ -334,12 +342,13 @@ No extra text, just valid JSON.`;
             title: shortTitle,
             summary: mappedPlan.businessIdeaSummary,
             sections: {
-              'Customer Persona': mappedPlan.customerProfile.description,
+              'Customer Profile': mappedPlan.customerProfile.description,
               'Customer Struggles': Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle.join('\n') : mappedPlan.customerStruggle,
               'Value Proposition': mappedPlan.valueProposition,
               'Market Size': mappedPlan.marketInformation.marketSize,
               'Market Trends': Array.isArray(mappedPlan.marketInformation.trends) ? mappedPlan.marketInformation.trends.join('\n') : mappedPlan.marketInformation.trends,
-              'Competitors': Array.isArray(mappedPlan.marketInformation.competitors) ? mappedPlan.marketInformation.competitors.join('\n') : mappedPlan.marketInformation.competitors
+              'Competitors': Array.isArray(mappedPlan.marketInformation.competitors) ? mappedPlan.marketInformation.competitors.join('\n') : mappedPlan.marketInformation.competitors,
+              'Financial Summary': mappedPlan.financialSummary,
             },
             // Add all nested fields for direct view rendering
             businessIdeaSummary: mappedPlan.businessIdeaSummary,
@@ -347,6 +356,7 @@ No extra text, just valid JSON.`;
             customerStruggle: mappedPlan.customerStruggle,
             valueProposition: mappedPlan.valueProposition,
             marketInformation: mappedPlan.marketInformation,
+            financialSummary: mappedPlan.financialSummary,
             idea: {
               title: idea?.title || 'Untitled Idea',
               description: idea?.interests || 'No idea description provided.'
@@ -411,7 +421,7 @@ No extra text, just valid JSON.`;
         type: 'text'
       },
       {
-        title: 'Customer Persona',
+        title: 'Customer Profile',
         content: newPlan.customerProfile.description,
         type: 'text'
       },
@@ -426,20 +436,19 @@ No extra text, just valid JSON.`;
         type: 'text'
       },
       {
-        title: 'Market Size',
-        content: newPlan.marketInformation.marketSize,
+        title: 'Market Research',
+        content: {
+          marketSize: newPlan.marketInformation.marketSize,
+          trends: newPlan.marketInformation.trends,
+          competitors: newPlan.marketInformation.competitors,
+        },
+        type: 'marketResearch'
+      },
+      {
+        title: 'Financial Summary',
+        content: newPlan.financialSummary,
         type: 'text'
       },
-      {
-        title: 'Market Trends',
-        content: newPlan.marketInformation.trends,
-        type: 'list'
-      },
-      {
-        title: 'Competitors',
-        content: newPlan.marketInformation.competitors,
-        type: 'list'
-      }
     ];
 
     // Only show first 2 sections for unauthenticated users
@@ -456,8 +465,35 @@ No extra text, just valid JSON.`;
                   <ListItem key={i}>{item}</ListItem>
                 ))}
               </ListContent>
+            ) : section.type === 'marketResearch' ? (
+              (() => {
+                const content = section.content as { marketSize: string; trends: string[]; competitors: string[] };
+                return (
+                  <>
+                    <div style={{ marginBottom: 8 }}>
+                      <strong>Market Size:</strong> {content.marketSize || 'N/A'}
+                    </div>
+                    <div style={{ marginTop: 12, marginBottom: 4 }}><strong>Market Trends:</strong></div>
+                    <ListContent>
+                      {Array.isArray(content.trends) && content.trends.length > 0 ? (
+                        content.trends.map((trend: string, i: number) => <ListItem key={i}>{trend}</ListItem>)
+                      ) : (
+                        <ListItem>N/A</ListItem>
+                      )}
+                    </ListContent>
+                    <div style={{ marginTop: 12, marginBottom: 4 }}><strong>Competitors:</strong></div>
+                    <ListContent>
+                      {Array.isArray(content.competitors) && content.competitors.length > 0 ? (
+                        content.competitors.map((comp: string, i: number) => <ListItem key={i}>{comp}</ListItem>)
+                      ) : (
+                        <ListItem>N/A</ListItem>
+                      )}
+                    </ListContent>
+                  </>
+                );
+              })()
             ) : (
-              <SectionContent>{section.content}</SectionContent>
+              <SectionContent>{typeof section.content === 'string' ? section.content : ''}</SectionContent>
             )}
           </SectionCard>
         ))}

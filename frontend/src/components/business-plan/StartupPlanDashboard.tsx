@@ -401,6 +401,44 @@ interface StartupPlanDashboardProps {
 
 const MINIMUM_SCORE = 60;
 
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.32);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const ModalCard = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2.5rem 2rem 2rem 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+`;
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+`;
+
+const DangerButton = styled(ActionButton)`
+  background: #fff;
+  color: #181a1b;
+  border: 1.5px solid #181a1b;
+  font-weight: 500;
+  &:hover {
+    background: #fff0f0;
+    color: #181a1b;
+    border-color: #181a1b;
+  }
+`;
+
 export default function StartupPlanDashboard({ onSelectPlan, setAppState }: StartupPlanDashboardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -421,6 +459,8 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   const [totalPages, setTotalPages] = useState(1);
   const [showDiscoveryModeModal, setShowDiscoveryModeModal] = useState(false);
   const [nextStepPlan, setNextStepPlan] = useState<StartupPlan | null>(null);
+  const [deleteModalPlanId, setDeleteModalPlanId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPlans(1);
@@ -492,19 +532,21 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   };
 
   const handleDeletePlan = async (planId: string) => {
-            if (!confirm('Are you sure you want to delete this business plan?')) return;
-    
+    setDeleteModalPlanId(planId);
+  };
+
+  const confirmDeletePlan = async () => {
+    if (!deleteModalPlanId) return;
+    setIsDeleting(true);
     try {
-      const response = await fetch(`${API_URL}/startup-plan/${planId}`, {
+      const response = await fetch(`${API_URL}/startup-plan/${deleteModalPlanId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      
       if (!response.ok) throw new Error('Failed to delete plan');
-      
-      const updatedPlans = plans.filter(p => p._id !== planId);
+      const updatedPlans = plans.filter(p => p._id !== deleteModalPlanId);
       setPlans(updatedPlans);
       // Recalculate stats immediately
       const total = updatedPlans.length;
@@ -523,8 +565,12 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
         validated,
         averageProgress: total > 0 ? Math.round(totalProgress / total) : 0
       });
+      setDeleteModalPlanId(null);
     } catch (err: any) {
       setError(err.message);
+      setDeleteModalPlanId(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -704,9 +750,9 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                     <ActionButton variant="primary" onClick={() => handleViewPlan(plan)}>
                       <FaEye /> View
                     </ActionButton>
-                    <ActionButton variant="danger" onClick={() => handleDeletePlan(plan._id)}>
-                      <FaTrash /> Delete
-                    </ActionButton>
+                    <DangerButton onClick={() => handleDeletePlan(plan._id)}>
+                      <FaTrash style={{ color: '#181a1b' }} /> Delete
+                    </DangerButton>
                     <ActionButton variant="secondary" onClick={() => handleNextSteps(plan)}>
                       <FaCheckCircle /> Continue to Next Steps
                     </ActionButton>
@@ -869,6 +915,24 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
             </button>
           </div>
         </div>
+      )}
+      {deleteModalPlanId && (
+        <ModalBackdrop>
+          <ModalCard>
+            <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: '#dc3545' }}>Delete Business Idea?</h2>
+            <p style={{ fontSize: '1.05rem', color: '#444', marginBottom: '1.5rem' }}>
+              Are you sure you want to delete this business idea? This action cannot be undone.
+            </p>
+            <ModalActions>
+              <DangerButton onClick={confirmDeletePlan} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </DangerButton>
+              <ActionButton variant="secondary" onClick={() => setDeleteModalPlanId(null)} disabled={isDeleting}>
+                Cancel
+              </ActionButton>
+            </ModalActions>
+          </ModalCard>
+        </ModalBackdrop>
       )}
     </>
   );

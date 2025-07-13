@@ -150,8 +150,34 @@ const IndentedList = styled.ul`
 const SubBulletList = styled.ul`
   padding-left: 1.5rem;
   margin: 0;
-  list-style-type: circle;
+  list-style-type: none;
   color: #888;
+`;
+
+// Add a styled component for custom bullets:
+const BulletList = styled.ul`
+  padding-left: 1.5rem;
+  margin: 0;
+  list-style: none;
+  li {
+    position: relative;
+    padding-left: 1.2em;
+    margin-bottom: 0.5em;
+    color: #888;
+  }
+  li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 0.15em;
+    height: 0.15em;
+    border: 2px solid #bbb;
+    background: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    transform: translateY(-50%);
+  }
 `;
 
 interface StartupPlan {
@@ -494,15 +520,15 @@ export default function StartupPlanViewPage() {
             </SectionContent>
             <SectionContent>
               <div><strong>Competitors:</strong></div>
-              <SubBulletList>
+              <BulletList>
                 {plan.marketInformation.competitors.map((c, i) => <li key={i}>{c.replace(/^[-–—]\s*/, '')}</li>)}
-              </SubBulletList>
+              </BulletList>
             </SectionContent>
             <SectionContent>
               <div><strong>Trends:</strong></div>
-              <SubBulletList>
+              <BulletList>
                 {plan.marketInformation.trends.map((t, i) => <li key={i}>{t.replace(/^[-–—]\s*/, '')}</li>)}
-              </SubBulletList>
+              </BulletList>
             </SectionContent>
           </Section>
           <Section>

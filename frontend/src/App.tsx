@@ -43,6 +43,7 @@ import { ExploreOpportunitiesPage } from './components/idea-flow/ExploreOpportun
 import { CustomerValidationPage } from './components/idea-flow/CustomerValidationPage';
 import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage';
 import AdminLogsPage from './components/business-plan/AdminLogsPage';
+import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -360,6 +361,7 @@ function AppContent() {
   }, [location.search]);
 
   useEffect(() => {
+    console.log('useEffect: isAuthenticated', isAuthenticated, 'currentStep', appState.currentStep);
     if (isAuthenticated && appState.currentStep === 'summary') {
       setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
     }
@@ -384,7 +386,7 @@ function AppContent() {
     isAuthenticated
   });
 
-  const isFlowStep = flowStepKeys.includes(currentStep);
+  const isFlowStep = flowStepKeys.includes(currentStep) && currentStep !== 'login' && currentStep !== 'signup';
   const activeFlowSteps = entryPoint === 'idea' ? steps : prematureIdeaFlowSteps;
 
   const stepsToHidePremature = ['marketEvaluation', 'evaluationScore'];
@@ -616,111 +618,163 @@ function AppContent() {
                 </TopBarRight>
               )}
             </TopBar>
-            {/* Conditional onboarding flow, same as '*' route */}
-            {isFlowStep ? (
-              <PageLayout>
-                {isTrackerVisible && (
-                  <Sidebar>
-                      <ProgressTracker 
-                        steps={
-                          entryPoint === 'idea'
-                            ? steps
-                            : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                        }
-                        currentStepKey={currentStep}
-                        onStepClick={handleStepClick}
-                        isSubscribed={user?.isSubscribed}
-                      />
-                      <ToggleTrackerButton 
-                        onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
-                        style={{ color: '#222' }}
-                      >
-                        Hide Tracker
-                      </ToggleTrackerButton>
-                  </Sidebar>
-                )}
-                <MainContent isExpanded={!isTrackerVisible}>
-                  <>
-                    {!isTrackerVisible && (
-                      <ToggleTrackerButton 
-                        style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
-                        onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
-                      >
-                        Show Tracker
-                      </ToggleTrackerButton>
-                    )}
-                    {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
-                    {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
-                    {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
-                    {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
-                        idea={{
-                          ...idea,
-                          area: idea.area,
-                          problemDescription,
-                          solutionDescription,
-                          competitionDescription
-                        }}
-                        customer={customer} 
-                        job={job} 
-                        onRestart={handleRestart} 
-                        onSignup={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'app' }));
-                        }} 
-                        onLogin={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
-                        }} 
-                      /> )}
-                    {currentStep === 'summary' && (!idea.area || !customer || !job) && (
-                      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                        Please complete all required steps before viewing your summary.
-                      </div>
-                    )}
-                    {currentStep === 'businessPlan' && job && (
-                      <StartupPlanPageDiscovery
-                        idea={idea}
-                        customer={customer}
-                        job={job}
-                        onSignup={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'app' }));
-                        }}
-                        onLogin={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
-                        }}
-                        isAuthenticated={isAuthenticated}
-                        isSubscribed={user?.isSubscribed}
-                      />
-                    )}
-                    {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
-                      <Navigate to="/" replace />
-                    )}
-                    {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
-                    {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
-                    {currentStep === 'describeProblem' && (
-                      <DescribeProblem
-                        onSubmit={handleDescribeProblemSubmit}
-                        customer={customer}
-                        initialValue={problemDescription}
-                        onClear={handleClearStep}
-                      />
-                    )}
-                    {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
-                    {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
-                    {currentStep === 'prematureJobDiscovery' && (
-                      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                        This step is not available in the current version.
-                      </div>
-                    )}
-                    {currentStep === 'solution' && (
-                      <SolutionSelectionPage
-                        job={job}
-                        onSelect={handleSolutionSelect}
-                      />
-                    )}
-                  </>
-                </MainContent>
-              </PageLayout>
-            ) : (
-              <Landing onSelect={handleLandingSelect} />
+            {/* Always render login/signup forms when currentStep is 'login' or 'signup' */}
+            {currentStep === 'login' && (
+              <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading login form...</div>}>
+                <Login
+                  onLogin={async (email, password) => {
+                    try {
+                      await login(email, password);
+                      setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                    } catch (err: any) {
+                      alert(err.message || 'Failed to log in. Please try again.');
+                    }
+                  }}
+                  onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
+                  onRequestPasswordReset={requestPasswordReset}
+                />
+              </React.Suspense>
+            )}
+            {currentStep === 'signup' && (
+              <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading signup form...</div>}>
+                <Signup
+                  onSignup={async (email, password) => {
+                    try {
+                      await signup(email, password);
+                      setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                    } catch (err: any) {
+                      alert(err.message || 'Failed to sign up. Please try again.');
+                    }
+                  }}
+                  onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
+                />
+              </React.Suspense>
+            )}
+            {/* Render flow steps or landing only if not in auth steps */}
+            {!['login', 'signup'].includes(currentStep) && (
+              isFlowStep ? (
+                <PageLayout>
+                  {isTrackerVisible && (
+                    <Sidebar>
+                        <ProgressTracker 
+                          steps={
+                            entryPoint === 'idea'
+                              ? steps
+                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                          }
+                          currentStepKey={currentStep}
+                          onStepClick={handleStepClick}
+                          isSubscribed={user?.isSubscribed}
+                        />
+                        <ToggleTrackerButton 
+                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
+                          style={{ color: '#222' }}
+                        >
+                          Hide Tracker
+                        </ToggleTrackerButton>
+                    </Sidebar>
+                  )}
+                  <MainContent isExpanded={!isTrackerVisible}>
+                    <>
+                      {!isTrackerVisible && (
+                        <ToggleTrackerButton 
+                          style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
+                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
+                        >
+                          Show Tracker
+                        </ToggleTrackerButton>
+                      )}
+                      {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
+                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
+                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
+                      {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
+                          idea={{
+                            ...idea,
+                            area: idea.area,
+                            problemDescription,
+                            solutionDescription,
+                            competitionDescription
+                          }}
+                          customer={customer} 
+                          job={job} 
+                          onRestart={handleRestart} 
+                          onSignup={() => {
+                            setAppState(prev => ({
+                              ...prev,
+                              currentStep: 'signup',
+                              stepBeforeAuth: 'summary',
+                            }));
+                          }} 
+                          onLogin={() => {
+                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
+                          }} 
+                        /> )}
+                      {currentStep === 'summary' && (!idea.area || !customer || !job) && (
+                        <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                          Please complete all required steps before viewing your summary.
+                        </div>
+                      )}
+                      {currentStep === 'businessPlan' && job && (
+                        <StartupPlanPageDiscovery
+                          idea={idea}
+                          customer={customer}
+                          job={job}
+                          onSignup={() => {
+                            setAppState(prev => ({
+                              ...prev,
+                              currentStep: 'signup',
+                              stepBeforeAuth: 'businessPlan',
+                            }));
+                          }}
+                          onLogin={() => {
+                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
+                          }}
+                          isAuthenticated={isAuthenticated}
+                          isSubscribed={user?.isSubscribed}
+                        />
+                      )}
+                      {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
+                        <Navigate to="/" replace />
+                      )}
+                      {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
+                      {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
+                      {currentStep === 'describeProblem' && (
+                        <DescribeProblem
+                          onSubmit={handleDescribeProblemSubmit}
+                          customer={customer}
+                          initialValue={problemDescription}
+                          onClear={handleClearStep}
+                        />
+                      )}
+                      {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'prematureJobDiscovery' && (
+                        <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                          This step is not available in the current version.
+                        </div>
+                      )}
+                      {currentStep === 'solution' && (
+                        <SolutionSelectionPage
+                          job={job}
+                          onSelect={handleSolutionSelect}
+                        />
+                      )}
+                    </>
+                  </MainContent>
+                </PageLayout>
+              ) : (
+                <>
+                  {currentStep === 'landing' && <Landing onSelect={handleLandingSelect} />}
+                  {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'customer' }))} /> )}
+                  {currentStep === 'problemGuidance' && (
+                    <Guidance 
+                      message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." 
+                      buttonText="Let's find the problem" 
+                      onContinue={handleProblemGuidanceContinue} 
+                    />
+                  )}
+                </>
+              )
             )}
           </AppContainer>
         } />
@@ -811,6 +865,7 @@ function AppContent() {
         <Route path="/customer-validation/:planId" element={<CustomerValidationPage />} />
         <Route path="/iterate-or-launch/:planId" element={<IterateOrLaunchPage />} />
         <Route path="/admin/logs" element={<AdminLogsPage />} />
+        <Route path="/automated-discovery/:id" element={<AutomatedDiscoveryPage />} />
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
@@ -870,151 +925,163 @@ function AppContent() {
                 </TopBarRight>
               )}
             </TopBar>
-            {isFlowStep ? (
-              <PageLayout>
-                {isTrackerVisible && (
-                  <Sidebar>
-                      <ProgressTracker 
-                        steps={
-                          entryPoint === 'idea'
-                            ? steps
-                            : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                        }
-                        currentStepKey={currentStep}
-                        onStepClick={handleStepClick}
-                        isSubscribed={user?.isSubscribed}
-                      />
-                      <ToggleTrackerButton 
-                        onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
-                        style={{ color: '#222' }}
-                      >
-                        Hide Tracker
-                      </ToggleTrackerButton>
-                  </Sidebar>
-                )}
-                <MainContent isExpanded={!isTrackerVisible}>
-                  <>
-                    {!isTrackerVisible && (
-                      <ToggleTrackerButton 
-                        style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
-                        onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
-                      >
-                        Show Tracker
-                      </ToggleTrackerButton>
-                    )}
-                    {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
-                    {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
-                    {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
-                    {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
-                        idea={{
-                          ...idea,
-                          area: idea.area,
-                          problemDescription,
-                          solutionDescription,
-                          competitionDescription
-                        }}
-                        customer={customer} 
-                        job={job} 
-                        onRestart={handleRestart} 
-                        onSignup={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'app' }));
-                        }} 
-                        onLogin={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
-                        }} 
-                      /> )}
-                    {currentStep === 'summary' && (!idea.area || !customer || !job) && (
-                      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                        Please complete all required steps before viewing your summary.
-                      </div>
-                    )}
-                    {currentStep === 'businessPlan' && job && (
-                      <StartupPlanPageDiscovery
-                        idea={idea}
-                        customer={customer}
-                        job={job}
-                        onSignup={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'app' }));
-                        }}
-                        onLogin={() => {
-                          setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
-                        }}
-                        isAuthenticated={isAuthenticated}
-                        isSubscribed={user?.isSubscribed}
-                      />
-                    )}
-                    {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
-                      <Navigate to="/" replace />
-                    )}
-                    {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
-                    {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
-                    {currentStep === 'describeProblem' && (
-                      <DescribeProblem
-                        onSubmit={handleDescribeProblemSubmit}
-                        customer={customer}
-                        initialValue={problemDescription}
-                        onClear={handleClearStep}
-                      />
-                    )}
-                    {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
-                    {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
-                    {currentStep === 'prematureJobDiscovery' && (
-                      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                        This step is not available in the current version.
-                      </div>
-                    )}
-                    {currentStep === 'solution' && (
-                      <SolutionSelectionPage
-                        job={job}
-                        onSelect={handleSolutionSelect}
-                      />
-                    )}
-                  </>
-                </MainContent>
-              </PageLayout>
-            ) : (
-              <>
-                {currentStep === 'landing' && <Landing onSelect={handleLandingSelect} />}
-                {currentStep === 'login' && (
-                  <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading login form...</div>}>
-                    <Login
-                      onLogin={async (email, password) => {
-                        try {
-                          await login(email, password);
-                          setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
-                        } catch (err: any) {
-                          alert(err.message || 'Failed to log in. Please try again.');
-                        }
-                      }}
-                      onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
-                      onRequestPasswordReset={requestPasswordReset}
+            {/* Always render login/signup forms when currentStep is 'login' or 'signup' */}
+            {currentStep === 'login' && (
+              <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading login form...</div>}>
+                <Login
+                  onLogin={async (email, password) => {
+                    try {
+                      await login(email, password);
+                      setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                    } catch (err: any) {
+                      alert(err.message || 'Failed to log in. Please try again.');
+                    }
+                  }}
+                  onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
+                  onRequestPasswordReset={requestPasswordReset}
+                />
+              </React.Suspense>
+            )}
+            {currentStep === 'signup' && (
+              <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading signup form...</div>}>
+                <Signup
+                  onSignup={async (email, password) => {
+                    try {
+                      await signup(email, password);
+                      setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+                    } catch (err: any) {
+                      alert(err.message || 'Failed to sign up. Please try again.');
+                    }
+                  }}
+                  onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
+                />
+              </React.Suspense>
+            )}
+            {/* Render flow steps or landing only if not in auth steps */}
+            {!['login', 'signup'].includes(currentStep) && (
+              isFlowStep ? (
+                <PageLayout>
+                  {isTrackerVisible && (
+                    <Sidebar>
+                        <ProgressTracker 
+                          steps={
+                            entryPoint === 'idea'
+                              ? steps
+                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                          }
+                          currentStepKey={currentStep}
+                          onStepClick={handleStepClick}
+                          isSubscribed={user?.isSubscribed}
+                        />
+                        <ToggleTrackerButton 
+                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
+                          style={{ color: '#222' }}
+                        >
+                          Hide Tracker
+                        </ToggleTrackerButton>
+                    </Sidebar>
+                  )}
+                  <MainContent isExpanded={!isTrackerVisible}>
+                    <>
+                      {!isTrackerVisible && (
+                        <ToggleTrackerButton 
+                          style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
+                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
+                        >
+                          Show Tracker
+                        </ToggleTrackerButton>
+                      )}
+                      {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
+                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
+                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
+                      {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
+                          idea={{
+                            ...idea,
+                            area: idea.area,
+                            problemDescription,
+                            solutionDescription,
+                            competitionDescription
+                          }}
+                          customer={customer} 
+                          job={job} 
+                          onRestart={handleRestart} 
+                          onSignup={() => {
+                            setAppState(prev => ({
+                              ...prev,
+                              currentStep: 'signup',
+                              stepBeforeAuth: 'summary',
+                            }));
+                          }} 
+                          onLogin={() => {
+                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'summary', currentStep: 'login' }));
+                          }} 
+                        /> )}
+                      {currentStep === 'summary' && (!idea.area || !customer || !job) && (
+                        <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                          Please complete all required steps before viewing your summary.
+                        </div>
+                      )}
+                      {currentStep === 'businessPlan' && job && (
+                        <StartupPlanPageDiscovery
+                          idea={idea}
+                          customer={customer}
+                          job={job}
+                          onSignup={() => {
+                            setAppState(prev => ({
+                              ...prev,
+                              currentStep: 'signup',
+                              stepBeforeAuth: 'businessPlan',
+                            }));
+                          }}
+                          onLogin={() => {
+                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
+                          }}
+                          isAuthenticated={isAuthenticated}
+                          isSubscribed={user?.isSubscribed}
+                        />
+                      )}
+                      {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
+                        <Navigate to="/" replace />
+                      )}
+                      {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
+                      {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
+                      {currentStep === 'describeProblem' && (
+                        <DescribeProblem
+                          onSubmit={handleDescribeProblemSubmit}
+                          customer={customer}
+                          initialValue={problemDescription}
+                          onClear={handleClearStep}
+                        />
+                      )}
+                      {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'prematureJobDiscovery' && (
+                        <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                          This step is not available in the current version.
+                        </div>
+                      )}
+                      {currentStep === 'solution' && (
+                        <SolutionSelectionPage
+                          job={job}
+                          onSelect={handleSolutionSelect}
+                        />
+                      )}
+                    </>
+                  </MainContent>
+                </PageLayout>
+              ) : (
+                <>
+                  {currentStep === 'landing' && <Landing onSelect={handleLandingSelect} />}
+                  {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'customer' }))} /> )}
+                  {currentStep === 'problemGuidance' && (
+                    <Guidance 
+                      message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." 
+                      buttonText="Let's find the problem" 
+                      onContinue={handleProblemGuidanceContinue} 
                     />
-                  </React.Suspense>
-                )}
-                {currentStep === 'signup' && (
-                  <React.Suspense fallback={<div style={{textAlign: 'center', marginTop: '2rem'}}>Loading signup form...</div>}>
-                    <Signup
-                      onSignup={async (email, password) => {
-                        try {
-                          await signup(email, password);
-                          setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
-                        } catch (err: any) {
-                          alert(err.message || 'Failed to sign up. Please try again.');
-                        }
-                      }}
-                      onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
-                    />
-                  </React.Suspense>
-                )}
-                {currentStep === 'customerGuidance' && ( <Guidance message="That's perfectly fine! A great business is built on a deep understanding of its customers. Let's explore some potential customer types to get you started." buttonText="Let's find my customer" onContinue={() => setAppState(prev => ({ ...prev, currentStep: 'customer' }))} /> )}
-                {currentStep === 'problemGuidance' && (
-                  <Guidance 
-                    message="No problem at all! The best businesses solve a clear, painful problem. Let's figure out what job your customers need done." 
-                    buttonText="Let's find the problem" 
-                    onContinue={handleProblemGuidanceContinue} 
-                  />
-                )}
-              </>
+                  )}
+                </>
+              )
             )}
           </AppContainer>
         } />

@@ -419,6 +419,8 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   const [selectedPlan, setSelectedPlan] = useState<StartupPlan | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showDiscoveryModeModal, setShowDiscoveryModeModal] = useState(false);
+  const [nextStepPlan, setNextStepPlan] = useState<StartupPlan | null>(null);
 
   useEffect(() => {
     fetchPlans(1);
@@ -533,8 +535,8 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       setShowScorePrompt(true);
       return;
     }
-    console.log('Navigating to:', `/next-steps-hub/${plan._id}`);
-    navigate(`/next-steps-hub/${plan._id}`);
+    setNextStepPlan(plan);
+    setShowDiscoveryModeModal(true);
   };
 
   const filteredPlans = plans.filter(plan => 
@@ -784,6 +786,86 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
               onClick={() => setShowScorePrompt(false)}
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+      {showDiscoveryModeModal && nextStepPlan && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.45)',
+          zIndex: 3000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: '2.5rem 2rem',
+            maxWidth: 420,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            textAlign: 'center',
+            position: 'relative',
+          }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#181a1b' }}>Choose Discovery Mode</h2>
+            <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#444' }}>
+              How would you like to proceed with Business Discovery for <b>{nextStepPlan.title}</b>?
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <button
+                style={{
+                  background: '#181a1b',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '0.9rem 1.5rem',
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setShowDiscoveryModeModal(false);
+                  navigate(`/next-steps-hub/${nextStepPlan._id}`);
+                }}
+              >
+                Manual (Step-by-step Roadmap)
+              </button>
+              <button
+                style={{
+                  background: '#fff',
+                  color: '#181a1b',
+                  border: '1.5px solid #181a1b',
+                  borderRadius: 8,
+                  padding: '0.9rem 1.5rem',
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setShowDiscoveryModeModal(false);
+                  navigate(`/automated-discovery/${nextStepPlan._id}`);
+                }}
+              >
+                Automated (AI-Powered Discovery)
+              </button>
+            </div>
+            <button
+              style={{
+                background: 'transparent',
+                color: '#888',
+                border: 'none',
+                marginTop: 24,
+                fontSize: '1rem',
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowDiscoveryModeModal(false)}
+            >
+              Cancel
             </button>
           </div>
         </div>

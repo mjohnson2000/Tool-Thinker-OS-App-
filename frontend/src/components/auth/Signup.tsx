@@ -1,63 +1,79 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
-const Container = styled.div`
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
+const GlassCard = styled.div`
+  max-width: 420px;
+  margin: 3.5rem auto 2rem auto;
+  padding: 2.5rem 2rem 2rem 2rem;
+  background: rgba(255,255,255,0.85);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(24,26,27,0.10);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #e5e5e5;
 `;
 
 const Title = styled.h1`
-  font-size: 1.8rem;
-  color: #333;
-  margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #181a1b;
+  margin-bottom: 2.2rem;
+  text-align: center;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.8rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  padding: 1.1rem 1rem;
+  font-size: 1.08rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
+  background: #fafbfc;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    outline: none;
+    border-color: #181a1b;
+    box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+    background: #fff;
+  }
 `;
 
 const Button = styled.button`
   width: 100%;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 500;
+  padding: 1.1rem;
+  font-size: 1.08rem;
+  font-weight: 700;
   color: #fff;
-  background-color: #007aff;
+  background: #181a1b;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
+  margin-top: 0.2rem;
+  box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  &:hover, &:focus {
+    background: #000;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(24,26,27,0.12);
   }
   &:disabled {
-    background: #b3d4fc;
+    background: #e5e5e5;
+    color: #aaa;
     cursor: not-allowed;
   }
 `;
 
 const Subtext = styled.p`
   margin-top: 1.5rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #666;
+  text-align: center;
 `;
 
 const Link = styled.a`
-  color: #007aff;
+  color: #181a1b;
   cursor: pointer;
   text-decoration: none;
-
+  font-weight: 700;
   &:hover {
     text-decoration: underline;
   }
@@ -65,8 +81,9 @@ const Link = styled.a`
 
 const ErrorMessage = styled.div`
   color: #dc3545;
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
 `;
 
 interface SignupProps {
@@ -75,6 +92,7 @@ interface SignupProps {
 }
 
 export function Signup({ onSignup, onLogin }: SignupProps) {
+  console.log('Signup component rendered');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -106,9 +124,9 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
   };
 
   return (
-    <Container>
-      <Title>Create Account</Title>
-      <form onSubmit={handleSubmit}>
+    <GlassCard>
+      <Title>Create Your Account</Title>
+      <form onSubmit={handleSubmit} autoComplete="off">
         {error && <ErrorMessage>{error}</ErrorMessage>}
         <Input
           type="email"
@@ -116,6 +134,7 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoFocus
         />
         <Input
           type="password"
@@ -138,6 +157,6 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
       <Subtext>
         Already have an account? <Link onClick={onLogin}>Log in</Link>
       </Subtext>
-    </Container>
+    </GlassCard>
   );
 } 

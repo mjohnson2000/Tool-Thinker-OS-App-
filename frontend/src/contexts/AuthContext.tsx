@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5001/api' : '/api');
 
 interface User {
   email: string;
@@ -95,15 +95,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Making login request to:', `${API_URL}/auth/login`);
       const response = await axios.post<ApiResponse>(`${API_URL}/auth/login`, {
         email,
         password
       });
+      console.log('Login response:', response.data);
       if (response.data && response.data.data) {
         setAuthToken(response.data.data.token);
         setUser(response.data.data.user);
       }
     } catch (error: any) {
+      console.error('Login request failed:', error);
+      console.error('Error response:', error.response?.data);
       throw new Error(error.response?.data?.message || 'Failed to log in');
     }
   };

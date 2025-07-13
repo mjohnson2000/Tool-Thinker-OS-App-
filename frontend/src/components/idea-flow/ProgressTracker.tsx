@@ -146,9 +146,8 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
                 )}
               </StepCircle>
               <StepLabel $status={status}>
-                {step.label.replace(/^\d+\.\s*/, '')}
-                {step.isPremium && <PremiumBadge>Premium</PremiumBadge>}
-                {isPremium && <LockIcon>🔒</LockIcon>}
+                {step.label.replace(/^[0-9]+\.\s*/, '')}
+                {/* Removed PremiumBadge and LockIcon */}
               </StepLabel>
             </StepItem>
             {/* Remove the vertical connector lines */}

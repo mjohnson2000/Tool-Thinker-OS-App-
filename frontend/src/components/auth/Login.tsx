@@ -5,91 +5,89 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
+const GlassCard = styled.div`
+  max-width: 420px;
+  margin: 3.5rem auto 2rem auto;
+  padding: 2.5rem 2rem 2rem 2rem;
+  background: rgba(255,255,255,0.85);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(24,26,27,0.10);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #e5e5e5;
 `;
 
-const Title = styled.h2`
+const Title = styled.h1`
   font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
+  font-weight: 800;
+  color: #181a1b;
+  margin-bottom: 2.2rem;
   text-align: center;
-`;
-
-const Form = styled.form`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #E5E5E5;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 1.1rem 1rem;
+  font-size: 1.08rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
   background: #fafbfc;
+  transition: border-color 0.2s, box-shadow 0.2s;
   &:focus {
     outline: none;
-    border-color: #ededed;
-    background: #fafbfc;
+    border-color: #181a1b;
+    box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+    background: #fff;
   }
 `;
 
 const Button = styled.button`
+  width: 100%;
+  padding: 1.1rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #fff;
   background: #181a1b;
-  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s;
-  &:hover {
+  margin-top: 0.2rem;
+  box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  &:hover, &:focus {
     background: #000;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(24,26,27,0.12);
   }
   &:disabled {
-    background: #ccc;
+    background: #e5e5e5;
+    color: #aaa;
     cursor: not-allowed;
-  }
-`;
-
-const LinkButton = styled.button`
-  background: none;
-  color: #181a1b;
-  border: none;
-  box-shadow: none;
-  font-weight: 500;
-  padding: 0;
-  font-size: 1rem;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.2s;
-  &:hover {
-    color: #000;
-    text-decoration: underline;
   }
 `;
 
 const ErrorMessage = styled.div`
   color: #dc3545;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
 `;
 
-const SwitchText = styled.p`
-  margin-top: 1rem;
+const Subtext = styled.p`
+  margin-top: 1.5rem;
   font-size: 1rem;
-  color: #555;
+  color: #666;
   text-align: center;
+`;
+
+const Link = styled.a`
+  color: #181a1b;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 700;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 interface LoginProps {
@@ -101,20 +99,12 @@ interface LoginProps {
 export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetMessage, setResetMessage] = useState<string | null>(null);
-  const [resetError, setResetError] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    setError('');
     setIsLoading(true);
     try {
       await onLogin(email, password);
@@ -125,83 +115,41 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
     }
   };
 
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetMessage(null);
-    setResetError(null);
-    if (!resetEmail) {
-      setResetError('Please enter your email');
-      return;
-    }
-    try {
-      if (onRequestPasswordReset) {
-        await onRequestPasswordReset(resetEmail);
-        setResetMessage('Password reset email sent! Check your inbox.');
-      } else {
-        setResetError('Password reset not available.');
-      }
-    } catch (err: any) {
-      setResetError(err.message || 'Failed to send reset email');
-    }
-  };
-
   return (
-    <Container>
-      <Title>Log In to Your Account</Title>
-      {!showReset ? (
-        <>
-          <Form onSubmit={handleSubmit}>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            {error && <ErrorMessage>{error}</ErrorMessage>}
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Log In'}
-            </Button>
-          </Form>
-          <SwitchText>
-            <LinkButton type="button" onClick={onSignup}>
-              Sign Up
-            </LinkButton>
-          </SwitchText>
-          <SwitchText>
-            <LinkButton type="button" onClick={() => setShowReset(true)}>
-              Forgot password?
-            </LinkButton>
-          </SwitchText>
-        </>
-      ) : (
-        <>
-          <Form onSubmit={handleReset}>
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              value={resetEmail}
-              onChange={e => setResetEmail(e.target.value)}
-              required
-            />
-            {resetError && <ErrorMessage>{resetError}</ErrorMessage>}
-            {resetMessage && <div style={{ color: '#007AFF', marginBottom: 8 }}>{resetMessage}</div>}
-            <Button type="submit">Send Reset Email</Button>
-          </Form>
-          <SwitchText>
-            <LinkButton type="button" onClick={() => setShowReset(false)}>
-              Back to login
-            </LinkButton>
-          </SwitchText>
-        </>
+    <GlassCard>
+      <Title>Log In</Title>
+      <form onSubmit={handleSubmit} autoComplete="off">
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+          autoFocus
+        />
+        <Input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Log In'}
+        </Button>
+      </form>
+      <Subtext>
+        Don&apos;t have an account?{' '}
+        <Link as="button" onClick={onSignup}>Sign up</Link>
+      </Subtext>
+      {onRequestPasswordReset && (
+        <Subtext>
+          <Link as="button" onClick={() => onRequestPasswordReset(email)}>
+            Forgot password?
+          </Link>
+        </Subtext>
       )}
-    </Container>
+    </GlassCard>
   );
 } 

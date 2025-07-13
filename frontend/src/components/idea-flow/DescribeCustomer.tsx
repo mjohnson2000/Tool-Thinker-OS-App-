@@ -36,47 +36,57 @@ const Textarea = styled.textarea`
 `;
 
 const ImprovementContainer = styled.div`
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background-color: #e8f4fd;
-    border: 1px solid #bde0fe;
-    border-radius: 6px;
-    text-align: left;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  padding: 1.5rem 1.2rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  text-align: left;
 `;
 
 const ImprovementHeader = styled.h4`
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #181a1b;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 0.5rem;
 `;
 
 const ImprovementText = styled.p`
-    font-size: 1rem;
-    color: #333;
-    white-space: pre-wrap;
+  font-size: 1rem;
+  color: #333;
+  white-space: pre-wrap;
+  margin-bottom: 1rem;
 `;
 
 const ButtonContainer = styled.div`
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
 `;
 
 const ImprovementButton = styled.button<{ accept?: boolean }>`
-    padding: 0.5rem 1rem;
-    border: 1px solid ${props => props.accept ? '#0d6efd' : '#6c757d'};
-    background-color: ${props => props.accept ? '#0d6efd' : 'transparent'};
-    color: ${props => props.accept ? '#fff' : '#6c757d'};
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-
-    &:hover {
-        opacity: 0.9;
-    }
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: ${props => props.accept ? '#181a1b' : '#f5f5f7'};
+  color: ${props => props.accept ? '#fff' : '#181a1b'};
+  box-shadow: 0 2px 8px rgba(24,26,27,0.08);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  &:hover, &:focus {
+    background: ${props => props.accept ? '#000' : '#e5e5e5'};
+    color: ${props => props.accept ? '#fff' : '#181a1b'};
+    box-shadow: 0 4px 16px rgba(24,26,27,0.12);
+  }
+  &:disabled {
+    background: #e5e5e5;
+    color: #aaa;
+    cursor: not-allowed;
+  }
 `;
 
 const ClearButton = styled.button`

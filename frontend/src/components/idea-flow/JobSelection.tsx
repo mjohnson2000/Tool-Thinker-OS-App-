@@ -151,19 +151,34 @@ No explanation, no markdown, just the JSON array.`;
             }
           }
         }
-        // Filter out any jobs missing required fields
-        const validOptions = parsed.filter(
-          option =>
-            option &&
-            typeof option.id === 'string' &&
-            typeof option.title === 'string' &&
-            typeof option.description === 'string' &&
-            typeof option.icon === 'string' &&
-            option.description.trim() !== '' &&
-            option.icon.trim() !== ''
-        );
-        if (!Array.isArray(validOptions) || validOptions.length === 0) throw new Error('No valid jobs found');
-        setOptions(validOptions.map(option => ({ ...option, id: String(option.id) })));
+        // Filter and clean up jobs, providing fallbacks for missing fields
+        const validOptions = parsed
+          .filter(option => option && typeof option === 'object')
+          .map((option, index) => ({
+            id: String(option.id || `job-${index + 1}`),
+            title: String(option.title || `Job ${index + 1}`),
+            description: String(option.description || 'No description provided'),
+            icon: String(option.icon || '💼')
+          }))
+          .filter(option => 
+            option.title.trim() !== '' && 
+            option.description.trim() !== '' && 
+            option.description !== 'No description provided'
+          );
+        
+        // If we have fewer than 5 valid options, add fallback options
+        while (validOptions.length < 5) {
+          const fallbackIndex = validOptions.length + 1;
+          validOptions.push({
+            id: `fallback-${fallbackIndex}`,
+            title: `Additional Job ${fallbackIndex}`,
+            description: `A job that helps ${customer.title} achieve their goals`,
+            icon: '💼'
+          });
+        }
+        
+        if (validOptions.length === 0) throw new Error('No valid jobs found');
+        setOptions(validOptions.slice(0, 5)); // Ensure exactly 5 options
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate jobs. Try again or pick a different customer.');

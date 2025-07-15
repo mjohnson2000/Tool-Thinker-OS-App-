@@ -24,6 +24,7 @@
     "mongoose": "^7.0.3",
     "nodemailer": "^6.9.1",
     "openai": "^5.9.0",
+    "pptxgenjs": "^3.11.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import robotLottie from '../../assets/robot-lottie.json';
@@ -45,6 +45,30 @@ export function AutomatedDiscoveryPage() {
   // Add state for collapsible summary and feedback sections
   const [showSummary, setShowSummary] = React.useState(true);
   const [showFeedback, setShowFeedback] = React.useState(true);
+  const PITCH_DECK_SLIDES = [
+    { key: 'title', label: 'Title Slide', defaultTitle: 'Title', defaultContent: '' },
+    { key: 'problem', label: 'Problem', defaultTitle: 'Problem', defaultContent: '' },
+    { key: 'solution', label: 'Solution', defaultTitle: 'Solution', defaultContent: '' },
+    { key: 'market', label: 'Market Opportunity', defaultTitle: 'Market Opportunity', defaultContent: '' },
+    { key: 'product', label: 'Product', defaultTitle: 'Product', defaultContent: '' },
+    { key: 'businessModel', label: 'Business Model', defaultTitle: 'Business Model', defaultContent: '' },
+    { key: 'goToMarket', label: 'Go-to-Market', defaultTitle: 'Go-to-Market', defaultContent: '' },
+    { key: 'competition', label: 'Competition', defaultTitle: 'Competition', defaultContent: '' },
+    { key: 'traction', label: 'Traction', defaultTitle: 'Traction', defaultContent: '' },
+    { key: 'team', label: 'Team', defaultTitle: 'Team', defaultContent: '' },
+    { key: 'financials', label: 'Financials', defaultTitle: 'Financials', defaultContent: '' },
+    { key: 'ask', label: 'Ask', defaultTitle: 'Ask', defaultContent: '' },
+  ];
+  const [showPitchDeckEditor, setShowPitchDeckEditor] = useState(false);
+  const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
+  const [pitchDeckSlides, setPitchDeckSlides] = useState(
+    PITCH_DECK_SLIDES.map(slide => ({
+      key: slide.key,
+      title: slide.defaultTitle,
+      content: '',
+    }))
+  );
+  const [planData, setPlanData] = useState<any>(null);
 
   // Helper to toggle expand/collapse
   function togglePersonaExpand(id: string) {
@@ -107,6 +131,7 @@ export function AutomatedDiscoveryPage() {
         const data = await res.json();
         setBusinessIdea(data.idea?.existingIdeaText || data.summary || '');
         setCustomerDescription(data.customer?.description || '');
+        setPlanData(data);
         setLogs((prev) => [...prev, 'Business plan loaded.']);
       } catch (err: any) {
         setError(err.message || 'Unknown error');
@@ -226,6 +251,100 @@ export function AutomatedDiscoveryPage() {
   function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
     // TODO: Replace with actual generation logic or API call
     alert(`Generate: ${type}`);
+  }
+
+  function openPitchDeckEditor() {
+    setPitchDeckSlides(PITCH_DECK_SLIDES.map(slide => {
+      let content = '';
+      switch (slide.key) {
+        case 'title':
+          content = planData?.title || businessIdea || '';
+          break;
+        case 'problem':
+          content = planData?.problem?.description || '';
+          break;
+        case 'solution':
+          content = planData?.solution?.description || '';
+          break;
+        case 'market':
+          content = planData?.marketEvaluation?.marketSize || '';
+          break;
+        case 'product':
+          content = (planData?.solution?.keyFeatures || []).join('\n') || '';
+          break;
+        case 'businessModel':
+          content = planData?.sections?.['Business Model'] || '';
+          break;
+        case 'goToMarket':
+          content = planData?.sections?.['Go-to-Market'] || '';
+          break;
+        case 'competition':
+          content = (planData?.marketEvaluation?.competitors || []).join('\n') || '';
+          break;
+        case 'traction':
+          content = planData?.sections?.['Traction'] || '';
+          break;
+        case 'team':
+          content = planData?.sections?.['Team'] || '';
+          break;
+        case 'financials':
+          content = planData?.sections?.['Financials'] || '';
+          break;
+        case 'ask':
+          content = planData?.sections?.['Ask'] || '';
+          break;
+        default:
+          content = '';
+      }
+      return {
+        key: slide.key,
+        title: slide.defaultTitle,
+        content,
+      };
+    }));
+    setCurrentSlideIdx(0);
+    setShowPitchDeckEditor(true);
+  }
+  function handleSlideFieldChange(idx: number, field: 'title' | 'content', value: string) {
+    setPitchDeckSlides(prev => prev.map((slide, i) => i === idx ? { ...slide, [field]: value } : slide));
+  }
+  function downloadCustomPitchDeck() {
+    if (!id) return;
+    const slidesObj: Record<string, string> = {};
+    pitchDeckSlides.forEach(slide => {
+      if (slide.key === 'title') return; // title handled separately
+      slidesObj[slide.key] = slide.content;
+    });
+    fetch(`${API_URL}/business-plan/${id}/pitch-deck`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+      },
+      body: JSON.stringify({
+        title: pitchDeckSlides[0].content || pitchDeckSlides[0].title,
+        slides: slidesObj
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to generate pitch deck');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pitch-deck.pptx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setShowPitchDeckEditor(false);
+      })
+      .catch(err => {
+        alert('Failed to download pitch deck.');
+        console.error(err);
+      });
   }
 
   return (
@@ -441,7 +560,7 @@ export function AutomatedDiscoveryPage() {
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('summary')}>
               Business Summary
             </button>
-            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('pitch')}>
+            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={openPitchDeckEditor}>
               Pitch Deck
             </button>
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('plan')}>
@@ -724,6 +843,114 @@ export function AutomatedDiscoveryPage() {
           }
         `}</style>
       </aside>
+      {/* Pitch Deck Modal Editor */}
+      {showPitchDeckEditor && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.18)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            width: 1100,
+            minHeight: 600,
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'row',
+            overflow: 'hidden',
+            position: 'relative',
+          }}>
+            {/* Right sidebar: all slides */}
+            <div style={{ width: 220, background: '#f7f8fa', borderLeft: '1.5px solid #eee', padding: '1.5rem 0.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pitchDeckSlides.map((slide, idx) => (
+                <div
+                  key={slide.key}
+                  onClick={() => setCurrentSlideIdx(idx)}
+                  style={{
+                    background: idx === currentSlideIdx ? 'linear-gradient(90deg, #5ad6ff22 0%, #5a6ee622 100%)' : '#fff',
+                    border: idx === currentSlideIdx ? '2px solid #5ad6ff' : '1.5px solid #eee',
+                    borderRadius: 10,
+                    padding: '10px 12px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: 15,
+                    marginBottom: 2,
+                    boxShadow: idx === currentSlideIdx ? '0 2px 8px #5ad6ff22' : undefined,
+                    transition: 'all 0.18s cubic-bezier(.4,0,.2,1)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {PITCH_DECK_SLIDES[idx].label}
+                </div>
+              ))}
+            </div>
+            {/* Center: current slide editor */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f7fa' }}>
+              <div style={{
+                width: 600,
+                minHeight: 340,
+                background: '#fff',
+                borderRadius: 12,
+                boxShadow: '0 4px 24px rgba(90,110,230,0.10)',
+                padding: '2.5rem 2.5rem 2rem 2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                position: 'relative',
+              }}>
+                <input
+                  style={{ fontSize: 26, fontWeight: 700, border: 'none', borderBottom: '2px solid #e5e5e5', marginBottom: 18, outline: 'none', background: 'transparent', padding: 2 }}
+                  value={pitchDeckSlides[currentSlideIdx].title}
+                  onChange={e => handleSlideFieldChange(currentSlideIdx, 'title', e.target.value)}
+                  placeholder={PITCH_DECK_SLIDES[currentSlideIdx].defaultTitle}
+                />
+                <textarea
+                  style={{ minHeight: 180, fontSize: 17, padding: 12, borderRadius: 8, border: '1.5px solid #e5e5e5', resize: 'vertical', background: '#fafbfc', fontWeight: 500 }}
+                  value={pitchDeckSlides[currentSlideIdx].content}
+                  onChange={e => handleSlideFieldChange(currentSlideIdx, 'content', e.target.value)}
+                  placeholder={`Enter content for ${PITCH_DECK_SLIDES[currentSlideIdx].label}...`}
+                />
+                {/* Navigation buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                  <button
+                    style={{ background: '#e5e5e5', color: '#222', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: currentSlideIdx === 0 ? 'not-allowed' : 'pointer', opacity: currentSlideIdx === 0 ? 0.5 : 1 }}
+                    onClick={() => setCurrentSlideIdx(idx => Math.max(0, idx - 1))}
+                    disabled={currentSlideIdx === 0}
+                  >
+                    Back
+                  </button>
+                  <button
+                    style={{ background: '#181a1b', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: currentSlideIdx === pitchDeckSlides.length - 1 ? 'not-allowed' : 'pointer', opacity: currentSlideIdx === pitchDeckSlides.length - 1 ? 0.5 : 1 }}
+                    onClick={() => setCurrentSlideIdx(idx => Math.min(pitchDeckSlides.length - 1, idx + 1))}
+                    disabled={currentSlideIdx === pitchDeckSlides.length - 1}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* Modal close and download controls */}
+            <button onClick={() => setShowPitchDeckEditor(false)} style={{ position: 'absolute', top: 18, right: 24, fontSize: 28, background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}>&times;</button>
+            <button
+              style={{ position: 'absolute', bottom: 28, right: 38, background: '#181a1b', color: '#fff', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px #181a1b22' }}
+              onClick={downloadCustomPitchDeck}
+            >
+              Download Pitch Deck
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

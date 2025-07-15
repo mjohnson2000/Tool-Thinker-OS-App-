@@ -135,19 +135,34 @@ export function SolutionSelectionPage({ job, onSelect, interests, businessArea, 
             }
           }
         }
-        // Filter out any solutions missing required fields
-        const validOptions = parsed.filter(
-          option =>
-            option &&
-            typeof option.id === 'string' &&
-            typeof option.title === 'string' &&
-            typeof option.description === 'string' &&
-            typeof option.icon === 'string' &&
-            option.description.trim() !== '' &&
-            option.icon.trim() !== ''
-        );
-        if (!Array.isArray(validOptions) || validOptions.length === 0) throw new Error('No valid solutions found');
-        setOptions(validOptions.map(option => ({ ...option, id: String(option.id) })));
+        // Filter and clean up solutions, providing fallbacks for missing fields
+        const validOptions = parsed
+          .filter(option => option && typeof option === 'object')
+          .map((option, index) => ({
+            id: String(option.id || `solution-${index + 1}`),
+            title: String(option.title || `Solution ${index + 1}`),
+            description: String(option.description || 'No description provided'),
+            icon: String(option.icon || '💡')
+          }))
+          .filter(option => 
+            option.title.trim() !== '' && 
+            option.description.trim() !== '' && 
+            option.description !== 'No description provided'
+          );
+        
+        // If we have fewer than 5 valid options, add fallback options
+        while (validOptions.length < 5) {
+          const fallbackIndex = validOptions.length + 1;
+          validOptions.push({
+            id: `fallback-${fallbackIndex}`,
+            title: `Additional Solution ${fallbackIndex}`,
+            description: `A solution that helps address the job: ${job.title}`,
+            icon: '💡'
+          });
+        }
+        
+        if (validOptions.length === 0) throw new Error('No valid solutions found');
+        setOptions(validOptions.slice(0, 5)); // Ensure exactly 5 options
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate solutions. Try again or pick a different job.');

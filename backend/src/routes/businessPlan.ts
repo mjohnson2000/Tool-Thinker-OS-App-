@@ -3,6 +3,7 @@ import axios from "axios";
 import { BusinessPlan, IBusinessPlan } from "../models/BusinessPlan";
 import { User } from "../models/User";
 import auth from "../middleware/auth";
+import PptxGenJS from 'pptxgenjs';
 
 interface AuthRequest extends Request {
   user?: {
@@ -643,5 +644,77 @@ businessPlanRouter.put(
     }
   }
 );
+
+// Generate and download a pitch deck for a business plan
+businessPlanRouter.post('/:id/pitch-deck', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const customSlides = req.body && req.body.slides ? req.body.slides : {};
+    const customTitle = req.body && req.body.title ? req.body.title : undefined;
+    const plan = await BusinessPlan.findById(id);
+    if (!plan) return res.status(404).json({ error: 'Business plan not found' });
+
+    const getSection = (key: string) => (plan.sections && plan.sections[key]) || '';
+    const bulletList = (arr: string[]) => Array.isArray(arr) && arr.length ? arr.map(item => `• ${item}`).join('\n') : '';
+
+    const pptx = new PptxGenJS();
+
+    // Title Slide
+    pptx.addSlide().addText(customTitle || plan.title || 'Pitch Deck', { x:1, y:1, fontSize:36 });
+
+    // Problem Slide
+    pptx.addSlide().addText('Problem', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.problem || plan.problem?.description || getSection('Problem') || 'Describe the problem here.', { x:1, y:1, fontSize:18 });
+
+    // Solution Slide
+    pptx.addSlide().addText('Solution', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.solution || plan.solution?.description || getSection('Solution') || 'Describe the solution here.', { x:1, y:1, fontSize:18 });
+
+    // Market Opportunity Slide
+    pptx.addSlide().addText('Market Opportunity', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.market || plan.marketEvaluation?.marketSize || getSection('Market Opportunity') || 'Describe the market opportunity here.', { x:1, y:1, fontSize:18 });
+
+    // Product Slide
+    pptx.addSlide().addText('Product', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.product || bulletList(plan.solution?.keyFeatures || []) || plan.solution?.description || getSection('Product') || 'Describe the product here.', { x:1, y:1, fontSize:18 });
+
+    // Business Model Slide
+    pptx.addSlide().addText('Business Model', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.businessModel || getSection('Business Model') || 'Describe the business model here.', { x:1, y:1, fontSize:18 });
+
+    // Go-to-Market Strategy Slide
+    pptx.addSlide().addText('Go-to-Market Strategy', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.goToMarket || getSection('Go-to-Market') || 'Describe the go-to-market strategy here.', { x:1, y:1, fontSize:18 });
+
+    // Competition Slide
+    pptx.addSlide().addText('Competition', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.competition || bulletList(plan.marketEvaluation?.competitors || []) || getSection('Competition') || 'Describe the competition here.', { x:1, y:1, fontSize:18 });
+
+    // Traction Slide
+    pptx.addSlide().addText('Traction', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.traction || getSection('Traction') || 'Describe traction here.', { x:1, y:1, fontSize:18 });
+
+    // Team Slide
+    pptx.addSlide().addText('Team', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.team || getSection('Team') || 'Describe the team here.', { x:1, y:1, fontSize:18 });
+
+    // Financials Slide
+    pptx.addSlide().addText('Financials', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.financials || getSection('Financials') || (plan.estimatedRevenue ? `Estimated Revenue: $${plan.estimatedRevenue}` : '') || 'Describe financials here.', { x:1, y:1, fontSize:18 });
+
+    // Ask Slide
+    pptx.addSlide().addText('Ask', { x:0.5, y:0.5, fontSize:28 });
+    pptx.addSlide().addText(customSlides.ask || getSection('Ask') || 'Describe your ask here.', { x:1, y:1, fontSize:18 });
+
+    // @ts-expect-error: pptxgenjs types may not include 'nodebuffer'
+    const buffer = await pptx.write('nodebuffer');
+    res.setHeader('Content-Disposition', 'attachment; filename=pitch-deck.pptx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Pitch deck generation error:', err);
+    res.status(500).json({ error: 'Failed to generate pitch deck' });
+  }
+});
 
 export default businessPlanRouter;

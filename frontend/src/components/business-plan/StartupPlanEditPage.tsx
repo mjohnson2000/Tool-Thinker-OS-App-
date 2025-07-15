@@ -166,7 +166,7 @@ interface StartupPlanEditPageProps {
   setAppState?: (fn: (prev: any) => any) => void;
 }
 
-export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
+export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -312,6 +312,4 @@ export function StartupPlanEditPage({ setAppState }: StartupPlanEditPageProps) {
       </Container>
     </>
   );
-}
-
-export default StartupPlanEditPage; 
+} 

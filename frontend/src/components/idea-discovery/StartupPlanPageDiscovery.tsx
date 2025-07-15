@@ -229,9 +229,13 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const prevPlanRef = useRef<StartupPlan | null>(null);
   const navigate = useNavigate();
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasSaved = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    // Reset the save flag when props change
+    hasSaved.current = false;
+    
     async function safeFetchPlan() {
       if (!cancelled) {
         await fetchPlan();
@@ -247,6 +251,10 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   async function fetchPlan() {
     console.log('fetchPlan called');
     if (isLoading) return; // Prevent duplicate triggers
+    
+    // Add a flag to prevent duplicate saves
+    if (plan) return; // Don't regenerate if we already have a plan
+    
     setIsLoading(true);
     setProgress(0);
     setError(null);
@@ -327,7 +335,8 @@ No extra text, just valid JSON.`;
       setNewPlan(mappedPlan);
 
       // Save plan to backend if authenticated
-      if (user && user.email) {
+      if (user && user.email && !hasSaved.current) {
+        hasSaved.current = true; // Prevent duplicate saves
         try {
           // Generate a short title from the first 6 to 8 words of the summary
           function generateShortTitle(summary: string): string {

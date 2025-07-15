@@ -96,9 +96,10 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 export interface CustomerSelectionProps {
   onSelect: (customer: CustomerOption) => void;
   businessArea: { title: string; description: string; icon: string } | null;
+  interests?: string; // Make interests optional
 }
 
-export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionProps) {
+export function CustomerSelection({ onSelect, businessArea, interests }: CustomerSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<CustomerOption[]>(customers);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -118,7 +119,9 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const prompt = `Return ONLY a JSON array of 5 customer types for a business in the area of: ${businessArea.title} - ${businessArea.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+        const prompt = interests 
+          ? `Return ONLY a JSON array of 5 customer types for someone interested in: "${interests}" who wants to start a business in the area of: ${businessArea.title} - ${businessArea.description}. Focus on customers that align with the user's specific interests and observations. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`
+          : `Return ONLY a JSON array of 5 customer types for a business in the area of: ${businessArea.title} - ${businessArea.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
         if (response && response.error) {
           console.error('ChatGPT API error:', response.error);
@@ -154,7 +157,7 @@ export function CustomerSelection({ onSelect, businessArea }: CustomerSelectionP
       }
     }
     fetchCustomerOptions();
-  }, [businessArea]);
+  }, [businessArea, interests]);
 
   function handleSelect(customer: CustomerOption) {
     console.log('CustomerSelection handleSelect:', customer);

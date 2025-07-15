@@ -88,9 +88,11 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 export interface JobSelectionProps {
   onSelect: (job: JobOption) => void;
   customer: { title: string; description: string; icon: string } | null;
+  interests?: string; // Add interests prop
+  businessArea?: { title: string; description: string; icon: string } | null; // Add business area prop
 }
 
-export function JobSelection({ onSelect, customer }: JobSelectionProps) {
+export function JobSelection({ onSelect, customer, interests, businessArea }: JobSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<JobOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -110,7 +112,31 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const prompt = `Return ONLY a JSON array of 5 jobs or needs that a customer like: ${customer.title} - ${customer.description} might want help with. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+        
+        // Build context string based on available data
+        let contextString = `Customer: ${customer.title} - ${customer.description}`;
+        if (businessArea) {
+          contextString += `\nBusiness Area: ${businessArea.title} - ${businessArea.description}`;
+        }
+        if (interests) {
+          contextString += `\nUser Interests: ${interests}`;
+        }
+        
+        const prompt = `Using the Job-to-be-Done framework, generate 5 specific jobs or problems that this customer wants to accomplish. 
+
+Context:
+${contextString}
+
+Job-to-be-Done Framework: Focus on what the customer is trying to accomplish, not what they want to buy. Use the format: "When [situation], I want to [motivation], so I can [expected outcome]."
+
+Return ONLY a JSON array of 5 jobs/problems. Each object must have:
+- id: string
+- title: string (the job/problem title)
+- description: string (the full JTBD statement)
+- icon: string (emoji)
+
+No explanation, no markdown, just the JSON array.`;
+        
         const response = await fetchChatGPT(prompt);
         let parsed: JobOption[] = Array.isArray(response) ? response : [];
         if (!parsed.length) {
@@ -125,8 +151,19 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
             }
           }
         }
-        if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No jobs found');
-        setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
+        // Filter out any jobs missing required fields
+        const validOptions = parsed.filter(
+          option =>
+            option &&
+            typeof option.id === 'string' &&
+            typeof option.title === 'string' &&
+            typeof option.description === 'string' &&
+            typeof option.icon === 'string' &&
+            option.description.trim() !== '' &&
+            option.icon.trim() !== ''
+        );
+        if (!Array.isArray(validOptions) || validOptions.length === 0) throw new Error('No valid jobs found');
+        setOptions(validOptions.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate jobs. Try again or pick a different customer.');
@@ -139,7 +176,7 @@ export function JobSelection({ onSelect, customer }: JobSelectionProps) {
       }
     }
     fetchJobOptions();
-  }, [customer]);
+  }, [customer, interests, businessArea]);
 
   function handleSelect(job: JobOption) {
     console.log('Job clicked in JobSelection:', job);

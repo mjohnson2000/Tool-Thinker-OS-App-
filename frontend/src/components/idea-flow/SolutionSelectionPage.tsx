@@ -88,9 +88,12 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 export interface SolutionSelectionPageProps {
   job: { title: string; description: string; icon: string } | null;
   onSelect: (solution: SolutionOption) => void;
+  interests?: string;
+  businessArea?: { title: string; description: string; icon: string } | null;
+  customer?: { title: string; description: string; icon: string } | null;
 }
 
-export function SolutionSelectionPage({ job, onSelect }: SolutionSelectionPageProps) {
+export function SolutionSelectionPage({ job, onSelect, interests, businessArea, customer }: SolutionSelectionPageProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<SolutionOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -110,7 +113,14 @@ export function SolutionSelectionPage({ job, onSelect }: SolutionSelectionPagePr
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const prompt = `Return ONLY a JSON array of 5 solutions for the job: ${job.title} - ${job.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+        // Build context string
+        let contextString = '';
+        if (interests) contextString += `User Interests: ${interests}\n`;
+        if (businessArea) contextString += `Business Area: ${businessArea.title} - ${businessArea.description}\n`;
+        if (customer) contextString += `Customer: ${customer.title} - ${customer.description}\n`;
+        contextString += `Job/Problem: ${job.title} - ${job.description}`;
+        
+        const prompt = `Given the following context, turn the job into a problem statement and use the How Might We framework to generate 5 creative solutions.\n\nContext:\n${contextString}\n\n1. What is the customer trying to accomplish?\n2. What obstacles are in their way?\n3. What emotional, social, or functional aspects matter?\n\nUse the format: How might we help [target customer] achieve [desired outcome] despite [obstacle]?\n\nReturn ONLY a JSON array of 5 solutions. Each object must have:\n- id: string\n- title: string (solution title)\n- description: string (the full How Might We statement)\n- icon: string (emoji)\n\nNo explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
         let parsed: SolutionOption[] = Array.isArray(response) ? response : [];
         if (!parsed.length) {
@@ -125,8 +135,19 @@ export function SolutionSelectionPage({ job, onSelect }: SolutionSelectionPagePr
             }
           }
         }
-        if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No solutions found');
-        setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
+        // Filter out any solutions missing required fields
+        const validOptions = parsed.filter(
+          option =>
+            option &&
+            typeof option.id === 'string' &&
+            typeof option.title === 'string' &&
+            typeof option.description === 'string' &&
+            typeof option.icon === 'string' &&
+            option.description.trim() !== '' &&
+            option.icon.trim() !== ''
+        );
+        if (!Array.isArray(validOptions) || validOptions.length === 0) throw new Error('No valid solutions found');
+        setOptions(validOptions.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
       } catch (err: any) {
         setError('Could not generate solutions. Try again or pick a different job.');
@@ -139,7 +160,7 @@ export function SolutionSelectionPage({ job, onSelect }: SolutionSelectionPagePr
       }
     }
     fetchSolutionOptions();
-  }, [job]);
+  }, [job, interests, businessArea, customer]);
 
   function handleSelect(solution: SolutionOption) {
     setSelected(solution.id);

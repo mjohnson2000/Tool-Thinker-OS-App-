@@ -699,8 +699,8 @@ function AppContent() {
                         </ToggleTrackerButton>
                       )}
                       {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
-                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
-                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
+                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} interests={entryPoint === 'idea' ? idea.interests : undefined} />}
+                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} interests={entryPoint === 'idea' ? idea.interests : undefined} businessArea={idea.area} />}
                       {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
                           idea={{
                             ...idea,
@@ -771,6 +771,9 @@ function AppContent() {
                         <SolutionSelectionPage
                           job={job}
                           onSelect={handleSolutionSelect}
+                          interests={idea.interests}
+                          businessArea={idea.area}
+                          customer={customer}
                         />
                       )}
                     </>
@@ -1006,8 +1009,8 @@ function AppContent() {
                         </ToggleTrackerButton>
                       )}
                       {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
-                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} />}
-                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} />}
+                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} interests={entryPoint === 'idea' ? idea.interests : undefined} />}
+                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} interests={entryPoint === 'idea' ? idea.interests : undefined} businessArea={idea.area} />}
                       {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
                           idea={{
                             ...idea,
@@ -1078,6 +1081,9 @@ function AppContent() {
                         <SolutionSelectionPage
                           job={job}
                           onSelect={handleSolutionSelect}
+                          interests={idea.interests}
+                          businessArea={idea.area}
+                          customer={customer}
                         />
                       )}
                     </>

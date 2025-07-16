@@ -12,6 +12,20 @@ interface Persona {
   feedback: string[];
 }
 
+interface ValidationScore {
+  score: number;
+  criteria: {
+    clarity: number;
+    painLevel: number;
+    marketSize: number;
+    urgency: number;
+    specificity: number;
+  };
+  recommendations: string[];
+  confidence: 'high' | 'medium' | 'low';
+  shouldProceed: boolean;
+}
+
 const STAGES = [
   'Problem Validation',
   'Customer Profile',
@@ -45,6 +59,19 @@ export function AutomatedDiscoveryPage() {
   // Add state for collapsible summary and feedback sections
   const [showSummary, setShowSummary] = React.useState(true);
   const [showFeedback, setShowFeedback] = React.useState(true);
+  
+  // Add validation scoring state
+  const [validationScore, setValidationScore] = React.useState<ValidationScore | null>(null);
+  const [showValidationDetails, setShowValidationDetails] = React.useState(false);
+  
+  // Add problem statement display state
+  const [showProblemStatement, setShowProblemStatement] = React.useState(true);
+  const [improvedProblemStatement, setImprovedProblemStatement] = React.useState<string>('');
+  const [isGeneratingProblem, setIsGeneratingProblem] = React.useState(false);
+  const [isUsingImprovedProblem, setIsUsingImprovedProblem] = React.useState(false);
+  const [isGeneratingValidationScore, setIsGeneratingValidationScore] = React.useState(false);
+  const [isTestingVariations, setIsTestingVariations] = React.useState(false);
+  const [variationProgress, setVariationProgress] = React.useState({ current: 0, total: 0 });
   const PITCH_DECK_SLIDES = [
     { key: 'title', label: 'Title Slide', defaultTitle: 'Title', defaultContent: '' },
     { key: 'problem', label: 'Problem', defaultTitle: 'Problem', defaultContent: '' },
@@ -118,6 +145,22 @@ export function AutomatedDiscoveryPage() {
       setLoading(true);
       setError(null);
       setLogs((prev) => [...prev, 'Fetching business plan...']);
+      
+      // Reset all cached data when loading a new business plan
+      setPersonas([]);
+      setCollectiveSummary('');
+      setValidationScore(null);
+      setImprovedProblemStatement('');
+      setIsUsingImprovedProblem(false);
+      setIsGeneratingProblem(false);
+      setIsGeneratingValidationScore(false);
+      setCurrentStage(0);
+      setVisibleFeedbackCounts([]);
+      setExpandedPersonas({});
+      setShowSummary(true);
+      setShowFeedback(true);
+      setShowProblemStatement(true);
+      
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(`${API_URL}/business-plan/${id}`, {
@@ -206,6 +249,9 @@ export function AutomatedDiscoveryPage() {
         const data = await res.json();
         setPersonas((prev) => prev.map((p) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) })));
         setCollectiveSummary(data.summary);
+        if (data.validationScore) {
+          setValidationScore(data.validationScore);
+        }
         setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded.`]);
       } catch (err: any) {
         setError(err.message || 'Unknown error');
@@ -216,6 +262,49 @@ export function AutomatedDiscoveryPage() {
     }
     fetchFeedback();
   }, [currentStage, personas.length, businessIdea, customerDescription]);
+
+  // Extract fetchFeedback as a standalone function
+  async function fetchFeedback() {
+    if (personas.length === 0 || !businessIdea || !customerDescription) return;
+    
+    setLoading(true);
+    setError(null);
+    setLogs((prev) => [...prev, `Getting feedback for stage: ${STAGES[currentStage]}...`]);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/automated-discovery/feedback`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          personas: personas.map(({ id, name, summary }) => ({
+            id: typeof id === 'string' ? id : String(id),
+            name,
+            summary
+          })),
+          stage: STAGES[currentStage],
+          businessIdea,
+          customerDescription,
+        }),
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to fetch feedback');
+      const data = await res.json();
+      setPersonas((prev) => prev.map((p) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) })));
+      setCollectiveSummary(data.summary);
+      if (data.validationScore) {
+        setValidationScore(data.validationScore);
+      }
+      setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded.`]);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+      setLogs((prev) => [...prev, 'Error fetching feedback.']);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Persist discovery data after each stage
   React.useEffect(() => {
@@ -246,6 +335,161 @@ export function AutomatedDiscoveryPage() {
     }
     persistDiscoveryData();
   }, [currentStage, personas, collectiveSummary, businessIdea, customerDescription, logs, id]);
+
+  // Generate improved problem statement using JTBD framework
+  async function generateImprovedProblemStatement() {
+    if (personas.length === 0 || !collectiveSummary) return;
+    
+    setIsGeneratingProblem(true);
+    try {
+      // Collect all feedback from personas
+      const allFeedback = personas.flatMap(p => p.feedback).join(' ');
+      
+      const response = await fetch(`${API_URL}/automated-discovery/improve-problem`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          currentProblem: businessIdea,
+          customerFeedback: allFeedback,
+          summary: collectiveSummary
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to generate improved problem statement');
+      const data = await response.json();
+      
+      // If we have multiple variations, test them efficiently and pick the best one
+      if (data.variations && data.variations.length > 1) {
+        const currentScore = validationScore?.score || 0;
+        let bestVariation = data.improvedProblemStatement;
+        let bestScore = currentScore;
+        
+        // For 30 variations, test them in batches to avoid overwhelming the API
+        const variations = data.variations;
+        const batchSize = 5; // Test 5 at a time
+        const maxVariationsToTest = 15; // Limit to testing 15 variations to save time/cost
+        
+        console.log(`Testing ${Math.min(variations.length, maxVariationsToTest)} variations in batches of ${batchSize}`);
+        
+        setIsTestingVariations(true);
+        setVariationProgress({ current: 0, total: Math.min(variations.length, maxVariationsToTest) });
+        
+        for (let i = 0; i < Math.min(variations.length, maxVariationsToTest); i += batchSize) {
+          const batch = variations.slice(i, i + batchSize);
+          
+          // Test each variation in the batch
+          const batchPromises = batch.map(async (variation: string) => {
+            const scoreData = await updateValidationScoreForImprovedProblem(variation);
+            setVariationProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            return { variation, score: scoreData?.score || 0 };
+          });
+          
+          const batchResults = await Promise.all(batchPromises);
+          
+          // Find the best in this batch
+          for (const result of batchResults) {
+            if (result.score > bestScore) {
+              bestScore = result.score;
+              bestVariation = result.variation;
+            }
+          }
+          
+          // If we found a significantly better score, we can stop early
+          if (bestScore >= currentScore + 2) {
+            console.log(`Found significantly better score (${bestScore} vs ${currentScore}), stopping early`);
+            break;
+          }
+        }
+        
+        setIsTestingVariations(false);
+        setVariationProgress({ current: 0, total: 0 });
+        
+        console.log(`Best variation found: ${bestVariation} with score: ${bestScore}`);
+        setImprovedProblemStatement(bestVariation);
+      } else {
+        setImprovedProblemStatement(data.improvedProblemStatement);
+      }
+    } catch (err: any) {
+      console.error('Failed to generate improved problem statement:', err);
+      // Fallback to basic extraction
+      const basicProblem = businessIdea
+        .replace(/We aim to build|We aim to develop|We are building|We are developing/gi, '')
+        .replace(/specifically designed for|designed for|targeting|focused on/gi, '')
+        .replace(/The product will focus on|The system will|The solution will/gi, '')
+        .replace(/to ensure|to provide|to deliver/gi, '')
+        .replace(/\.$/, '')
+        .trim();
+      setImprovedProblemStatement(`People struggle with ${basicProblem.toLowerCase()}.`);
+    } finally {
+      setIsGeneratingProblem(false);
+    }
+  }
+
+  // Update validation score for improved problem statement
+  async function updateValidationScoreForImprovedProblem(problemStatement: string) {
+    if (!customerDescription) return null;
+    
+    setIsGeneratingValidationScore(true);
+    try {
+      const response = await fetch(`${API_URL}/automated-discovery/validation-score`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          problemStatement,
+          customerDescription
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to update validation score');
+      const data = await response.json();
+      return data.validationScore; // Return the score for comparison
+    } catch (err: any) {
+      console.error('Failed to update validation score:', err);
+      return null; // Return null on error
+    } finally {
+      setIsGeneratingValidationScore(false);
+    }
+  }
+
+  // Handle improve button click
+  async function handleImproveProblem() {
+    // Always generate the improved problem statement
+    await generateImprovedProblemStatement();
+    
+    if (improvedProblemStatement) {
+      // Get the current validation score before improvement
+      const currentScore = validationScore?.score || 0;
+      
+      // Get the improved validation score
+      const improvedScoreData = await updateValidationScoreForImprovedProblem(improvedProblemStatement);
+      
+      // Only apply the improvement if the score is higher or equal
+      if (improvedScoreData && improvedScoreData.score >= currentScore) {
+        setIsUsingImprovedProblem(true);
+        setValidationScore(improvedScoreData);
+      } else if (improvedScoreData) {
+        // If the improved score is lower, show an error and don't apply it
+        alert(`The improved problem statement scored ${improvedScoreData.score}/10, which is lower than the current ${currentScore}/10. The improvement was not applied to maintain quality.`);
+        // Reset the improved problem statement so user can try again
+        setImprovedProblemStatement('');
+      }
+    }
+  }
+
+  // Handle undo button click
+  function handleUndoProblem() {
+    setIsUsingImprovedProblem(false);
+    // Restore original validation score by refetching feedback
+    if (personas.length > 0 && businessIdea && customerDescription) {
+      fetchFeedback();
+    }
+  }
 
   // Handlers for Launch stage buttons
   function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
@@ -434,6 +678,113 @@ export function AutomatedDiscoveryPage() {
             Back to Dashboard
           </button>
         </div>
+        
+        {/* Validation Score Display - Center Top */}
+        {currentStage === 0 && (validationScore || isGeneratingValidationScore) && (
+          <div style={{ 
+            width: 420, 
+            marginBottom: 16,
+            background: validationScore?.shouldProceed ? '#f0f9ff' : '#fef2f2', 
+            border: `2px solid ${validationScore?.shouldProceed ? '#0ea5e9' : '#ef4444'}`, 
+            borderRadius: 12, 
+            padding: 16
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: 18, 
+                fontWeight: 700, 
+                color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
+              }}>
+                Problem Validation Score: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+              </h3>
+              {validationScore && (
+                <div style={{ 
+                  padding: '6px 16px', 
+                  borderRadius: 20, 
+                  background: validationScore.shouldProceed ? '#0ea5e9' : '#ef4444',
+                  color: 'white',
+                  fontSize: 14,
+                  fontWeight: 700
+                }}>
+                  {validationScore.shouldProceed ? '✅ PROCEED' : '⚠️ ITERATE'}
+                </div>
+              )}
+              {isGeneratingValidationScore && (
+                <div style={{ 
+                  padding: '6px 16px', 
+                  borderRadius: 20, 
+                  background: '#6b7280',
+                  color: 'white',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}>
+                  <div style={{
+                    width: 14,
+                    height: 14,
+                    border: '2px solid #fff',
+                    borderTop: '2px solid transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  Updating...
+                </div>
+              )}
+            </div>
+            
+            {validationScore && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {Object.entries(validationScore.criteria).map(([key, value]) => (
+                  <div key={key} style={{ 
+                    background: '#fff', 
+                    padding: '8px 12px', 
+                    borderRadius: 8, 
+                    border: '1px solid #e5e7eb',
+                    fontSize: 13
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#374151', textTransform: 'capitalize' }}>
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </div>
+                    <div style={{ 
+                      color: value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
+                      fontWeight: 700,
+                      fontSize: 14
+                    }}>
+                      {value}/10
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {isGeneratingValidationScore && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 8,
+                color: '#6b7280',
+                fontStyle: 'italic',
+                fontSize: 13,
+                justifyContent: 'center',
+                padding: '8px 0'
+              }}>
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid #e5e7eb',
+                  borderTop: '2px solid #3b82f6',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Calculating new validation score...
+              </div>
+            )}
+          </div>
+        )}
+        
         <div style={{ width: 420, height: 340, background: '#fafbfc', borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', flexDirection: 'column', border: '2px solid #181a1b', position: 'relative', overflow: 'hidden' }}>
           {/* Animated glow/shadow under robot */}
           <div style={{
@@ -522,13 +873,237 @@ export function AutomatedDiscoveryPage() {
             </div>
           )}
         </div>
+        
+        {/* Collapsible Problem Statement Display */}
+        {currentStage === 0 && businessIdea && (
+          <div style={{ 
+            width: 420, 
+            marginTop: 16,
+            marginBottom: 16
+          }}>
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: 15,
+                marginBottom: 8,
+                color: showProblemStatement ? '#222' : '#444',
+                background: showProblemStatement ? '#f0f0f0' : '#f0f2f8',
+                padding: '8px 16px',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'background 0.25s cubic-bezier(.4,0,.2,1)',
+                border: '1px solid #e5e7eb',
+              }}
+              onClick={() => setShowProblemStatement(s => !s)}
+              tabIndex={0}
+              role="button"
+              aria-expanded={showProblemStatement}
+              onMouseEnter={e => (e.currentTarget.style.background = '#f0f0f0')}
+              onMouseLeave={e => (e.currentTarget.style.background = showProblemStatement ? '#f0f0f0' : '#f0f2f8')}
+            >
+              <span style={{ 
+                marginRight: 8, 
+                display: 'inline-block', 
+                transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', 
+                transform: showProblemStatement ? 'rotate(90deg)' : 'rotate(0deg)' 
+              }}>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 8L10 12L14 8" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              📋 Your Problem Statement
+            </div>
+            {showProblemStatement && (
+              <div className="fade-slide-in" style={{ 
+                background: '#fff', 
+                border: '1px solid #e5e7eb', 
+                borderRadius: 12, 
+                padding: 16,
+                color: '#374151',
+                fontSize: 14,
+                lineHeight: 1.6,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{isUsingImprovedProblem ? 'New Problem Statement:' : 'Problem Statement:'}</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {!isUsingImprovedProblem && (
+                      <button
+                        style={{
+                          background: '#3b82f6',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '4px 12px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4
+                        }}
+                        onClick={handleImproveProblem}
+                        disabled={isGeneratingProblem}
+                        title="Improve problem statement using customer feedback"
+                      >
+                        {isGeneratingProblem ? (
+                          <>
+                            <div style={{
+                              width: 12,
+                              height: 12,
+                              border: '2px solid #fff',
+                              borderTop: '2px solid transparent',
+                              borderRadius: '50%',
+                              animation: 'spin 1s linear infinite'
+                            }} />
+                            Generating 30 variations...
+                          </>
+                        ) : (
+                          <>
+                            ✨ Improve (30 variations)
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {isUsingImprovedProblem && (
+                      <button
+                        style={{
+                          background: '#6b7280',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '4px 8px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4
+                        }}
+                        onClick={handleUndoProblem}
+                        title="Revert to original problem statement"
+                      >
+                        ↩️ Undo
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12, color: '#4b5563' }}>
+                  {isGeneratingProblem ? (
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 8,
+                      color: '#6b7280',
+                      fontStyle: 'italic'
+                    }}>
+                      <div style={{
+                        width: 16,
+                        height: 16,
+                        border: '2px solid #e5e7eb',
+                        borderTop: '2px solid #3b82f6',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      Generating 30 improved variations...
+                    </div>
+                  ) : isUsingImprovedProblem ? (
+                    improvedProblemStatement
+                  ) : (
+                    (() => {
+                      // Create a proper problem statement based on the business idea
+                      const cleanedIdea = businessIdea
+                        .replace(/We aim to build|We aim to develop|We are building|We are developing/gi, '')
+                        .replace(/specifically designed for|designed for|targeting|focused on/gi, '')
+                        .replace(/The product will focus on|The system will|The solution will/gi, '')
+                        .replace(/to ensure|to provide|to deliver/gi, '')
+                        .replace(/\.$/, '')
+                        .trim();
+                      
+                      // Extract the core problem from the business idea
+                      if (cleanedIdea.toLowerCase().includes('ice cream') || cleanedIdea.toLowerCase().includes('beach')) {
+                        return `Ice cream enthusiasts struggle to discover high-quality, unique ice cream shops near beach locations.`;
+                      } else if (cleanedIdea.toLowerCase().includes('food') || cleanedIdea.toLowerCase().includes('restaurant')) {
+                        return `Food lovers struggle to find authentic, high-quality dining experiences.`;
+                      } else if (cleanedIdea.toLowerCase().includes('app') || cleanedIdea.toLowerCase().includes('mobile')) {
+                        return `Users struggle to find reliable, user-friendly mobile solutions for their needs.`;
+                      } else if (cleanedIdea.toLowerCase().includes('service') || cleanedIdea.toLowerCase().includes('help')) {
+                        return `People struggle to access reliable, convenient services when they need them most.`;
+                      } else {
+                        // Generic problem statement based on the business idea
+                        const words = cleanedIdea.split(' ').slice(0, 5).join(' ');
+                        return `People struggle with ${words.toLowerCase()}.`;
+                      }
+                    })()
+                  )}
+                </div>
+                {isGeneratingValidationScore && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 8,
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                    fontSize: 12
+                  }}>
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      border: '2px solid #e5e7eb',
+                      borderTop: '2px solid #3b82f6',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Updating validation score...
+                  </div>
+                )}
+                {isTestingVariations && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 8,
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                    fontSize: 12
+                  }}>
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      border: '2px solid #e5e7eb',
+                      borderTop: '2px solid #3b82f6',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Testing {variationProgress.current}/{variationProgress.total} variations...
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Continue button (hide at Launch stage) */}
         {currentStage < STAGES.length - 1 && (
           <button
-            style={{ marginTop: 32, background: '#181a1b', color: '#fff', border: 'none', borderRadius: 8, padding: '0.8rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' }}
+            style={{ 
+              marginTop: 32, 
+              background: validationScore && !validationScore.shouldProceed ? '#6b7280' : '#181a1b', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: 8, 
+              padding: '0.8rem 1.5rem', 
+              fontSize: '1rem', 
+              fontWeight: 600, 
+              cursor: validationScore && !validationScore.shouldProceed ? 'not-allowed' : 'pointer',
+              opacity: validationScore && !validationScore.shouldProceed ? 0.6 : 1
+            }}
             onClick={() => setCurrentStage((s) => Math.min(s + 1, STAGES.length - 1))}
+            disabled={validationScore ? !validationScore.shouldProceed : false}
           >
-            Continue
+            {validationScore && !validationScore.shouldProceed ? 'Please improve your problem statement first' : 'Continue'}
           </button>
         )}
       </main>
@@ -607,6 +1182,154 @@ export function AutomatedDiscoveryPage() {
             </div>
             {showSummary && (
               <div className="fade-slide-in" style={{ color: '#444', fontSize: 15, marginBottom: 8 }}>{collectiveSummary}</div>
+            )}
+            
+            {/* Problem Validation Criteria Explanation */}
+            {currentStage === 0 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  📋 What Makes a Valid Problem Statement?
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Clarity (7-10):</strong> Clear, specific problem that customers can easily understand<br/>
+                  <strong>Pain Level (7-10):</strong> Problem is painful enough that customers will pay to solve it<br/>
+                  <strong>Market Size (6-10):</strong> Enough people have this problem to build a business<br/>
+                  <strong>Urgency (6-10):</strong> Problem needs solving now, not "someday"<br/>
+                  <strong>Specificity (7-10):</strong> Specific enough to build a targeted solution
+                </div>
+              </div>
+            )}
+            
+            {/* Problem Validation Score Display */}
+            {currentStage === 0 && (validationScore || isGeneratingValidationScore) && (
+              <div style={{ 
+                background: validationScore?.shouldProceed ? '#f0f9ff' : '#fef2f2', 
+                border: `2px solid ${validationScore?.shouldProceed ? '#0ea5e9' : '#ef4444'}`, 
+                borderRadius: 12, 
+                padding: 16, 
+                marginTop: 12,
+                marginBottom: 12
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: 16, 
+                    fontWeight: 600, 
+                    color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
+                  }}>
+                    Problem Validation Score: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+                  </h3>
+                  {validationScore && (
+                    <div style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: 20, 
+                      background: validationScore.shouldProceed ? '#0ea5e9' : '#ef4444',
+                      color: 'white',
+                      fontSize: 12,
+                      fontWeight: 600
+                    }}>
+                      {validationScore.shouldProceed ? '✅ PROCEED' : '⚠️ ITERATE'}
+                    </div>
+                  )}
+                  {isGeneratingValidationScore && (
+                    <div style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: 20, 
+                      background: '#6b7280',
+                      color: 'white',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}>
+                      <div style={{
+                        width: 12,
+                        height: 12,
+                        border: '2px solid #fff',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      Updating...
+                    </div>
+                  )}
+                </div>
+                
+                {validationScore && (
+                  <>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Validation Criteria:</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        {Object.entries(validationScore.criteria).map(([key, value]) => (
+                          <div key={key} style={{ 
+                            background: '#fff', 
+                            padding: '8px 12px', 
+                            borderRadius: 8, 
+                            border: '1px solid #e5e7eb',
+                            fontSize: 13
+                          }}>
+                            <div style={{ fontWeight: 600, color: '#374151', textTransform: 'capitalize' }}>
+                              {key.replace(/([A-Z])/g, ' $1').trim()}
+                            </div>
+                            <div style={{ 
+                              color: value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
+                              fontWeight: 600
+                            }}>
+                              {value}/10
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Recommendations:</div>
+                      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: '#4b5563' }}>
+                        {validationScore.recommendations.map((rec, idx) => (
+                          <li key={idx} style={{ marginBottom: 4 }}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div style={{ 
+                      fontSize: 13, 
+                      color: '#6b7280',
+                      fontStyle: 'italic'
+                    }}>
+                      Confidence: {validationScore.confidence.charAt(0).toUpperCase() + validationScore.confidence.slice(1)}
+                    </div>
+                  </>
+                )}
+                
+                {isGeneratingValidationScore && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 8,
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                    fontSize: 13
+                  }}>
+                    <div style={{
+                      width: 16,
+                      height: 16,
+                      border: '2px solid #e5e7eb',
+                      borderTop: '2px solid #3b82f6',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Calculating new validation score...
+                  </div>
+                )}
+              </div>
             )}
             {/* Divider between summary and feedback sections */}
             <div style={{

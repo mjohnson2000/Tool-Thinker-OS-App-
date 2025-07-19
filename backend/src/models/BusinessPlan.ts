@@ -121,6 +121,81 @@ export interface IBusinessPlan extends Document {
     date: Date;
   };
   
+  // Business Model Data
+  businessModel?: {
+    // Business Model Canvas
+    keyPartners: string[];
+    keyActivities: string[];
+    valuePropositions: string[];
+    customerRelationships: string[];
+    customerSegments: string[];
+    keyResources: string[];
+    channels: string[];
+    costStructure: {
+      fixedCosts: number;
+      variableCosts: number;
+      costBreakdown: Record<string, number>;
+    };
+    revenueStreams: {
+      streams: Array<{
+        name: string;
+        type: 'subscription' | 'one-time' | 'freemium' | 'licensing';
+        price: number;
+        frequency: string;
+        projectedVolume: number;
+      }>;
+      totalProjectedRevenue: number;
+    };
+    
+    // Financial Metrics
+    financialProjections: {
+      monthlyRevenue: number[];
+      annualRevenue: number[];
+      grossMargin: number;
+      netMargin: number;
+      breakEvenPoint: number;
+      customerLifetimeValue: number;
+      customerAcquisitionCost: number;
+      paybackPeriod: number;
+    };
+    
+    // Competitive Analysis
+    competitiveLandscape: {
+      competitors: Array<{
+        name: string;
+        pricing: number;
+        features: string[];
+        marketShare: number;
+        strengths: string[];
+        weaknesses: string[];
+      }>;
+      competitiveAdvantages: string[];
+      differentiationStrategy: string;
+    };
+    
+    // Risk Assessment
+    riskAssessment: {
+      businessModelRisks: string[];
+      marketRisks: string[];
+      operationalRisks: string[];
+      financialRisks: string[];
+      regulatoryRisks: string[];
+      mitigationStrategies: Record<string, string>;
+    };
+    
+    // Scalability & Growth
+    scalabilityAnalysis: {
+      marketSize: {
+        tam: number; // Total Addressable Market
+        sam: number; // Serviceable Addressable Market
+        som: number; // Serviceable Obtainable Market
+      };
+      growthStrategy: string;
+      expansionPlans: string[];
+      scaleFactors: string[];
+    };
+  };
+  
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -367,6 +442,222 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
   validationScore: {
     score: { type: Number },
     date: { type: Date }
+  },
+  
+  // Business Model Data
+  businessModel: {
+    keyPartners: [{
+      type: String,
+      trim: true
+    }],
+    keyActivities: [{
+      type: String,
+      trim: true
+    }],
+    valuePropositions: [{
+      type: String,
+      trim: true
+    }],
+    customerRelationships: [{
+      type: String,
+      trim: true
+    }],
+    customerSegments: [{
+      type: String,
+      trim: true
+    }],
+    keyResources: [{
+      type: String,
+      trim: true
+    }],
+    channels: [{
+      type: String,
+      trim: true
+    }],
+    costStructure: {
+      fixedCosts: {
+        type: Number,
+        min: 0
+      },
+      variableCosts: {
+        type: Number,
+        min: 0
+      },
+      costBreakdown: {
+        type: Schema.Types.Mixed,
+        default: {}
+      }
+    },
+    revenueStreams: {
+      streams: [{
+        name: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        type: {
+          type: String,
+          enum: ['subscription', 'one-time', 'freemium', 'licensing'],
+          required: true
+        },
+        price: {
+          type: Number,
+          required: true,
+          min: 0
+        },
+        frequency: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        projectedVolume: {
+          type: Number,
+          required: true,
+          min: 0
+        }
+      }],
+      totalProjectedRevenue: {
+        type: Number,
+        min: 0
+      }
+    },
+    
+    // Financial Metrics
+    financialProjections: {
+      monthlyRevenue: [{
+        type: Number,
+        min: 0
+      }],
+      annualRevenue: [{
+        type: Number,
+        min: 0
+      }],
+      grossMargin: {
+        type: Number,
+        min: 0,
+        max: 100
+      },
+      netMargin: {
+        type: Number,
+        min: 0,
+        max: 100
+      },
+      breakEvenPoint: {
+        type: Number,
+        min: 0
+      },
+      customerLifetimeValue: {
+        type: Number,
+        min: 0
+      },
+      customerAcquisitionCost: {
+        type: Number,
+        min: 0
+      },
+      paybackPeriod: {
+        type: Number,
+        min: 0
+      }
+    },
+    
+    // Competitive Analysis
+    competitiveLandscape: {
+      competitors: [{
+        name: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        pricing: {
+          type: Number,
+          required: true,
+          min: 0
+        },
+        features: [{
+          type: String,
+          trim: true
+        }],
+        marketShare: {
+          type: Number,
+          min: 0,
+          max: 100
+        },
+        strengths: [{
+          type: String,
+          trim: true
+        }],
+        weaknesses: [{
+          type: String,
+          trim: true
+        }]
+      }],
+      competitiveAdvantages: [{
+        type: String,
+        trim: true
+      }],
+      differentiationStrategy: {
+        type: String,
+        trim: true
+      }
+    },
+    
+    // Risk Assessment
+    riskAssessment: {
+      businessModelRisks: [{
+        type: String,
+        trim: true
+      }],
+      marketRisks: [{
+        type: String,
+        trim: true
+      }],
+      operationalRisks: [{
+        type: String,
+        trim: true
+      }],
+      financialRisks: [{
+        type: String,
+        trim: true
+      }],
+      regulatoryRisks: [{
+        type: String,
+        trim: true
+      }],
+      mitigationStrategies: {
+        type: Schema.Types.Mixed,
+        default: {}
+      }
+    },
+    
+    // Scalability & Growth
+    scalabilityAnalysis: {
+      marketSize: {
+        tam: {
+          type: Number,
+          min: 0
+        },
+        sam: {
+          type: Number,
+          min: 0
+        },
+        som: {
+          type: Number,
+          min: 0
+        }
+      },
+      growthStrategy: {
+        type: String,
+        trim: true
+      },
+      expansionPlans: [{
+        type: String,
+        trim: true
+      }],
+      scaleFactors: [{
+        type: String,
+        trim: true
+      }]
+    }
   }
 }, {
   timestamps: true

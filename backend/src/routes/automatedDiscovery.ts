@@ -1,6 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { chatCompletion } from '../utils/openai';
+import { BusinessPlan } from '../models/BusinessPlan'; // Fixed import for BusinessPlan
 
 const router = express.Router();
 
@@ -574,6 +575,14 @@ Return ONLY a JSON array of feedback points.`
     }
 
     // Generate problem discovery insights for Problem Discovery stage
+    console.log('=== VALIDATION DEBUG ===');
+    console.log('Stage received:', stage);
+    console.log('Stage type:', typeof stage);
+    console.log('Stage comparison with "Customer Struggle":', stage === 'Customer Struggle');
+    console.log('Stage comparison with "Customer Profile":', stage === 'Customer Profile');
+    console.log('Stage comparison with "Problem Discovery":', stage === 'Problem Discovery');
+    console.log('=== END VALIDATION DEBUG ===');
+    
     let validationScore = null;
     if (stage === 'Problem Discovery') {
       const industryContext = getIndustryContext(businessIdea, customerDescription);
@@ -598,102 +607,678 @@ BUSINESS VALIDATION EXPERTISE:
 - Startup validation best practices
 - MVP development and testing strategies
 
-INDUSTRY KNOWLEDGE:
-Industry Context: ${industryContext.marketDynamics}
-Key Validation Metrics: ${industryContext.validationMetrics}
-Common Challenges: ${industryContext.commonChallenges}
+You are evaluating a business idea for PROBLEM DISCOVERY validation. Your role is to assess whether the entrepreneur has properly identified and validated the problems they're trying to solve.
 
-YOUR APPROACH:
-You evaluate business ideas through the lens of an experienced entrepreneur who has:
-- Built products from idea to market
-- Conducted hundreds of customer interviews
-- Made critical go/no-go decisions
-- Seen what makes startups succeed or fail
-- Understood the difference between real problems and perceived problems
+EVALUATION CRITERIA:
+1. Problem Identification (1-10): How clearly and specifically is the problem defined?
+2. Problem Validation (1-10): Is there evidence that this problem actually exists?
+3. Problem Scope (1-10): Is the problem scope appropriate and manageable?
+4. Problem Urgency (1-10): How urgent is this problem for the target customers?
+5. Problem Impact (1-10): How significant is the impact of solving this problem?
 
-Your job is to DISCOVER and VALIDATE problems, not just rate an existing problem statement.
-Focus on:
-- What problems does this business idea actually solve?
-- Are these real problems that customers face?
-- What related problems are being missed?
-- How urgent and impactful are these problems?
-- What evidence supports these problems exist?
-
-Market Research Methods to Consider:
-- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
-- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
-- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
-- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+Return a JSON object with:
+{
+  "score": number (1-10),
+  "criteria": {
+    "problemIdentification": number (1-10),
+    "problemValidation": number (1-10),
+    "problemScope": number (1-10),
+    "problemUrgency": number (1-10),
+    "problemImpact": number (1-10)
+  },
+  "discoveredProblems": [array of specific problems identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean
+}`
         },
         { 
           role: 'user', 
-          content: `As an experienced entrepreneur and business coach, analyze this business idea for PROBLEM DISCOVERY:
+          content: `Evaluate this business idea for PROBLEM DISCOVERY:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+Industry Context: ${JSON.stringify(industryContext)}
+
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
+
+Provide a comprehensive evaluation focusing on problem identification and validation.`
+        }
+      ];
+
+      try {
+        const aiResponse = await chatCompletion(problemDiscoveryPrompt, 'gpt-4o-mini', 0.7);
+        if (aiResponse) {
+          try {
+            validationScore = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+          } catch (e) {
+            console.error('Failed to parse validation score:', e);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to generate validation score:', e);
+      }
+    } else if (stage === 'Customer Profile') {
+      // Customer Profile validation logic
+      console.log('Generating Customer Profile validation score...');
+      const customerProfilePrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+CUSTOMER DEVELOPMENT EXPERTISE:
+- Customer persona development and validation
+- Customer segmentation and targeting strategies
+- Customer interview and research methodologies
+- Customer journey mapping and optimization
+- Customer acquisition and retention strategies
+- Customer feedback analysis and implementation
+
+You are evaluating a business idea for CUSTOMER PROFILE validation. Your role is to assess whether the entrepreneur has properly defined and validated their target customer profile.
+
+EVALUATION CRITERIA:
+1. Customer Clarity (1-10): How clearly and specifically is the customer defined?
+2. Customer Specificity (1-10): How detailed and actionable is the customer profile?
+3. Customer Relevance (1-10): How relevant is this customer to the business idea?
+4. Customer Accessibility (1-10): How accessible and reachable is this customer?
+5. Customer Value (1-10): How valuable is this customer segment to the business?
+
+Return a JSON object with:
+{
+  "score": number (1-10),
+  "criteria": {
+    "customerClarity": number (1-10),
+    "customerSpecificity": number (1-10),
+    "customerRelevance": number (1-10),
+    "customerAccessibility": number (1-10),
+    "customerValue": number (1-10)
+  },
+  "discoveredProblems": [array of customer-related issues identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean
+}`
+        },
+        { 
+          role: 'user', 
+          content: `Evaluate this business idea for CUSTOMER PROFILE validation:
 
 Business Idea: "${businessIdea}"
 Customer Description: "${customerDescription}"
 
-Based on your experience building startups and coaching entrepreneurs, evaluate this business idea through the lens of:
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
 
-1. Problem Identification (1-10): How clearly does this identify specific problems?
-   - 1-3: Vague, unclear what problems are being solved (like most failed startups)
-   - 4-6: Somewhat clear problems identified (typical early-stage confusion)
-   - 7-10: Crystal clear, specific problems with evidence (like successful startups)
-
-2. Problem Validation (1-10): How well does this validate that problems actually exist?
-   - 1-3: Assumes problems exist without validation (common startup mistake)
-   - 4-6: Some validation but could be stronger (needs more customer interviews)
-   - 7-10: Strong evidence that problems are real and impactful (validated through customer development)
-
-3. Problem Scope (1-10): How well does this understand the full scope of problems?
-   - 1-3: Addresses surface-level problems only (missing core issues)
-   - 4-6: Addresses some core problems (partial understanding)
-   - 7-10: Comprehensive understanding of problem landscape (like successful founders)
-
-4. Problem Urgency (1-10): How urgent are the problems being addressed?
-   - 1-3: Low urgency, customers can wait (not a viable startup)
-   - 4-6: Moderate urgency, customers want solutions soon (potential market)
-   - 7-10: High urgency, customers need solutions now (strong market pull)
-
-5. Problem Impact (1-10): How impactful are these problems on customers?
-   - 1-3: Minor inconvenience, low willingness to pay (not worth building)
-   - 4-6: Moderate impact, some willingness to pay (viable business)
-   - 7-10: High impact, strong willingness to pay (strong business opportunity)
-
-Also provide:
-- Overall problem discovery score (average of all criteria)
-- 3 specific problems discovered or validated (based on your startup experience)
-- 3 recommendations for better problem discovery (as you would give to a founder)
-- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
-- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
-
-Return as JSON:
-{
-  "score": number,
-  "criteria": {
-    "problemIdentification": number,
-    "problemValidation": number,
-    "problemScope": number,
-    "problemUrgency": number,
-    "problemImpact": number
-  },
-  "discoveredProblems": [string],
-  "recommendations": [string],
-  "confidence": "high"|"medium"|"low",
-  "shouldProceed": boolean
-}` },
+Provide a comprehensive evaluation focusing on customer profile definition and validation.`
+        }
       ];
+
       try {
-        const validationResponse = await chatCompletion(problemDiscoveryPrompt) || '';
-        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
-        validationScore = JSON.parse(cleanResponse);
+        console.log('Sending Customer Profile validation request to OpenAI...');
+        const aiResponse = await chatCompletion(customerProfilePrompt, 'gpt-4o-mini', 0.7);
+        console.log('Customer Profile AI response received:', aiResponse);
+        if (aiResponse) {
+          try {
+            validationScore = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+            console.log('Customer Profile validation score parsed:', validationScore);
+          } catch (e) {
+            console.error('Failed to parse Customer Profile validation score:', e);
+            console.error('Raw AI response:', aiResponse);
+          }
+        }
       } catch (e) {
-        console.error('Failed to generate validation score:', e);
+        console.error('Failed to generate Customer Profile validation score:', e);
+      }
+      
+      // Fallback validation score if AI fails
+      if (!validationScore) {
+        console.log('Using fallback validation score for Customer Profile');
+        validationScore = {
+          score: 5.0,
+          criteria: {
+            customerClarity: 5,
+            customerSpecificity: 5,
+            customerRelevance: 5,
+            customerAccessibility: 5,
+            customerValue: 5
+          },
+          discoveredProblems: ['Customer profile needs more clarity', 'Customer specificity could be improved'],
+          recommendations: ['Define customer more clearly', 'Add more specific customer characteristics'],
+          confidence: 'medium',
+          shouldProceed: false
+        };
+      }
+    } else if (stage === 'Customer Struggle') {
+      // Customer Struggle validation logic
+      console.log('Generating Customer Struggle validation score...');
+      const customerStrugglePrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+CUSTOMER STRUGGLE EXPERTISE:
+- Customer pain point identification and validation
+- Jobs-to-be-Done framework implementation
+- Customer journey mapping and touchpoint analysis
+- Customer struggle quantification and measurement
+- Customer motivation and behavior analysis
+- Customer struggle prioritization and ranking
+
+You are evaluating a business idea for CUSTOMER STRUGGLE validation. Your role is to assess whether the entrepreneur has properly identified and validated the specific struggles their target customers face.
+
+EVALUATION CRITERIA:
+1. Struggle Identification (1-10): How clearly and specifically are customer struggles identified?
+2. Struggle Validation (1-10): Is there evidence that these struggles actually exist?
+3. Struggle Urgency (1-10): How urgent are these struggles for the customers?
+4. Struggle Frequency (1-10): How frequently do customers experience these struggles?
+5. Struggle Impact (1-10): How significant is the impact of these struggles on customers?
+
+Return a JSON object with:
+{
+  "score": number (1-10),
+  "criteria": {
+    "struggleIdentification": number (1-10),
+    "struggleValidation": number (1-10),
+    "struggleUrgency": number (1-10),
+    "struggleFrequency": number (1-10),
+    "struggleImpact": number (1-10)
+  },
+  "discoveredProblems": [array of struggle-related issues identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean
+}`
+        },
+        { 
+          role: 'user', 
+          content: `Evaluate this business idea for CUSTOMER STRUGGLE validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
+
+Provide a comprehensive evaluation focusing on customer struggle identification and validation.`
+        }
+      ];
+
+      try {
+        console.log('Sending Customer Struggle validation request to OpenAI...');
+        const aiResponse = await chatCompletion(customerStrugglePrompt, 'gpt-4o-mini', 0.7);
+        console.log('Customer Struggle AI response received:', aiResponse);
+        if (aiResponse) {
+          try {
+            validationScore = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+            console.log('Customer Struggle validation score parsed:', validationScore);
+          } catch (e) {
+            console.error('Failed to parse Customer Struggle validation score:', e);
+            console.error('Raw AI response:', aiResponse);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to generate Customer Struggle validation score:', e);
+      }
+      
+      // Fallback validation score if AI fails
+      if (!validationScore) {
+        console.log('Using fallback validation score for Customer Struggle');
+        validationScore = {
+          score: 5.0,
+          criteria: {
+            struggleIdentification: 5,
+            struggleValidation: 5,
+            struggleUrgency: 5,
+            struggleFrequency: 5,
+            struggleImpact: 5
+          },
+          discoveredProblems: ['Customer struggles need more clarity', 'Struggle validation could be improved'],
+          recommendations: ['Define customer struggles more clearly', 'Add more specific struggle characteristics'],
+          confidence: 'medium',
+          shouldProceed: false
+        };
+      }
+    } else if (stage === 'Solution Fit') {
+      // Solution Fit validation logic
+      console.log('Generating Solution Fit validation score...');
+      const solutionFitPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+SOLUTION FIT EXPERTISE:
+- Product-market fit validation and measurement
+- Solution effectiveness assessment and optimization
+- Customer value proposition development
+- Solution differentiation and competitive analysis
+- Solution scalability and sustainability evaluation
+- Solution adoption and retention strategies
+
+You are evaluating a business idea for SOLUTION FIT validation. Your role is to assess whether the proposed solution effectively addresses the customer struggles and provides compelling value.
+
+EVALUATION CRITERIA:
+1. Solution Alignment (1-10): How well does the solution align with customer struggles?
+2. Solution Effectiveness (1-10): How effectively does the solution solve the identified problems?
+3. Solution Differentiation (1-10): How unique and differentiated is the solution?
+4. Solution Value (1-10): How much value does the solution provide to customers?
+5. Solution Feasibility (1-10): How feasible and practical is the solution to implement?
+
+Return a JSON object with:
+{
+  "score": number (1-10),
+  "criteria": {
+    "solutionAlignment": number (1-10),
+    "solutionEffectiveness": number (1-10),
+    "solutionDifferentiation": number (1-10),
+    "solutionValue": number (1-10),
+    "solutionFeasibility": number (1-10)
+  },
+  "discoveredProblems": [array of solution-related issues identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean
+}`
+        },
+        { 
+          role: 'user', 
+          content: `Evaluate this business idea for SOLUTION FIT validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
+
+Provide a comprehensive evaluation focusing on solution fit and effectiveness.`
+        }
+      ];
+
+      try {
+        console.log('Sending Solution Fit validation request to OpenAI...');
+        const aiResponse = await chatCompletion(solutionFitPrompt, 'gpt-4o-mini', 0.7);
+        console.log('Solution Fit AI response received:', aiResponse);
+        if (aiResponse) {
+          try {
+            validationScore = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+            console.log('Solution Fit validation score parsed:', validationScore);
+          } catch (e) {
+            console.error('Failed to parse Solution Fit validation score:', e);
+            console.error('Raw AI response:', aiResponse);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to generate Solution Fit validation score:', e);
+      }
+      
+      // Fallback validation score if AI fails
+      if (!validationScore) {
+        console.log('Using fallback validation score for Solution Fit');
+        validationScore = {
+          score: 5.0,
+          criteria: {
+            solutionAlignment: 5,
+            solutionEffectiveness: 5,
+            solutionDifferentiation: 5,
+            solutionValue: 5,
+            solutionFeasibility: 5
+          },
+          discoveredProblems: ['Solution alignment needs improvement', 'Solution effectiveness could be enhanced'],
+          recommendations: ['Improve solution alignment with customer needs', 'Enhance solution differentiation'],
+          confidence: 'medium',
+          shouldProceed: false
+        };
+      }
+    } else if (stage === 'Business Model') {
+      // Business Model validation logic with complete data generation
+      console.log('Generating Business Model validation score and complete business model data...');
+      const businessModelPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+BUSINESS MODEL EXPERTISE:
+- Business model canvas development and validation
+- Revenue model optimization and pricing strategy
+- Cost structure analysis and profitability modeling
+- Competitive positioning and market analysis
+- Scalability assessment and growth strategy
+- Risk assessment and mitigation planning
+
+You are evaluating a business idea for BUSINESS MODEL validation and generating a complete business model. Your role is to assess the business model viability AND generate all business model components.
+
+EVALUATION CRITERIA:
+1. Model Viability (1-10): Is the business model fundamentally sound and sustainable?
+2. Revenue Potential (1-10): How much revenue can this business model generate?
+3. Cost Efficiency (1-10): Are costs manageable and scalable?
+4. Competitive Advantage (1-10): How defensible and differentiated is the model?
+5. Scalability (1-10): Can this business model scale effectively?
+
+Return a comprehensive JSON object with validation AND complete business model data:
+{
+  "score": number (1-10),
+  "criteria": {
+    "modelViability": number (1-10),
+    "revenuePotential": number (1-10),
+    "costEfficiency": number (1-10),
+    "competitiveAdvantage": number (1-10),
+    "scalability": number (1-10)
+  },
+  "discoveredProblems": [array of business model issues identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean,
+  "businessModelData": {
+    "keyPartners": [array of key partners],
+    "keyActivities": [array of key activities],
+    "valuePropositions": [array of value propositions],
+    "customerRelationships": [array of customer relationship types],
+    "customerSegments": [array of customer segments],
+    "keyResources": [array of key resources],
+    "channels": [array of distribution channels],
+    "costStructure": {
+      "fixedCosts": number,
+      "variableCosts": number,
+      "costBreakdown": { "category": amount }
+    },
+    "revenueStreams": {
+      "streams": [
+        {
+          "name": "string",
+          "type": "subscription" | "one-time" | "freemium" | "licensing",
+          "price": number,
+          "frequency": "string",
+          "projectedVolume": number
+        }
+      ],
+      "totalProjectedRevenue": number
+    },
+    "financialProjections": {
+      "monthlyRevenue": [12 months of projected revenue],
+      "annualRevenue": [3 years of projected revenue],
+      "grossMargin": number (percentage),
+      "netMargin": number (percentage),
+      "breakEvenPoint": number (months),
+      "customerLifetimeValue": number,
+      "customerAcquisitionCost": number,
+      "paybackPeriod": number (months)
+    },
+    "competitiveLandscape": {
+      "competitors": [
+        {
+          "name": "string",
+          "pricing": number,
+          "features": [array of features],
+          "marketShare": number (percentage),
+          "strengths": [array of strengths],
+          "weaknesses": [array of weaknesses]
+        }
+      ],
+      "competitiveAdvantages": [array of competitive advantages],
+      "differentiationStrategy": "string"
+    },
+    "riskAssessment": {
+      "businessModelRisks": [array of business model risks],
+      "marketRisks": [array of market risks],
+      "operationalRisks": [array of operational risks],
+      "financialRisks": [array of financial risks],
+      "regulatoryRisks": [array of regulatory risks],
+      "mitigationStrategies": { "risk": "strategy" }
+    },
+    "scalabilityAnalysis": {
+      "marketSize": {
+        "tam": number (Total Addressable Market),
+        "sam": number (Serviceable Addressable Market),
+        "som": number (Serviceable Obtainable Market)
+      },
+      "growthStrategy": "string",
+      "expansionPlans": [array of expansion plans],
+      "scaleFactors": [array of scale factors]
+    }
+  }
+}`
+        },
+        { 
+          role: 'user', 
+          content: `Evaluate this business idea for BUSINESS MODEL validation and generate complete business model data:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
+
+Provide a comprehensive evaluation focusing on business model viability, profitability, and scalability. Also generate complete business model canvas components, financial projections, competitive analysis, risk assessment, and scalability analysis.`
+        }
+      ];
+
+      try {
+        console.log('Sending Business Model validation request to OpenAI...');
+        const aiResponse = await chatCompletion(businessModelPrompt, 'gpt-4o-mini', 0.7);
+        console.log('Business Model AI response received:', aiResponse);
+        if (aiResponse) {
+          try {
+            const fullResponse = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+            console.log('Business Model full response parsed:', fullResponse);
+            
+            // Extract validation score
+            validationScore = {
+              score: fullResponse.score,
+              criteria: fullResponse.criteria,
+              discoveredProblems: fullResponse.discoveredProblems,
+              recommendations: fullResponse.recommendations,
+              confidence: fullResponse.confidence,
+              shouldProceed: fullResponse.shouldProceed
+            };
+            
+            // Extract business model data for saving
+            const businessModelData = fullResponse.businessModelData;
+            console.log('Business Model data extracted:', businessModelData);
+            
+            // Save business model data to database if business plan ID is available
+            if (req.body.businessPlanId) {
+              try {
+                const businessPlan = await BusinessPlan.findById(req.body.businessPlanId);
+                if (businessPlan) {
+                  businessPlan.businessModel = businessModelData;
+                  await businessPlan.save();
+                  console.log('Business model data saved to database');
+                }
+              } catch (saveError) {
+                console.error('Failed to save business model data:', saveError);
+              }
+            }
+            
+          } catch (e) {
+            console.error('Failed to parse Business Model response:', e);
+            console.error('Raw AI response:', aiResponse);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to generate Business Model validation score:', e);
+      }
+      
+      // Fallback validation score if AI fails
+      if (!validationScore) {
+        console.log('Using fallback validation score for Business Model');
+        validationScore = {
+          score: 5.0,
+          criteria: {
+            modelViability: 5,
+            revenuePotential: 5,
+            costEfficiency: 5,
+            competitiveAdvantage: 5,
+            scalability: 5
+          },
+          discoveredProblems: ['Business model needs more clarity', 'Revenue potential could be improved'],
+          recommendations: ['Define revenue streams more clearly', 'Improve cost structure analysis'],
+          confidence: 'medium',
+          shouldProceed: false
+                };
+      }
+    } else if (stage === 'Market Validation') {
+      // Market Validation validation logic
+      console.log('Generating Market Validation validation score...');
+      const marketValidationPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+MARKET VALIDATION EXPERTISE:
+- Market size analysis and opportunity assessment
+- Competitive landscape analysis and positioning
+- Customer demand validation and market readiness
+- Market timing and entry strategy evaluation
+- Market research and validation methodologies
+- Go-to-market strategy development
+
+You are evaluating a business idea for MARKET VALIDATION. Your role is to assess whether the market opportunity is real, viable, and ready for the proposed solution.
+
+EVALUATION CRITERIA:
+1. Market Size (1-10): How large and accessible is the target market?
+2. Market Demand (1-10): Is there genuine demand for this solution?
+3. Market Timing (1-10): Is the market ready for this solution now?
+4. Competitive Landscape (1-10): How favorable is the competitive environment?
+5. Market Access (1-10): How easily can we reach and serve this market?
+
+Return a JSON object with:
+{
+  "score": number (1-10),
+  "criteria": {
+    "marketSize": number (1-10),
+    "marketDemand": number (1-10),
+    "marketTiming": number (1-10),
+    "competitiveLandscape": number (1-10),
+    "marketAccess": number (1-10)
+  },
+  "discoveredProblems": [array of market-related issues identified],
+  "recommendations": [array of actionable recommendations],
+  "confidence": "high" | "medium" | "low",
+  "shouldProceed": boolean
+}`
+        },
+        { 
+          role: 'user', 
+          content: `Evaluate this business idea for MARKET VALIDATION:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Customer Feedback: ${feedback.map(f => f.feedback.join('; ')).join(' | ')}
+
+Provide a comprehensive evaluation focusing on market opportunity, demand, timing, and competitive landscape.`
+        }
+      ];
+
+      try {
+        console.log('Sending Market Validation request to OpenAI...');
+        const aiResponse = await chatCompletion(marketValidationPrompt, 'gpt-4o-mini', 0.7);
+        console.log('Market Validation AI response received:', aiResponse);
+        if (aiResponse) {
+          try {
+            validationScore = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+            console.log('Market Validation validation score parsed:', validationScore);
+          } catch (e) {
+            console.error('Failed to parse Market Validation validation score:', e);
+            console.error('Raw AI response:', aiResponse);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to generate Market Validation validation score:', e);
+      }
+      
+      // Fallback validation score if AI fails
+      if (!validationScore) {
+        console.log('Using fallback validation score for Market Validation');
+        validationScore = {
+          score: 5.0,
+          criteria: {
+            marketSize: 5,
+            marketDemand: 5,
+            marketTiming: 5,
+            competitiveLandscape: 5,
+            marketAccess: 5
+          },
+          discoveredProblems: ['Market size needs validation', 'Market demand could be stronger'],
+          recommendations: ['Conduct more market research', 'Validate market timing'],
+          confidence: 'medium',
+          shouldProceed: false
+        };
       }
     }
-
+    
+    console.log('Final response data:', { feedback, summary, validationScore });
     res.json({ feedback, summary, validationScore });
+    
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'OpenAI error' });
+  }
+});
+
+// POST /api/automated-discovery/business-model
+router.post('/business-model', async (req, res) => {
+  try {
+    const { businessPlanId, businessModelData } = req.body;
+    
+    // Validate business plan exists
+    const businessPlan = await BusinessPlan.findById(businessPlanId);
+    if (!businessPlan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+    
+    // Update business plan with business model data
+    businessPlan.businessModel = businessModelData;
+    await businessPlan.save();
+    
+    res.json({ success: true, message: 'Business model data saved successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to save business model data' });
+  }
+});
+
+// GET /api/automated-discovery/business-model/:businessPlanId
+router.get('/business-model/:businessPlanId', async (req, res) => {
+  try {
+    const { businessPlanId } = req.params;
+    
+    const businessPlan = await BusinessPlan.findById(businessPlanId);
+    if (!businessPlan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+    
+    res.json({ businessModelData: businessPlan.businessModel || null });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to retrieve business model data' });
   }
 });
 
@@ -1044,6 +1629,85 @@ Provide improved versions of ALL sections in this JSON format:
   } catch (error) {
     console.error('Auto-improve error:', error);
     res.status(500).json({ error: 'Failed to improve business plan sections' });
+  }
+});
+
+// POST /api/automated-discovery/customer-profile-improve
+router.post('/customer-profile-improve', async (req, res) => {
+  const parse = AutoImproveSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.errors });
+  const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = parse.data;
+
+  try {
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const customerProfileImprovePrompt = [
+      { 
+        role: 'system', 
+        content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+CUSTOMER DEVELOPMENT EXPERTISE:
+- Customer persona development and validation
+- Customer segmentation and targeting strategies
+- Customer interview and research methodologies
+- Customer journey mapping and optimization
+- Customer acquisition and retention strategies
+- Customer feedback analysis and implementation
+
+You are helping an entrepreneur improve their customer profile based on validation feedback. Your role is to provide comprehensive improvements that address customer profile validation gaps.
+
+CUSTOMER PROFILE IMPROVEMENT FOCUS:
+1. Customer Clarity: Make customer definition crystal clear and specific
+2. Customer Specificity: Add detailed, actionable customer characteristics
+3. Customer Relevance: Ensure customer is highly relevant to the business idea
+4. Customer Accessibility: Make customer segment easily reachable and targetable
+5. Customer Value: Demonstrate high value and willingness to pay
+
+Return a JSON object with improved customer profile sections:
+{
+  "improvedSections": {
+    "customerClarity": "Enhanced customer clarity description...",
+    "customerSpecificity": "Detailed customer specificity...",
+    "customerRelevance": "Improved customer relevance...",
+    "customerAccessibility": "Enhanced customer accessibility...",
+    "customerValue": "Improved customer value proposition..."
+  }
+}`
+      },
+      { 
+        role: 'user', 
+        content: `Improve this customer profile based on validation feedback:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+Current Validation Score: ${currentValidationScore}/10
+Validation Criteria: ${JSON.stringify(validationCriteria)}
+Recommendations: ${recommendations.join(', ')}
+Discovered Problems: ${discoveredProblems?.join(', ') || 'None identified'}
+
+Industry Context: ${JSON.stringify(industryContext)}
+
+Current Customer Profile:
+${(planData as any)?.customer ? JSON.stringify((planData as any).customer) : 'No customer profile available'}
+
+Provide comprehensive customer profile improvements that will increase the validation score. Focus on making the customer definition clearer, more specific, more relevant, more accessible, and more valuable.`
+      }
+    ];
+
+    const aiResponse = await chatCompletion(customerProfileImprovePrompt, 'gpt-4o-mini', 0.7);
+    if (!aiResponse) throw new Error('Failed to generate customer profile improvements');
+    
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(aiResponse.replace(/```json|```/gi, '').trim());
+    } catch (e) {
+      console.error('Failed to parse customer profile improve response:', e);
+      throw new Error('Failed to parse customer profile improvements');
+    }
+
+    res.json({ improvedSections: improvedSections.improvedSections });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to improve customer profile' });
   }
 });
 

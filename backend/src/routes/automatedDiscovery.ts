@@ -4,6 +4,122 @@ import { chatCompletion } from '../utils/openai';
 
 const router = express.Router();
 
+// Enhanced persona generation with behavioral patterns and validation frameworks
+const ENHANCED_PERSONA_TEMPLATES = {
+  earlyAdopter: {
+    name: "Early Adopter",
+    characteristics: [
+      "Willing to try new solutions",
+      "Values innovation and efficiency",
+      "Has budget for new tools",
+      "Influences others' decisions",
+      "Provides detailed feedback"
+    ],
+    painPoints: [
+      "Frustrated with existing solutions",
+      "Wants to be ahead of the curve",
+      "Needs measurable ROI",
+      "Concerned about integration complexity"
+    ],
+    decisionFactors: [
+      "Innovation potential",
+      "Time savings",
+      "Competitive advantage",
+      "Ease of implementation"
+    ]
+  },
+  pragmaticUser: {
+    name: "Pragmatic User",
+    characteristics: [
+      "Waits for proven solutions",
+      "Focuses on reliability and stability",
+      "Cost-conscious",
+      "Requires clear ROI",
+      "Prefers gradual adoption"
+    ],
+    painPoints: [
+      "Risk-averse to new solutions",
+      "Needs extensive proof of value",
+      "Concerned about disruption",
+      "Requires strong support"
+    ],
+    decisionFactors: [
+      "Proven track record",
+      "Clear cost-benefit analysis",
+      "Minimal disruption",
+      "Strong customer support"
+    ]
+  },
+  budgetConstrained: {
+    name: "Budget Constrained",
+    characteristics: [
+      "Limited budget for new tools",
+      "Focuses on essential features",
+      "Values free trials",
+      "Compares multiple options",
+      "Negotiates pricing"
+    ],
+    painPoints: [
+      "Cannot afford expensive solutions",
+      "Needs to justify every expense",
+      "Worries about hidden costs",
+      "Requires flexible pricing"
+    ],
+    decisionFactors: [
+      "Clear pricing structure",
+      "Free trial availability",
+      "Essential feature coverage",
+      "Scalable pricing model"
+    ]
+  },
+  enterpriseUser: {
+    name: "Enterprise User",
+    characteristics: [
+      "Works in large organizations",
+      "Requires compliance and security",
+      "Needs integration capabilities",
+      "Involves multiple stakeholders",
+      "Long sales cycles"
+    ],
+    painPoints: [
+      "Complex approval processes",
+      "Integration with existing systems",
+      "Security and compliance concerns",
+      "Change management challenges"
+    ],
+    decisionFactors: [
+      "Enterprise-grade security",
+      "Integration capabilities",
+      "Compliance certifications",
+      "Scalability and support"
+    ]
+  }
+};
+
+// Industry-specific persona variations
+const INDUSTRY_PERSONA_VARIATIONS = {
+  saas: {
+    roles: ["Product Manager", "Engineering Manager", "Operations Director", "Growth Manager"],
+    companySizes: ["Startup (1-50)", "Scale-up (51-200)", "Mid-market (201-1000)", "Enterprise (1000+)"],
+    decisionMakers: ["CTO", "VP Engineering", "Head of Product", "Operations Manager"]
+  },
+  ecommerce: {
+    roles: ["E-commerce Manager", "Marketing Director", "Operations Manager", "Customer Success Manager"],
+    companySizes: ["Small Business", "Mid-size Retailer", "Large E-commerce", "Marketplace"],
+    decisionMakers: ["CEO", "Marketing Director", "Operations Director", "Customer Success Lead"]
+  },
+  fintech: {
+    roles: ["Compliance Officer", "Product Manager", "Risk Manager", "Operations Director"],
+    companySizes: ["Fintech Startup", "Regional Bank", "National Bank", "International Bank"],
+    decisionMakers: ["CCO", "Head of Product", "Risk Director", "Operations VP"]
+  },
+  healthtech: {
+    roles: ["Clinical Director", "IT Manager", "Operations Manager", "Quality Assurance"],
+    companySizes: ["Small Practice", "Multi-location Practice", "Hospital System", "Healthcare Network"],
+    decisionMakers: ["Medical Director", "CIO", "Operations Director", "Quality Manager"]
+  }
+};
+
 // Industry-specific knowledge base
 const INDUSTRY_CONTEXT = {
   saas: {
@@ -81,10 +197,41 @@ const FeedbackSchema = z.object({
     id: z.string(),
     name: z.string(),
     summary: z.string(),
+    role: z.string().optional(),
+    companySize: z.string().optional(),
+    industry: z.string().optional(),
+    age: z.string().optional(),
+    experience: z.string().optional(),
+    budget: z.string().optional(),
+    painPoints: z.array(z.string()).optional(),
+    goals: z.array(z.string()).optional(),
+    decisionFactors: z.array(z.string()).optional(),
+    objections: z.array(z.string()).optional(),
+    communicationStyle: z.string().optional(),
+    techSavviness: z.string().optional(),
+    validationQuestions: z.array(z.string()).optional(),
   })),
   stage: z.string(),
   businessIdea: z.string(),
   customerDescription: z.string(),
+});
+
+const AutoImproveSchema = z.object({
+  businessIdea: z.string().min(5),
+  customerDescription: z.string().min(5),
+  currentValidationScore: z.number().min(0).max(10),
+  validationCriteria: z.object({
+    problemIdentification: z.number(),
+    problemValidation: z.number(),
+    problemScope: z.number(),
+    problemUrgency: z.number(),
+    problemImpact: z.number(),
+  }),
+  recommendations: z.array(z.string()),
+  discoveredProblems: z.array(z.string()).optional(),
+  planData: z.object({
+    sections: z.record(z.string()).optional(),
+  }).optional(),
 });
 
 const ImproveProblemSchema = z.object({
@@ -105,26 +252,184 @@ router.post('/personas', async (req, res) => {
   const { businessIdea, customerDescription, numPersonas } = parse.data;
 
   try {
-    const prompt = [
-      { role: 'system', content: 'You are an expert business coach and customer researcher.' },
-      { role: 'user', content: `Given the following business idea and customer description, generate ${numPersonas} diverse customer personas as a JSON array. Each persona should have: id, name, summary (1-2 sentences), and a short bio.\n\nBusiness Idea: ${businessIdea}\nCustomer Description: ${customerDescription}\n\nReturn ONLY the JSON array, no explanation.` },
+    // Get industry context for more specific personas
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    const industryKey = Object.keys(INDUSTRY_PERSONA_VARIATIONS).find(key => 
+      businessIdea.toLowerCase().includes(key) || customerDescription.toLowerCase().includes(key)
+    ) || 'saas';
+
+    const industryVariations = INDUSTRY_PERSONA_VARIATIONS[industryKey as keyof typeof INDUSTRY_PERSONA_VARIATIONS];
+
+    const enhancedPrompt = [
+      { 
+        role: 'system', 
+        content: `You are an expert customer researcher and business strategist with deep knowledge of customer validation and market research. Your goal is to create highly realistic, detailed customer personas that would provide authentic feedback for business idea validation.
+
+Key Principles:
+1. Create personas based on REAL customer archetypes, not generic templates
+2. Include specific behavioral patterns, pain points, and decision-making criteria
+3. Ensure personas represent different segments of the target market
+4. Make personas specific enough to provide actionable feedback
+5. Include realistic constraints, budgets, and organizational contexts
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Use these persona templates as inspiration but create unique, realistic personas:
+${JSON.stringify(ENHANCED_PERSONA_TEMPLATES, null, 2)}
+
+Industry-specific variations for ${industryKey}:
+- Roles: ${industryVariations.roles.join(', ')}
+- Company Sizes: ${industryVariations.companySizes.join(', ')}
+- Decision Makers: ${industryVariations.decisionMakers.join(', ')}
+
+Create ${numPersonas} diverse, realistic personas that would actually exist in this market.`
+      },
+      { 
+        role: 'user', 
+        content: `Generate ${numPersonas} highly detailed customer personas for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Industry: ${industryKey}
+
+For each persona, include:
+1. id: unique identifier
+2. name: realistic full name
+3. role: specific job title
+4. companySize: realistic company size
+5. industry: specific industry or sector
+6. age: realistic age range
+7. experience: years of experience in role
+8. budget: realistic budget constraints
+9. painPoints: 3-4 specific pain points they experience
+10. goals: 2-3 specific goals they're trying to achieve
+11. decisionFactors: 3-4 factors that influence their decisions
+12. objections: 2-3 likely objections they would have
+13. communicationStyle: how they prefer to communicate
+14. techSavviness: their comfort level with technology
+15. summary: 2-3 sentence bio that captures their essence
+16. validationQuestions: 3-4 specific questions they would ask to validate this solution
+
+Make each persona unique and realistic. Avoid generic descriptions. Focus on specific, actionable details that would help validate the business idea.
+
+Return ONLY a JSON array of personas.`
+      },
     ];
-    const aiResponse = await chatCompletion(prompt);
-    // Try to parse the JSON from the AI response
+
+          const aiResponse = await chatCompletion(enhancedPrompt, 'gpt-4o-mini', 0.7);
     let personas = [];
+    
     try {
       let clean = aiResponse || '';
       clean = clean.replace(/```json|```/gi, '').trim();
       personas = JSON.parse(clean);
+      
+      // Validate and enhance personas
+      personas = personas.map((p: any, i: number) => ({
+        id: typeof p.id === 'string' ? p.id : String(p.id ?? (i + 1)),
+        name: p.name || `Persona ${i + 1}`,
+        role: p.role || 'Business Professional',
+        companySize: p.companySize || 'Small to Medium',
+        industry: p.industry || industryKey,
+        age: p.age || '30-45',
+        experience: p.experience || '5-10 years',
+        budget: p.budget || 'Moderate',
+        painPoints: Array.isArray(p.painPoints) ? p.painPoints : ['General frustration with current solutions'],
+        goals: Array.isArray(p.goals) ? p.goals : ['Improve efficiency', 'Reduce costs'],
+        decisionFactors: Array.isArray(p.decisionFactors) ? p.decisionFactors : ['ROI', 'Ease of use'],
+        objections: Array.isArray(p.objections) ? p.objections : ['Cost concerns', 'Implementation time'],
+        communicationStyle: p.communicationStyle || 'Direct and data-driven',
+        techSavviness: p.techSavviness || 'Moderate',
+        summary: p.summary || `${p.name} is a ${p.role} looking to improve their business processes.`,
+        validationQuestions: Array.isArray(p.validationQuestions) ? p.validationQuestions : [
+          'How does this solve my specific problem?',
+          'What is the ROI and timeline?',
+          'How easy is it to implement?'
+        ],
+        feedback: [],
+        feedbackQuality: 'pending' // Track feedback quality
+      }));
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to parse AI personas response', aiResponse });
+      console.error('Failed to parse enhanced personas:', e);
+      // Fallback to basic personas
+      personas = [
+        {
+          id: '1',
+          name: 'Sarah Chen',
+          role: 'Product Manager',
+          companySize: 'Scale-up (51-200)',
+          industry: industryKey,
+          age: '32',
+          experience: '7 years',
+          budget: '$10k-50k annually',
+          painPoints: ['Manual processes slowing down development', 'Lack of data-driven insights', 'Team collaboration issues'],
+          goals: ['Increase development velocity', 'Improve product quality', 'Better team alignment'],
+          decisionFactors: ['Time to value', 'Integration ease', 'Team adoption'],
+          objections: ['Learning curve for team', 'Integration complexity', 'Ongoing costs'],
+          communicationStyle: 'Data-driven and collaborative',
+          techSavviness: 'High',
+          summary: 'Sarah is a data-driven Product Manager at a growing tech company, focused on improving team efficiency and product quality.',
+          validationQuestions: [
+            'How quickly can we see results?',
+            'What does the implementation process look like?',
+            'How does this integrate with our existing tools?'
+          ],
+          feedback: [],
+          feedbackQuality: 'pending'
+        },
+        {
+          id: '2',
+          name: 'Michael Rodriguez',
+          role: 'Operations Director',
+          companySize: 'Mid-market (201-1000)',
+          industry: industryKey,
+          age: '45',
+          experience: '15 years',
+          budget: '$25k-100k annually',
+          painPoints: ['Inefficient workflows', 'High operational costs', 'Difficulty scaling processes'],
+          goals: ['Reduce operational costs', 'Improve efficiency', 'Scale operations'],
+          decisionFactors: ['Cost savings', 'ROI timeline', 'Scalability'],
+          objections: ['High upfront costs', 'Disruption to current processes', 'Training requirements'],
+          communicationStyle: 'Results-oriented and direct',
+          techSavviness: 'Moderate',
+          summary: 'Michael is a seasoned Operations Director focused on optimizing business processes and reducing costs.',
+          validationQuestions: [
+            'What is the expected ROI and timeline?',
+            'How disruptive is the implementation?',
+            'What training and support is provided?'
+          ],
+          feedback: [],
+          feedbackQuality: 'pending'
+        },
+        {
+          id: '3',
+          name: 'Emily Watson',
+          role: 'Startup Founder',
+          companySize: 'Startup (1-50)',
+          industry: industryKey,
+          age: '28',
+          experience: '3 years',
+          budget: '$5k-20k annually',
+          painPoints: ['Limited resources', 'Need to move fast', 'Competitive pressure'],
+          goals: ['Rapid growth', 'Market validation', 'Efficient operations'],
+          decisionFactors: ['Speed of implementation', 'Cost-effectiveness', 'Competitive advantage'],
+          objections: ['Limited budget', 'Time constraints', 'Risk of new solutions'],
+          communicationStyle: 'Fast-paced and direct',
+          techSavviness: 'High',
+          summary: 'Emily is a driven startup founder looking for solutions that can help her company grow quickly and efficiently.',
+          validationQuestions: [
+                         'How quickly can we implement this?',
+             'What is the cost vs. benefit?',
+             'How does this give us a competitive edge?'
+          ],
+          feedback: [],
+          feedbackQuality: 'pending'
+        }
+      ];
     }
-    // Add empty feedback array for each persona
-    personas = personas.map((p: any, i: number) => ({
-      ...p,
-      id: typeof p.id === 'string' ? p.id : String(p.id ?? (i + 1)),
-      feedback: []
-    }));
+
     res.json({ personas });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'OpenAI error' });
@@ -138,34 +443,121 @@ router.post('/feedback', async (req, res) => {
   const { personas, stage, businessIdea, customerDescription } = parse.data;
 
   try {
-    // Generate feedback for each persona
+    // Generate problem-focused feedback for each persona
     const feedback = await Promise.all(personas.map(async (persona) => {
-      const prompt = [
-        { role: 'system', content: `You are acting as a customer persona for a business discovery process. Your persona: ${persona.name} - ${persona.summary}` },
-        { role: 'user', content: `Given the business idea: "${businessIdea}" and customer description: "${customerDescription}", provide 2-3 bullet points of feedback for the stage: "${stage}". Be concise and realistic. Return ONLY a JSON array of bullet points.` },
-      ];
+      let enhancedPrompt;
+      
+      if (stage === 'Problem Validation') {
+        // Problem Discovery Mode
+        enhancedPrompt = [
+          { 
+            role: 'system', 
+            content: `You are ${persona.name}, a ${persona.role || 'Business Professional'} at a ${persona.companySize || 'company'} in the ${persona.industry || 'business'} industry. You have ${persona.experience || 'several years'} of experience and are ${persona.age || 'in your career'}.
+
+Your Profile:
+- Budget: ${persona.budget || 'Moderate budget for business solutions'}
+- Pain Points: ${persona.painPoints?.join(', ') || 'General business inefficiencies and process challenges'}
+- Goals: ${persona.goals?.join(', ') || 'Improve efficiency and reduce costs'}
+- Decision Factors: ${persona.decisionFactors?.join(', ') || 'ROI, ease of implementation, and team adoption'}
+- Communication Style: ${persona.communicationStyle || 'Direct and results-oriented'}
+- Tech Savviness: ${persona.techSavviness || 'Moderate'}
+
+You are a PROBLEM RESEARCHER. Your job is to:
+1. Identify what problems this business idea is trying to solve
+2. Validate if these problems actually exist in your world
+3. Discover related problems you face that aren't addressed
+4. Assess the urgency and impact of these problems
+5. Determine if you would pay to solve these problems
+
+Be brutally honest about what problems you actually face vs. what the business idea assumes.`
+          },
+          { 
+            role: 'user', 
+            content: `As ${persona.name}, analyze this business idea for PROBLEM DISCOVERY:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Your task is to:
+1. What specific problems do you think this business idea is trying to solve?
+2. Do you actually experience these problems? (Be honest!)
+3. What related problems do you face that this idea doesn't address?
+4. How urgent are these problems for you? (1-10 scale)
+5. How much would you pay to solve these problems?
+6. What are your current workarounds for these problems?
+
+Provide 4-5 specific insights about the problems this business idea addresses (or fails to address). Be authentic and realistic.`
+          },
+        ];
+      } else {
+        // Regular validation mode for other stages
+        enhancedPrompt = [
+          { 
+            role: 'system', 
+            content: `You are ${persona.name}, a ${persona.role || 'Business Professional'} at a ${persona.companySize || 'company'} in the ${persona.industry || 'business'} industry. You have ${persona.experience || 'several years'} of experience and are ${persona.age || 'in your career'}.
+
+Your Profile:
+- Budget: ${persona.budget || 'Moderate budget for business solutions'}
+- Pain Points: ${persona.painPoints?.join(', ') || 'General business inefficiencies and process challenges'}
+- Goals: ${persona.goals?.join(', ') || 'Improve efficiency and reduce costs'}
+- Decision Factors: ${persona.decisionFactors?.join(', ') || 'ROI, ease of implementation, and team adoption'}
+- Likely Objections: ${persona.objections?.join(', ') || 'Cost concerns and implementation time'}
+- Communication Style: ${persona.communicationStyle || 'Direct and results-oriented'}
+- Tech Savviness: ${persona.techSavviness || 'Moderate'}
+
+Your Validation Questions:
+${persona.validationQuestions?.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n') || '1. How does this solve my specific problem?\n2. What is the ROI and timeline?\n3. How easy is it to implement?'}
+
+You are evaluating a business idea that claims to solve problems for customers like you. Provide authentic, realistic feedback based on your specific profile, pain points, and decision-making criteria. Be honest about whether this solution would actually work for someone in your position with your constraints.
+
+Focus on:
+1. Whether this addresses YOUR specific pain points
+2. Whether it fits YOUR budget and constraints
+3. Whether it aligns with YOUR goals and decision factors
+4. What objections YOU would have
+5. What questions YOU would ask to validate this solution`
+          },
+          { 
+            role: 'user', 
+            content: `As ${persona.name}, evaluate this business idea for the "${stage}" stage:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Provide 3-4 specific, realistic feedback points based on your profile. Consider:
+- Does this address your specific pain points?
+- Is it within your budget and constraints?
+- Does it align with your goals and decision factors?
+- What objections would you have?
+- What questions would you ask to validate this?
+
+Be authentic and realistic. If you have concerns, voice them. If you see potential, explain why. Base your feedback on your specific role, company size, industry, and personal characteristics.
+
+Return ONLY a JSON array of feedback points.`
+          },
+        ];
+      }
+      
       let feedbackArr: string[] = [];
       try {
-        const aiResponse = await chatCompletion(prompt) || '';
-        // Clean and parse the response as an array of bullet points
+        const aiResponse = await chatCompletion(enhancedPrompt, 'gpt-4o-mini', 0.8) || '';
         let clean = aiResponse.replace(/```json|```/gi, '').trim();
         try {
           const parsed = JSON.parse(clean);
           if (Array.isArray(parsed)) {
             feedbackArr = parsed;
           } else if (typeof parsed === 'string') {
-            // If it's a string, split by line breaks or bullet points
             feedbackArr = parsed.split(/\n|•|\-/).map(s => s.trim()).filter(Boolean);
           } else {
             feedbackArr = [clean];
           }
         } catch (e) {
-          // If not JSON, split by line breaks or bullet points
           feedbackArr = clean.split(/\n|•|\-/).map(s => s.trim()).filter(Boolean);
         }
       } catch (e) {
         feedbackArr = ['Could not generate feedback.'];
       }
+      
       return { personaId: persona.id, feedback: feedbackArr };
     }));
 
@@ -181,90 +573,117 @@ router.post('/feedback', async (req, res) => {
       summary = 'Could not generate summary.';
     }
 
-    // Generate validation score for Problem Validation stage
+    // Generate problem discovery insights for Problem Discovery stage
     let validationScore = null;
-    if (stage === 'Problem Validation') {
+    if (stage === 'Problem Discovery') {
       const industryContext = getIndustryContext(businessIdea, customerDescription);
       
-      const validationPrompt = [
+      const problemDiscoveryPrompt = [
         { 
           role: 'system', 
-          content: `You are an expert business validator with deep knowledge of:
-          - Jobs-to-be-Done framework methodology
-          - Market sizing techniques (TAM/SAM/SOM)
-          - Customer pain point validation methods
-          - Industry-specific market dynamics
-          - Startup validation best practices
-          
-          Industry Context: ${industryContext.marketDynamics}
-          Key Validation Metrics: ${industryContext.validationMetrics}
-          Common Challenges: ${industryContext.commonChallenges}
-          
-          Use this knowledge to provide accurate, specific assessments. Consider:
-          - Industry benchmarks and standards
-          - Market maturity and competition levels
-          - Customer acquisition costs and willingness to pay
-          - Regulatory and technical barriers
-          - Growth potential and market trends
-          
-          Market Research Methods to Consider:
-          - TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}
-          - Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
-          - Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
-          - Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}`
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+BUSINESS VALIDATION EXPERTISE:
+- Jobs-to-be-Done framework implementation
+- Customer pain point identification and validation
+- Market research and customer interview techniques
+- Problem-solution fit analysis
+- Startup validation best practices
+- MVP development and testing strategies
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate business ideas through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between real problems and perceived problems
+
+Your job is to DISCOVER and VALIDATE problems, not just rate an existing problem statement.
+Focus on:
+- What problems does this business idea actually solve?
+- Are these real problems that customers face?
+- What related problems are being missed?
+- How urgent and impactful are these problems?
+- What evidence supports these problems exist?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
         },
         { 
           role: 'user', 
-          content: `Rate this problem statement: "${businessIdea}" for customer: "${customerDescription}" based on these criteria:
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for PROBLEM DISCOVERY:
 
-1. Clarity (1-10): How clear and specific is the problem statement?
-   - 1-3: Vague, unclear what problem is being solved
-   - 4-6: Somewhat clear but could be more specific
-   - 7-10: Crystal clear, specific problem with measurable impact
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
 
-2. Pain Level (1-10): How painful is this problem for the customer?
-   - 1-3: Minor inconvenience, customers can work around it
-   - 4-6: Moderate frustration, causes some stress
-   - 7-10: Significant pain, customers actively seek solutions
+Based on your experience building startups and coaching entrepreneurs, evaluate this business idea through the lens of:
 
-3. Market Size (1-10): How many people have this problem?
-   - 1-3: Very niche, limited number affected
-   - 4-6: Moderate market, affects specific segment
-   - 7-10: Large market, affects many people across segments
+1. Problem Identification (1-10): How clearly does this identify specific problems?
+   - 1-3: Vague, unclear what problems are being solved (like most failed startups)
+   - 4-6: Somewhat clear problems identified (typical early-stage confusion)
+   - 7-10: Crystal clear, specific problems with evidence (like successful startups)
 
-4. Urgency (1-10): How urgent is solving this problem?
-   - 1-3: Low urgency, can wait for solution
-   - 4-6: Moderate urgency, would like solution soon
-   - 7-10: High urgency, need solution immediately
+2. Problem Validation (1-10): How well does this validate that problems actually exist?
+   - 1-3: Assumes problems exist without validation (common startup mistake)
+   - 4-6: Some validation but could be stronger (needs more customer interviews)
+   - 7-10: Strong evidence that problems are real and impactful (validated through customer development)
 
-5. Specificity (1-10): How specific and actionable is the problem?
-   - 1-3: Too broad, hard to build solution for
-   - 4-6: Somewhat specific, could be more actionable
-   - 7-10: Very specific, clear path to solution
+3. Problem Scope (1-10): How well does this understand the full scope of problems?
+   - 1-3: Addresses surface-level problems only (missing core issues)
+   - 4-6: Addresses some core problems (partial understanding)
+   - 7-10: Comprehensive understanding of problem landscape (like successful founders)
+
+4. Problem Urgency (1-10): How urgent are the problems being addressed?
+   - 1-3: Low urgency, customers can wait (not a viable startup)
+   - 4-6: Moderate urgency, customers want solutions soon (potential market)
+   - 7-10: High urgency, customers need solutions now (strong market pull)
+
+5. Problem Impact (1-10): How impactful are these problems on customers?
+   - 1-3: Minor inconvenience, low willingness to pay (not worth building)
+   - 4-6: Moderate impact, some willingness to pay (viable business)
+   - 7-10: High impact, strong willingness to pay (strong business opportunity)
 
 Also provide:
-- Overall score (average of all criteria)
-- 3 specific recommendations for improvement
-- Confidence level (high/medium/low)
-- Whether to proceed (score >= 7 and confidence high/medium)
+- Overall problem discovery score (average of all criteria)
+- 3 specific problems discovered or validated (based on your startup experience)
+- 3 recommendations for better problem discovery (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
 
 Return as JSON:
 {
   "score": number,
   "criteria": {
-    "clarity": number,
-    "painLevel": number,
-    "marketSize": number,
-    "urgency": number,
-    "specificity": number
+    "problemIdentification": number,
+    "problemValidation": number,
+    "problemScope": number,
+    "problemUrgency": number,
+    "problemImpact": number
   },
+  "discoveredProblems": [string],
   "recommendations": [string],
   "confidence": "high"|"medium"|"low",
   "shouldProceed": boolean
 }` },
       ];
       try {
-        const validationResponse = await chatCompletion(validationPrompt) || '';
+        const validationResponse = await chatCompletion(problemDiscoveryPrompt) || '';
         const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
         validationScore = JSON.parse(cleanResponse);
       } catch (e) {
@@ -431,29 +850,79 @@ router.post('/validation-score', async (req, res) => {
 
   try {
     const validationPrompt = [
-      { role: 'system', content: 'You are an expert business validator. Rate problem statements on a scale of 1-10 for each criterion.' },
-      { role: 'user', content: `Rate this problem statement: "${problemStatement}" for customer: "${customerDescription}" based on these criteria:
-1. Clarity (1-10): How clear and specific is the problem statement?
-2. Pain Level (1-10): How painful is this problem for the customer?
-3. Market Size (1-10): How many people have this problem?
-4. Urgency (1-10): How urgent is solving this problem?
-5. Specificity (1-10): How specific and actionable is the problem?
+      { 
+        role: 'system', 
+        content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+BUSINESS VALIDATION EXPERTISE:
+- Jobs-to-be-Done framework implementation
+- Customer pain point identification and validation
+- Market research and customer interview techniques
+- Problem-solution fit analysis
+- Startup validation best practices
+- MVP development and testing strategies
+
+YOUR APPROACH:
+You evaluate business ideas through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between real problems and perceived problems
+
+Rate problem statements based on your real-world startup experience.` 
+      },
+      { 
+        role: 'user', 
+        content: `As an experienced entrepreneur and business coach, rate this problem statement: "${problemStatement}" for customer: "${customerDescription}" based on these criteria:
+
+1. Problem Identification (1-10): How clearly does this identify specific problems with evidence?
+   - 1-3: Vague, unclear what problems are being solved (like most failed startups)
+   - 4-6: Somewhat clear problems identified (typical early-stage confusion)
+   - 7-10: Crystal clear, specific problems with evidence (like successful startups)
+
+2. Problem Validation (1-10): How well does this validate that problems actually exist in the real world?
+   - 1-3: Assumes problems exist without validation (common startup mistake)
+   - 4-6: Some validation but could be stronger (needs more customer interviews)
+   - 7-10: Strong evidence that problems are real and impactful (validated through customer development)
+
+3. Problem Scope (1-10): How well does this understand the full scope of related problems?
+   - 1-3: Addresses surface-level problems only (missing core issues)
+   - 4-6: Addresses some core problems (partial understanding)
+   - 7-10: Comprehensive understanding of problem landscape (like successful founders)
+
+4. Problem Urgency (1-10): How urgent are these problems that customers need solutions now?
+   - 1-3: Low urgency, customers can wait (not a viable startup)
+   - 4-6: Moderate urgency, customers want solutions soon (potential market)
+   - 7-10: High urgency, customers need solutions now (strong market pull)
+
+5. Problem Impact (1-10): How impactful are these problems that customers will pay to solve them?
+   - 1-3: Minor inconvenience, low willingness to pay (not worth building)
+   - 4-6: Moderate impact, some willingness to pay (viable business)
+   - 7-10: High impact, strong willingness to pay (strong business opportunity)
 
 Also provide:
 - Overall score (average of all criteria)
-- 3 specific recommendations for improvement
-- Confidence level (high/medium/low)
-- Whether to proceed (score >= 7 and confidence high/medium)
+- 3 specific recommendations for improvement (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
 
 Return as JSON:
 {
   "score": number,
   "criteria": {
-    "clarity": number,
-    "painLevel": number,
-    "marketSize": number,
-    "urgency": number,
-    "specificity": number
+    "problemIdentification": number,
+    "problemValidation": number,
+    "problemScope": number,
+    "problemUrgency": number,
+    "problemImpact": number
   },
   "recommendations": [string],
   "confidence": "high"|"medium"|"low",
@@ -472,6 +941,109 @@ Return as JSON:
     }
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'OpenAI error' });
+  }
+});
+
+// Auto-improve problem statement using AI
+router.post('/auto-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of all sections
+    const improvementPrompt = `You are an expert business consultant helping to improve a complete business plan for a startup idea.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Problem Identification: ${validationCriteria.problemIdentification}/10
+- Problem Validation: ${validationCriteria.problemValidation}/10
+- Problem Scope: ${validationCriteria.problemScope}/10
+- Problem Urgency: ${validationCriteria.problemUrgency}/10
+- Problem Impact: ${validationCriteria.problemImpact}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve ALL sections of the business plan to address the validation gaps and create a cohesive, professional business plan. Focus on:
+
+1. **Problem Statement**: Make it specific, evidence-based, and address validation gaps
+2. **Solution**: Align with the improved problem statement
+3. **Customer Pain Points**: Refine based on better problem understanding
+4. **Value Proposition**: Enhance to match the improved problem and solution
+5. **Market Analysis**: Update with new insights from improved problem scope
+6. **Competitive Analysis**: Refine positioning based on better problem articulation
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete
+- Include quantifiable evidence where possible
+- Address the discovered problems
+- Make urgency clear
+- Show business impact
+- Keep sections concise but comprehensive
+- Use active voice and clear language
+- Ensure all sections tell a cohesive story
+
+Provide improved versions of ALL sections in this JSON format:
+{
+  "problemStatement": "improved problem statement",
+  "solution": "improved solution description",
+  "customerPainPoints": ["pain point 1", "pain point 2", "pain point 3"],
+  "valueProposition": "improved value proposition",
+  "marketAnalysis": "improved market analysis",
+  "competitiveAnalysis": "improved competitive analysis"
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in comprehensive business plan improvement. You help startups create cohesive, professional business plans that address validation gaps and market opportunities.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved business plan sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the problem statement
+      improvedSections = {
+        problemStatement: response,
+        solution: "Solution will be updated based on improved problem statement",
+        customerPainPoints: ["Customer pain points will be refined"],
+        valueProposition: "Value proposition will be enhanced",
+        marketAnalysis: "Market analysis will be updated",
+        competitiveAnalysis: "Competitive analysis will be refined"
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved sections should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Auto-improve error:', error);
+    res.status(500).json({ error: 'Failed to improve business plan sections' });
   }
 });
 

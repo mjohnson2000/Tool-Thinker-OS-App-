@@ -51,7 +51,7 @@ No extra text, just valid JSON.
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 600,
         temperature: 0.7,
@@ -529,7 +529,7 @@ businessPlanRouter.post(
       const response = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-4",
+          model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 400,
           temperature: 0.7,

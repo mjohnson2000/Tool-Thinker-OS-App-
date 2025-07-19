@@ -9,25 +9,40 @@ interface Persona {
   name: string;
   avatarUrl?: string;
   summary: string;
+  role?: string;
+  companySize?: string;
+  industry?: string;
+  age?: string;
+  experience?: string;
+  budget?: string;
+  painPoints?: string[];
+  goals?: string[];
+  decisionFactors?: string[];
+  objections?: string[];
+  communicationStyle?: string;
+  techSavviness?: string;
+  validationQuestions?: string[];
   feedback: string[];
+  feedbackQuality?: 'pending' | 'good' | 'poor';
 }
 
 interface ValidationScore {
   score: number;
   criteria: {
-    clarity: number;
-    painLevel: number;
-    marketSize: number;
-    urgency: number;
-    specificity: number;
+    problemIdentification: number;
+    problemValidation: number;
+    problemScope: number;
+    problemUrgency: number;
+    problemImpact: number;
   };
+  discoveredProblems?: string[];
   recommendations: string[];
   confidence: 'high' | 'medium' | 'low';
   shouldProceed: boolean;
 }
 
 const STAGES = [
-  'Problem Validation',
+  'Problem Discovery',
   'Customer Profile',
   'Customer Struggle',
   'Solution Fit',
@@ -64,14 +79,43 @@ export function AutomatedDiscoveryPage() {
   const [validationScore, setValidationScore] = React.useState<ValidationScore | null>(null);
   const [showValidationDetails, setShowValidationDetails] = React.useState(false);
   
-  // Add problem statement display state
-  const [showProblemStatement, setShowProblemStatement] = React.useState(true);
-  const [improvedProblemStatement, setImprovedProblemStatement] = React.useState<string>('');
-  const [isGeneratingProblem, setIsGeneratingProblem] = React.useState(false);
-  const [isUsingImprovedProblem, setIsUsingImprovedProblem] = React.useState(false);
+  // Add validation score state
   const [isGeneratingValidationScore, setIsGeneratingValidationScore] = React.useState(false);
-  const [isTestingVariations, setIsTestingVariations] = React.useState(false);
-  const [variationProgress, setVariationProgress] = React.useState({ current: 0, total: 0 });
+  const [showBusinessPlanModal, setShowBusinessPlanModal] = React.useState(false);
+  const [isAutoImproving, setIsAutoImproving] = React.useState(false);
+  const [improvedProblemStatement, setImprovedProblemStatement] = React.useState<string>('');
+  const [showImprovementModal, setShowImprovementModal] = React.useState(false);
+  const [improvedSections, setImprovedSections] = React.useState<{
+    problemStatement: string;
+    solution: string;
+    customerPainPoints: string[];
+    valueProposition: string;
+    marketAnalysis: string;
+    competitiveAnalysis: string;
+  } | null>(null);
+  const [editableSections, setEditableSections] = React.useState<{
+    problemStatement: string;
+    solution: string;
+    customerPainPoints: string[];
+    valueProposition: string;
+    marketAnalysis: string;
+    competitiveAnalysis: string;
+  } | null>(null);
+  const [selectedSections, setSelectedSections] = React.useState<{
+    problemStatement: boolean;
+    solution: boolean;
+    customerPainPoints: boolean;
+    valueProposition: boolean;
+    marketAnalysis: boolean;
+    competitiveAnalysis: boolean;
+  }>({
+    problemStatement: true,
+    solution: false,
+    customerPainPoints: false,
+    valueProposition: false,
+    marketAnalysis: false,
+    competitiveAnalysis: false
+  });
   const PITCH_DECK_SLIDES = [
     { key: 'title', label: 'Title Slide', defaultTitle: 'Title', defaultContent: '' },
     { key: 'problem', label: 'Problem', defaultTitle: 'Problem', defaultContent: '' },
@@ -96,6 +140,14 @@ export function AutomatedDiscoveryPage() {
     }))
   );
   const [planData, setPlanData] = useState<any>(null);
+  
+  // Add state to track current process step
+  const [currentProcessStep, setCurrentProcessStep] = useState<string>('');
+  const [processSteps, setProcessSteps] = useState<string[]>([]);
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  
+  // Add ref for progress container auto-scroll
+  const progressContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Helper to toggle expand/collapse
   function togglePersonaExpand(id: string) {
@@ -139,6 +191,30 @@ export function AutomatedDiscoveryPage() {
     }
   }, [logs]);
 
+  // Auto-scroll progress container to current step
+  React.useEffect(() => {
+    if (progressContainerRef.current && currentProcessStep) {
+      const container = progressContainerRef.current;
+      const currentStepElement = container.querySelector('[data-current-step="true"]') as HTMLElement;
+      
+      if (currentStepElement) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = currentStepElement.getBoundingClientRect();
+        
+        // Calculate if the current step is outside the visible area
+        const isAbove = elementRect.top < containerRect.top;
+        const isBelow = elementRect.bottom > containerRect.bottom;
+        
+        if (isAbove || isBelow) {
+          currentStepElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }
+    }
+  }, [currentProcessStep]);
+
   // Fetch business plan on mount
   React.useEffect(() => {
     async function fetchBusinessPlan() {
@@ -150,16 +226,12 @@ export function AutomatedDiscoveryPage() {
       setPersonas([]);
       setCollectiveSummary('');
       setValidationScore(null);
-      setImprovedProblemStatement('');
-      setIsUsingImprovedProblem(false);
-      setIsGeneratingProblem(false);
       setIsGeneratingValidationScore(false);
       setCurrentStage(0);
       setVisibleFeedbackCounts([]);
       setExpandedPersonas({});
       setShowSummary(true);
       setShowFeedback(true);
-      setShowProblemStatement(true);
       
       try {
         const token = localStorage.getItem('token');
@@ -193,8 +265,39 @@ export function AutomatedDiscoveryPage() {
       setLoading(true);
       setError(null);
       setLogs((prev) => [...prev, 'Generating AI personas...']);
+      
+      // Initialize process steps for Problem Discovery
+      if (currentStage === 0) {
+        setProcessSteps([
+          'Analyzing business idea and customer description...',
+          'Identifying industry context and market dynamics...',
+          'Generating realistic customer personas...',
+          'Creating detailed behavioral profiles...',
+          'Preparing validation questions...',
+          'Personas ready for feedback generation...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing business idea and customer description...');
+      }
+      
       try {
         const token = localStorage.getItem('token');
+        
+        // Update progress
+        setCurrentProcessStep('Identifying industry context and market dynamics...');
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        setCompletedSteps(['Analyzing business idea and customer description...']);
+        setCurrentProcessStep('Generating realistic customer personas...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(prev => [...prev, 'Identifying industry context and market dynamics...']);
+        setCurrentProcessStep('Creating detailed behavioral profiles...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setCompletedSteps(prev => [...prev, 'Generating realistic customer personas...']);
+        setCurrentProcessStep('Preparing validation questions...');
+        
         const res = await fetch(`${API_URL}/automated-discovery/personas`, {
           method: 'POST',
           headers: {
@@ -204,13 +307,30 @@ export function AutomatedDiscoveryPage() {
           body: JSON.stringify({ businessIdea, customerDescription, numPersonas: 3 }),
           credentials: 'include'
         });
+        
         if (!res.ok) throw new Error('Failed to fetch personas');
         const data = await res.json();
+        
+        setCompletedSteps(prev => [...prev, 'Creating detailed behavioral profiles...', 'Preparing validation questions...']);
+        setCurrentProcessStep('Personas ready for feedback generation...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
         setPersonas(data.personas.map((p: any) => ({ ...p, feedback: [] })));
         setLogs((prev) => [...prev, 'AI personas generated.']);
+        
+        // Clear process steps after completion
+        setTimeout(() => {
+          setProcessSteps([]);
+          setCompletedSteps([]);
+          setCurrentProcessStep('');
+        }, 1000);
+        
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setLogs((prev) => [...prev, 'Error generating personas.']);
+        setProcessSteps([]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('');
       } finally {
         setLoading(false);
       }
@@ -265,13 +385,50 @@ export function AutomatedDiscoveryPage() {
 
   // Extract fetchFeedback as a standalone function
   async function fetchFeedback() {
-    if (personas.length === 0 || !businessIdea || !customerDescription) return;
+    console.log('fetchFeedback called');
+    console.log('personas.length:', personas.length);
+    console.log('businessIdea:', businessIdea);
+    console.log('customerDescription:', customerDescription);
+    
+    if (personas.length === 0 || !businessIdea || !customerDescription) {
+      console.log('Early return from fetchFeedback - missing data');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     setLogs((prev) => [...prev, `Getting feedback for stage: ${STAGES[currentStage]}...`]);
+    
+    // Initialize feedback generation steps
+    if (currentStage === 0) {
+      setProcessSteps([
+        'Analyzing customer personas and business context...',
+        'Generating problem-focused feedback from each persona...',
+        'Validating problem identification and scope...',
+        'Assessing problem urgency and impact...',
+        'Calculating expert validation score...',
+        'Preparing recommendations and insights...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing customer personas and business context...');
+    }
+    
     try {
       const token = localStorage.getItem('token');
+      console.log('Making feedback request to:', `${API_URL}/automated-discovery/feedback`);
+      
+      // Update progress
+      setCurrentProcessStep('Generating problem-focused feedback from each persona...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setCompletedSteps(['Analyzing customer personas and business context...']);
+      setCurrentProcessStep('Validating problem identification and scope...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Add timeout to prevent infinite hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const res = await fetch(`${API_URL}/automated-discovery/feedback`, {
         method: 'POST',
         headers: {
@@ -288,21 +445,68 @@ export function AutomatedDiscoveryPage() {
           businessIdea,
           customerDescription,
         }),
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal
       });
-      if (!res.ok) throw new Error('Failed to fetch feedback');
+      
+      clearTimeout(timeoutId);
+      console.log('Feedback response status:', res.status);
+      console.log('Feedback response ok:', res.ok);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Feedback response error:', errorText);
+        throw new Error(`Failed to fetch feedback: ${res.status} ${errorText}`);
+      }
+      
       const data = await res.json();
+      console.log('Feedback response data:', data);
+      
+      setCompletedSteps(prev => [...prev, 'Generating problem-focused feedback from each persona...', 'Validating problem identification and scope...']);
+      setCurrentProcessStep('Assessing problem urgency and impact...');
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      setCompletedSteps(prev => [...prev, 'Assessing problem urgency and impact...']);
+      setCurrentProcessStep('Calculating expert validation score...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       setPersonas((prev) => prev.map((p) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) })));
       setCollectiveSummary(data.summary);
       if (data.validationScore) {
         setValidationScore(data.validationScore);
+        console.log('Updated validation score:', data.validationScore);
       }
+      
+      setCompletedSteps(prev => [...prev, 'Calculating expert validation score...']);
+      setCurrentProcessStep('Preparing recommendations and insights...');
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded.`]);
+      console.log('fetchFeedback completed successfully');
+      
+      // Clear process steps after completion
+      setTimeout(() => {
+        setProcessSteps([]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('');
+      }, 800);
+      
     } catch (err: any) {
-      setError(err.message || 'Unknown error');
-      setLogs((prev) => [...prev, 'Error fetching feedback.']);
+      console.error('Error in fetchFeedback:', err);
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+        setLogs((prev) => [...prev, 'Feedback request timed out.']);
+      } else {
+        setError(err.message || 'Unknown error');
+        setLogs((prev) => [...prev, `Error fetching feedback: ${err.message}`]);
+      }
+      setProcessSteps([]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('');
     } finally {
       setLoading(false);
+      setIsGeneratingValidationScore(false);
+      console.log('fetchFeedback finally block - loading and validation score generation set to false');
     }
   }
 
@@ -312,22 +516,24 @@ export function AutomatedDiscoveryPage() {
     async function persistDiscoveryData() {
       try {
         const token = localStorage.getItem('token');
-        await fetch(`${API_URL}/business-plan/${id}/discovery-data`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            stage: STAGES[currentStage],
-            personas,
-            summary: collectiveSummary,
-            businessIdea,
-            customerDescription,
-            logs,
-          }),
-          credentials: 'include'
-        });
+        // TODO: Create discovery-data endpoint in backend
+        // await fetch(`${API_URL}/business-plan/${id}/discovery-data`, {
+        //   method: 'PUT',
+        //   headers: {
+        //     'Authorization': token ? `Bearer ${token}` : '',
+        //     'Content-Type': 'application/json'
+        //   },
+        //   body: JSON.stringify({
+        //     stage: STAGES[currentStage],
+        //     personas,
+        //     summary: collectiveSummary,
+        //     businessIdea,
+        //     customerDescription,
+        //     logs,
+        //   }),
+        //   credentials: 'include'
+        // });
+        console.log('Discovery data persistence temporarily disabled - endpoint not implemented');
       } catch (err) {
         // Optionally handle error
         console.error('Failed to persist discovery data', err);
@@ -336,160 +542,7 @@ export function AutomatedDiscoveryPage() {
     persistDiscoveryData();
   }, [currentStage, personas, collectiveSummary, businessIdea, customerDescription, logs, id]);
 
-  // Generate improved problem statement using JTBD framework
-  async function generateImprovedProblemStatement() {
-    if (personas.length === 0 || !collectiveSummary) return;
-    
-    setIsGeneratingProblem(true);
-    try {
-      // Collect all feedback from personas
-      const allFeedback = personas.flatMap(p => p.feedback).join(' ');
-      
-      const response = await fetch(`${API_URL}/automated-discovery/improve-problem`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          currentProblem: businessIdea,
-          customerFeedback: allFeedback,
-          summary: collectiveSummary
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate improved problem statement');
-      const data = await response.json();
-      
-      // If we have multiple variations, test them efficiently and pick the best one
-      if (data.variations && data.variations.length > 1) {
-        const currentScore = validationScore?.score || 0;
-        let bestVariation = data.improvedProblemStatement;
-        let bestScore = currentScore;
-        
-        // For 30 variations, test them in batches to avoid overwhelming the API
-        const variations = data.variations;
-        const batchSize = 5; // Test 5 at a time
-        const maxVariationsToTest = 15; // Limit to testing 15 variations to save time/cost
-        
-        console.log(`Testing ${Math.min(variations.length, maxVariationsToTest)} variations in batches of ${batchSize}`);
-        
-        setIsTestingVariations(true);
-        setVariationProgress({ current: 0, total: Math.min(variations.length, maxVariationsToTest) });
-        
-        for (let i = 0; i < Math.min(variations.length, maxVariationsToTest); i += batchSize) {
-          const batch = variations.slice(i, i + batchSize);
-          
-          // Test each variation in the batch
-          const batchPromises = batch.map(async (variation: string) => {
-            const scoreData = await updateValidationScoreForImprovedProblem(variation);
-            setVariationProgress(prev => ({ ...prev, current: prev.current + 1 }));
-            return { variation, score: scoreData?.score || 0 };
-          });
-          
-          const batchResults = await Promise.all(batchPromises);
-          
-          // Find the best in this batch
-          for (const result of batchResults) {
-            if (result.score > bestScore) {
-              bestScore = result.score;
-              bestVariation = result.variation;
-            }
-          }
-          
-          // If we found a significantly better score, we can stop early
-          if (bestScore >= currentScore + 2) {
-            console.log(`Found significantly better score (${bestScore} vs ${currentScore}), stopping early`);
-            break;
-          }
-        }
-        
-        setIsTestingVariations(false);
-        setVariationProgress({ current: 0, total: 0 });
-        
-        console.log(`Best variation found: ${bestVariation} with score: ${bestScore}`);
-        setImprovedProblemStatement(bestVariation);
-      } else {
-        setImprovedProblemStatement(data.improvedProblemStatement);
-      }
-    } catch (err: any) {
-      console.error('Failed to generate improved problem statement:', err);
-      // Fallback to basic extraction
-      const basicProblem = businessIdea
-        .replace(/We aim to build|We aim to develop|We are building|We are developing/gi, '')
-        .replace(/specifically designed for|designed for|targeting|focused on/gi, '')
-        .replace(/The product will focus on|The system will|The solution will/gi, '')
-        .replace(/to ensure|to provide|to deliver/gi, '')
-        .replace(/\.$/, '')
-        .trim();
-      setImprovedProblemStatement(`People struggle with ${basicProblem.toLowerCase()}.`);
-    } finally {
-      setIsGeneratingProblem(false);
-    }
-  }
 
-  // Update validation score for improved problem statement
-  async function updateValidationScoreForImprovedProblem(problemStatement: string) {
-    if (!customerDescription) return null;
-    
-    setIsGeneratingValidationScore(true);
-    try {
-      const response = await fetch(`${API_URL}/automated-discovery/validation-score`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          problemStatement,
-          customerDescription
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to update validation score');
-      const data = await response.json();
-      return data.validationScore; // Return the score for comparison
-    } catch (err: any) {
-      console.error('Failed to update validation score:', err);
-      return null; // Return null on error
-    } finally {
-      setIsGeneratingValidationScore(false);
-    }
-  }
-
-  // Handle improve button click
-  async function handleImproveProblem() {
-    // Always generate the improved problem statement
-    await generateImprovedProblemStatement();
-    
-    if (improvedProblemStatement) {
-      // Get the current validation score before improvement
-      const currentScore = validationScore?.score || 0;
-      
-      // Get the improved validation score
-      const improvedScoreData = await updateValidationScoreForImprovedProblem(improvedProblemStatement);
-      
-      // Only apply the improvement if the score is higher or equal
-      if (improvedScoreData && improvedScoreData.score >= currentScore) {
-        setIsUsingImprovedProblem(true);
-        setValidationScore(improvedScoreData);
-      } else if (improvedScoreData) {
-        // If the improved score is lower, show an error and don't apply it
-        alert(`The improved problem statement scored ${improvedScoreData.score}/10, which is lower than the current ${currentScore}/10. The improvement was not applied to maintain quality.`);
-        // Reset the improved problem statement so user can try again
-        setImprovedProblemStatement('');
-      }
-    }
-  }
-
-  // Handle undo button click
-  function handleUndoProblem() {
-    setIsUsingImprovedProblem(false);
-    // Restore original validation score by refetching feedback
-    if (personas.length > 0 && businessIdea && customerDescription) {
-      fetchFeedback();
-    }
-  }
 
   // Handlers for Launch stage buttons
   function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
@@ -591,6 +644,335 @@ export function AutomatedDiscoveryPage() {
       });
   }
 
+  // Auto-improve function using AI
+  async function handleAutoImprove() {
+    if (!validationScore || !businessIdea || !customerDescription) return;
+    
+    setIsAutoImproving(true);
+    setLogs((prev) => [...prev, 'Starting AI-powered comprehensive improvement...']);
+    
+    // Initialize auto-improve process steps
+    setProcessSteps([
+      'Analyzing current validation scores and recommendations...',
+      'Identifying improvement opportunities across all sections...',
+      'Generating enhanced problem statement...',
+      'Creating improved solution description...',
+      'Refining customer pain points and value proposition...',
+      'Updating market and competitive analysis...',
+      'Preparing comprehensive business plan improvements...'
+    ]);
+    setCompletedSteps([]);
+    setCurrentProcessStep('Analyzing current validation scores and recommendations...');
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Update progress
+      setCurrentProcessStep('Identifying improvement opportunities across all sections...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setCompletedSteps(['Analyzing current validation scores and recommendations...']);
+      setCurrentProcessStep('Generating enhanced problem statement...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setCompletedSteps(prev => [...prev, 'Identifying improvement opportunities across all sections...']);
+      setCurrentProcessStep('Creating improved solution description...');
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      setCompletedSteps(prev => [...prev, 'Generating enhanced problem statement...']);
+      setCurrentProcessStep('Refining customer pain points and value proposition...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setCompletedSteps(prev => [...prev, 'Creating improved solution description...']);
+      setCurrentProcessStep('Updating market and competitive analysis...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setCompletedSteps(prev => [...prev, 'Refining customer pain points and value proposition...']);
+      setCurrentProcessStep('Preparing comprehensive business plan improvements...');
+      
+      const res = await fetch(`${API_URL}/automated-discovery/auto-improve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          businessIdea,
+          customerDescription,
+          currentValidationScore: validationScore.score,
+          validationCriteria: validationScore.criteria,
+          recommendations: validationScore.recommendations,
+          discoveredProblems: validationScore.discoveredProblems || [],
+          planData: planData // Include current business plan sections
+        }),
+        credentials: 'include'
+      });
+      
+      if (!res.ok) throw new Error('Failed to improve business plan');
+      
+      const data = await res.json();
+      
+      setCompletedSteps(prev => [...prev, 'Updating market and competitive analysis...', 'Preparing comprehensive business plan improvements...']);
+      setCurrentProcessStep('Improvements ready for review...');
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Set improved sections
+      setImprovedSections(data.improvedSections);
+      
+      // Initialize editable sections with AI suggestions
+      setEditableSections({
+        problemStatement: data.improvedSections.problemStatement,
+        solution: data.improvedSections.solution,
+        customerPainPoints: data.improvedSections.customerPainPoints,
+        valueProposition: data.improvedSections.valueProposition,
+        marketAnalysis: data.improvedSections.marketAnalysis,
+        competitiveAnalysis: data.improvedSections.competitiveAnalysis
+      });
+      
+      setShowImprovementModal(true);
+      setLogs((prev) => [...prev, 'AI comprehensive improvement completed successfully.']);
+      
+      // Clear process steps after completion
+      setTimeout(() => {
+        setProcessSteps([]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('');
+      }, 1000);
+      
+    } catch (err: any) {
+      setError(err.message || 'Failed to improve business plan');
+      setLogs((prev) => [...prev, 'Error during AI improvement.']);
+      setProcessSteps([]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('');
+    } finally {
+      setIsAutoImproving(false);
+    }
+  }
+
+  // Apply the improved sections selectively
+  async function applyImprovement() {
+    console.log('applyImprovement called');
+    console.log('editableSections:', editableSections);
+    console.log('id:', id);
+    console.log('selectedSections:', selectedSections);
+    
+    if (!editableSections || !id) {
+      console.log('Early return - missing editableSections or id');
+      return;
+    }
+    
+    // Initialize apply improvement process steps
+    setProcessSteps([
+      'Preparing selected improvements for application...',
+      'Updating business plan sections...',
+      'Validating data structure and format...',
+      'Saving changes to database...',
+      'Triggering re-validation process...',
+      'Generating updated validation scores...',
+      'Finalizing improvement application...'
+    ]);
+    setCompletedSteps([]);
+    setCurrentProcessStep('Preparing selected improvements for application...');
+    
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Token:', token ? 'Present' : 'Missing');
+      
+      // Update progress
+      setCurrentProcessStep('Updating business plan sections...');
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      setCompletedSteps(['Preparing selected improvements for application...']);
+      setCurrentProcessStep('Validating data structure and format...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Prepare update data based on selected sections
+      const updateData: any = {};
+      
+      if (selectedSections.problemStatement) {
+        updateData.idea = { existingIdeaText: editableSections.problemStatement };
+        console.log('Adding problem statement update:', updateData.idea);
+      }
+      
+      if (selectedSections.solution) {
+        updateData.solution = { description: editableSections.solution };
+        console.log('Adding solution update:', updateData.solution);
+      }
+      
+      if (selectedSections.customerPainPoints) {
+        updateData.customer = { 
+          ...planData?.customer,
+          painPoints: editableSections.customerPainPoints 
+        };
+        console.log('Adding customer pain points update:', updateData.customer);
+      }
+      
+      // Handle sections that need to be updated in the sections object
+      const sectionsToUpdate: any = {};
+      if (selectedSections.valueProposition) {
+        sectionsToUpdate.valueProposition = editableSections.valueProposition;
+      }
+      if (selectedSections.marketAnalysis) {
+        sectionsToUpdate.marketAnalysis = editableSections.marketAnalysis;
+      }
+      if (selectedSections.competitiveAnalysis) {
+        sectionsToUpdate.competitiveAnalysis = editableSections.competitiveAnalysis;
+      }
+      
+      if (Object.keys(sectionsToUpdate).length > 0) {
+        updateData.sections = {
+          ...planData?.sections,
+          ...sectionsToUpdate
+        };
+        console.log('Adding sections update:', updateData.sections);
+      }
+      
+      setCompletedSteps(prev => [...prev, 'Updating business plan sections...', 'Validating data structure and format...']);
+      setCurrentProcessStep('Saving changes to database...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('Final updateData:', updateData);
+      
+      const res = await fetch(`${API_URL}/business-plan/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData),
+        credentials: 'include'
+      });
+      
+      console.log('Response status:', res.status);
+      console.log('Response ok:', res.ok);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Failed to update business plan: ${res.status} ${errorText}`);
+      }
+      
+      const responseData = await res.json();
+      console.log('Response data:', responseData);
+      
+      setCompletedSteps(prev => [...prev, 'Saving changes to database...']);
+      setCurrentProcessStep('Triggering re-validation process...');
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Update local state
+      if (selectedSections.problemStatement) {
+        setBusinessIdea(editableSections.problemStatement);
+        console.log('Updated businessIdea state');
+      }
+      
+      // Update planData state to reflect the applied improvements
+      if (planData) {
+        const updatedPlanData = { ...planData };
+        
+        if (selectedSections.problemStatement) {
+          updatedPlanData.idea = { 
+            ...updatedPlanData.idea, 
+            existingIdeaText: editableSections.problemStatement 
+          };
+        }
+        
+        if (selectedSections.solution) {
+          updatedPlanData.solution = { 
+            ...updatedPlanData.solution, 
+            description: editableSections.solution 
+          };
+        }
+        
+        if (selectedSections.customerPainPoints) {
+          updatedPlanData.customer = { 
+            ...updatedPlanData.customer, 
+            painPoints: editableSections.customerPainPoints 
+          };
+        }
+        
+        if (selectedSections.valueProposition || selectedSections.marketAnalysis || selectedSections.competitiveAnalysis) {
+          updatedPlanData.sections = {
+            ...updatedPlanData.sections,
+            ...(selectedSections.valueProposition && { valueProposition: editableSections.valueProposition }),
+            ...(selectedSections.marketAnalysis && { marketAnalysis: editableSections.marketAnalysis }),
+            ...(selectedSections.competitiveAnalysis && { competitiveAnalysis: editableSections.competitiveAnalysis })
+          };
+        }
+        
+        setPlanData(updatedPlanData);
+        console.log('Updated planData state with improvements');
+      }
+      
+      setCompletedSteps(prev => [...prev, 'Triggering re-validation process...']);
+      setCurrentProcessStep('Generating updated validation scores...');
+      
+      setShowImprovementModal(false);
+      setImprovedSections(null);
+      setEditableSections(null);
+      setSelectedSections({
+        problemStatement: true,
+        solution: false,
+        customerPainPoints: false,
+        valueProposition: false,
+        marketAnalysis: false,
+        competitiveAnalysis: false
+      });
+      
+      // Trigger re-validation
+      setIsGeneratingValidationScore(true);
+      await fetchFeedback();
+      
+      setCompletedSteps(prev => [...prev, 'Generating updated validation scores...']);
+      setCurrentProcessStep('Finalizing improvement application...');
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      setLogs((prev) => [...prev, 'Selected sections updated and re-validated.']);
+      console.log('Improvement applied successfully');
+      
+      // Clear process steps after completion
+      setTimeout(() => {
+        setProcessSteps([]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('');
+      }, 800);
+      
+    } catch (err: any) {
+      console.error('Error in applyImprovement:', err);
+      setError(err.message || 'Failed to apply improvements');
+      setLogs((prev) => [...prev, `Error applying improvements: ${err.message}`]);
+      setProcessSteps([]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('');
+    }
+  }
+
+  // Helper function to get current section content
+  function getCurrentSectionContent(sectionKey: string) {
+    if (sectionKey === 'problemStatement') {
+      return businessIdea;
+    }
+    
+    // Map section keys to planData properties
+    const sectionMap: { [key: string]: string } = {
+      solution: planData?.solution?.description || '',
+      customerPainPoints: planData?.customer?.painPoints?.join('\n• ') || '',
+      valueProposition: planData?.valueProposition?.description || '',
+      marketAnalysis: planData?.marketAnalysis?.description || '',
+      competitiveAnalysis: planData?.competitiveAnalysis?.description || ''
+    };
+    
+    return sectionMap[sectionKey] || '';
+  }
+
+  // Helper function to update editable section
+  function updateEditableSection(sectionKey: string, value: string | string[]) {
+    setEditableSections(prev => prev ? {
+      ...prev,
+      [sectionKey]: value
+    } : null);
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#f7f8fa', position: 'relative' }}>
       {/* Back to Dashboard button in upper right */}
@@ -656,7 +1038,7 @@ export function AutomatedDiscoveryPage() {
               marginBottom: 2,
               maxWidth: 340,
             }}>
-              You’ve completed the Automated Discovery journey. Your business idea is refined and ready for launch!
+              You've completed the Automated Discovery journey. Your business idea is refined and ready for launch!
             </span>
           </div>
         )}
@@ -687,16 +1069,18 @@ export function AutomatedDiscoveryPage() {
             background: validationScore?.shouldProceed ? '#f0f9ff' : '#fef2f2', 
             border: `2px solid ${validationScore?.shouldProceed ? '#0ea5e9' : '#ef4444'}`, 
             borderRadius: 12, 
-            padding: 16
+            padding: 16,
+            position: 'relative',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <h3 style={{ 
                 margin: 0, 
                 fontSize: 18, 
                 fontWeight: 700, 
                 color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
               }}>
-                Problem Validation Score: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+                Expert Assessment: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
               </h3>
               {validationScore && (
                 <div style={{ 
@@ -705,9 +1089,12 @@ export function AutomatedDiscoveryPage() {
                   background: validationScore.shouldProceed ? '#0ea5e9' : '#ef4444',
                   color: 'white',
                   fontSize: 14,
-                  fontWeight: 700
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
                 }}>
-                  {validationScore.shouldProceed ? '✅ PROCEED' : '⚠️ ITERATE'}
+                  {validationScore.shouldProceed ? '✅ PROCEED' : '▲ ITERATE'}
                 </div>
               )}
               {isGeneratingValidationScore && (
@@ -740,12 +1127,13 @@ export function AutomatedDiscoveryPage() {
                 {Object.entries(validationScore.criteria).map(([key, value]) => (
                   <div key={key} style={{ 
                     background: '#fff', 
-                    padding: '8px 12px', 
+                    padding: '10px 12px', 
                     borderRadius: 8, 
                     border: '1px solid #e5e7eb',
-                    fontSize: 13
+                    fontSize: 13,
+                    transition: 'all 0.2s ease'
                   }}>
-                    <div style={{ fontWeight: 600, color: '#374151', textTransform: 'capitalize' }}>
+                    <div style={{ fontWeight: 600, color: '#374151', textTransform: 'capitalize', marginBottom: 4 }}>
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                     <div style={{ 
@@ -780,12 +1168,32 @@ export function AutomatedDiscoveryPage() {
                   animation: 'spin 1s linear infinite'
                 }} />
                 Calculating new validation score...
+                <button
+                  onClick={() => {
+                    setIsGeneratingValidationScore(false);
+                    setLoading(false);
+                    setLogs((prev) => [...prev, 'Validation score calculation cancelled by user.']);
+                  }}
+                  style={{
+                    marginLeft: '12px',
+                    padding: '4px 8px',
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  Cancel
+                </button>
               </div>
             )}
           </div>
         )}
         
-        <div style={{ width: 420, height: 340, background: '#fafbfc', borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', flexDirection: 'column', border: '2px solid #181a1b', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: 420, minHeight: 340, background: '#fafbfc', borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', flexDirection: 'column', border: '2px solid #181a1b', position: 'relative', overflow: 'hidden', padding: '20px' }}>
           {/* Animated glow/shadow under robot */}
           <div style={{
             position: 'absolute',
@@ -805,7 +1213,7 @@ export function AutomatedDiscoveryPage() {
             animationData={robotLottie}
             loop={true}
             autoplay={true}
-            style={{ width: 240, height: 240, marginBottom: 8, zIndex: 1 }}
+            style={{ width: 200, height: 200, marginBottom: 16, zIndex: 1 }}
             aria-label="AI robot animation"
           />
           {/* Minimalist AI is Thinking animation (three animated dots) */}
@@ -848,14 +1256,134 @@ export function AutomatedDiscoveryPage() {
           )}
           {/* Error message UI */}
           {error && (
-            <div style={{ color: '#c00', background: '#fff0f0', border: '1px solid #c00', borderRadius: 8, padding: '1rem', margin: '1rem 0', fontWeight: 600, fontSize: 16, textAlign: 'center', zIndex: 10 }}>
+            <div style={{ 
+              color: '#c00', 
+              background: '#fff0f0', 
+              border: '1px solid #c00', 
+              borderRadius: 8, 
+              padding: '1rem', 
+              margin: '1rem 0', 
+              fontWeight: 600, 
+              fontSize: 16, 
+              textAlign: 'center', 
+              zIndex: 10,
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  color: '#c00',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(204, 0, 0, 0.1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                title="Dismiss error"
+              >
+                ×
+              </button>
               {error}
             </div>
           )}
           <span style={{ color: '#181a1b', fontWeight: 600, fontSize: 18 }}>
             {STAGES[currentStage]}
           </span>
-          {loading && (
+          
+          {/* Process Steps Progress Indicator */}
+          {processSteps.length > 0 && (
+            <div style={{
+              width: '100%',
+              maxWidth: 320,
+              marginTop: 16,
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              padding: '12px',
+              fontSize: 13
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+                color: '#374151',
+                fontWeight: 600
+              }}>
+                <div style={{
+                  width: 12,
+                  height: 12,
+                  border: '2px solid #3b82f6',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Processing...
+              </div>
+              
+              <div ref={progressContainerRef} style={{ maxHeight: 120, overflow: 'auto' }}>
+                {processSteps.map((step, index) => {
+                  const isCompleted = completedSteps.includes(step);
+                  const isCurrent = currentProcessStep === step;
+                  
+                  return (
+                    <div 
+                      key={index} 
+                      data-current-step={isCurrent}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        marginBottom: 6,
+                        opacity: isCompleted ? 0.7 : 1,
+                        padding: isCurrent ? '4px 0' : '0',
+                        borderRadius: isCurrent ? '4px' : '0',
+                        background: isCurrent ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                      }}
+                    >
+                      <div style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        background: isCompleted ? '#10b981' : isCurrent ? '#3b82f6' : '#e5e7eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 10,
+                        color: 'white',
+                        fontWeight: 'bold',
+                        flexShrink: 0,
+                        marginTop: 1
+                      }}>
+                        {isCompleted ? '✓' : isCurrent ? '⟳' : index + 1}
+                      </div>
+                      <span style={{
+                        color: isCompleted ? '#6b7280' : isCurrent ? '#1f2937' : '#9ca3af',
+                        fontWeight: isCurrent ? 600 : 500,
+                        fontSize: 12,
+                        lineHeight: 1.4
+                      }}>
+                        {step}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          {loading && !processSteps.length && (
             <div style={{ width: 240, height: 6, background: '#e0e0e0', borderRadius: 3, overflow: 'hidden', marginTop: 18 }}>
               <div style={{
                 width: '40%',
@@ -874,237 +1402,160 @@ export function AutomatedDiscoveryPage() {
           )}
         </div>
         
-        {/* Collapsible Problem Statement Display */}
+
+        
+        {/* View Full Business Plan Modal Button */}
         {currentStage === 0 && businessIdea && (
           <div style={{ 
             width: 420, 
             marginTop: 16,
             marginBottom: 16
           }}>
-            <div
+            <button
               style={{
-                fontWeight: 600,
-                fontSize: 15,
-                marginBottom: 8,
-                color: showProblemStatement ? '#222' : '#444',
-                background: showProblemStatement ? '#f0f0f0' : '#f0f2f8',
-                padding: '8px 16px',
+                width: '100%',
+                background: '#f8fafc',
+                color: '#374151',
+                border: '1px solid #d1d5db',
                 borderRadius: 8,
+                padding: '12px 16px',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                cursor: 'pointer',
-                userSelect: 'none',
-                transition: 'background 0.25s cubic-bezier(.4,0,.2,1)',
-                border: '1px solid #e5e7eb',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
-              onClick={() => setShowProblemStatement(s => !s)}
-              tabIndex={0}
-              role="button"
-              aria-expanded={showProblemStatement}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f0f0f0')}
-              onMouseLeave={e => (e.currentTarget.style.background = showProblemStatement ? '#f0f0f0' : '#f0f2f8')}
+              onClick={() => setShowBusinessPlanModal(true)}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#f1f5f9';
+                e.currentTarget.style.borderColor = '#9ca3af';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#d1d5db';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+              }}
             >
-              <span style={{ 
-                marginRight: 8, 
-                display: 'inline-block', 
-                transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', 
-                transform: showProblemStatement ? 'rotate(90deg)' : 'rotate(0deg)' 
-              }}>
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 8L10 12L14 8" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-              📋 Your Problem Statement
-            </div>
-            {showProblemStatement && (
-              <div className="fade-slide-in" style={{ 
-                background: '#fff', 
-                border: '1px solid #e5e7eb', 
-                borderRadius: 12, 
-                padding: 16,
-                color: '#374151',
-                fontSize: 14,
-                lineHeight: 1.6,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-              }}>
-                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{isUsingImprovedProblem ? 'New Problem Statement:' : 'Problem Statement:'}</span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {!isUsingImprovedProblem && (
-                      <button
-                        style={{
-                          background: '#3b82f6',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '4px 12px',
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                        onClick={handleImproveProblem}
-                        disabled={isGeneratingProblem}
-                        title="Improve problem statement using customer feedback"
-                      >
-                        {isGeneratingProblem ? (
-                          <>
-                            <div style={{
-                              width: 12,
-                              height: 12,
-                              border: '2px solid #fff',
-                              borderTop: '2px solid transparent',
-                              borderRadius: '50%',
-                              animation: 'spin 1s linear infinite'
-                            }} />
-                            Generating 30 variations...
-                          </>
-                        ) : (
-                          <>
-                            ✨ Improve (30 variations)
-                          </>
-                        )}
-                      </button>
-                    )}
-                    {isUsingImprovedProblem && (
-                      <button
-                        style={{
-                          background: '#6b7280',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '4px 8px',
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4
-                        }}
-                        onClick={handleUndoProblem}
-                        title="Revert to original problem statement"
-                      >
-                        ↩️ Undo
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div style={{ marginBottom: 12, color: '#4b5563' }}>
-                  {isGeneratingProblem ? (
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 8,
-                      color: '#6b7280',
-                      fontStyle: 'italic'
-                    }}>
-                      <div style={{
-                        width: 16,
-                        height: 16,
-                        border: '2px solid #e5e7eb',
-                        borderTop: '2px solid #3b82f6',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                      Generating 30 improved variations...
-                    </div>
-                  ) : isUsingImprovedProblem ? (
-                    improvedProblemStatement
-                  ) : (
-                    (() => {
-                      // Create a proper problem statement based on the business idea
-                      const cleanedIdea = businessIdea
-                        .replace(/We aim to build|We aim to develop|We are building|We are developing/gi, '')
-                        .replace(/specifically designed for|designed for|targeting|focused on/gi, '')
-                        .replace(/The product will focus on|The system will|The solution will/gi, '')
-                        .replace(/to ensure|to provide|to deliver/gi, '')
-                        .replace(/\.$/, '')
-                        .trim();
-                      
-                      // Extract the core problem from the business idea
-                      if (cleanedIdea.toLowerCase().includes('ice cream') || cleanedIdea.toLowerCase().includes('beach')) {
-                        return `Ice cream enthusiasts struggle to discover high-quality, unique ice cream shops near beach locations.`;
-                      } else if (cleanedIdea.toLowerCase().includes('food') || cleanedIdea.toLowerCase().includes('restaurant')) {
-                        return `Food lovers struggle to find authentic, high-quality dining experiences.`;
-                      } else if (cleanedIdea.toLowerCase().includes('app') || cleanedIdea.toLowerCase().includes('mobile')) {
-                        return `Users struggle to find reliable, user-friendly mobile solutions for their needs.`;
-                      } else if (cleanedIdea.toLowerCase().includes('service') || cleanedIdea.toLowerCase().includes('help')) {
-                        return `People struggle to access reliable, convenient services when they need them most.`;
-                      } else {
-                        // Generic problem statement based on the business idea
-                        const words = cleanedIdea.split(' ').slice(0, 5).join(' ');
-                        return `People struggle with ${words.toLowerCase()}.`;
-                      }
-                    })()
-                  )}
-                </div>
-                {isGeneratingValidationScore && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 8,
-                    color: '#6b7280',
-                    fontStyle: 'italic',
-                    fontSize: 12
-                  }}>
-                    <div style={{
-                      width: 12,
-                      height: 12,
-                      border: '2px solid #e5e7eb',
-                      borderTop: '2px solid #3b82f6',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    Updating validation score...
-                  </div>
-                )}
-                {isTestingVariations && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 8,
-                    color: '#6b7280',
-                    fontStyle: 'italic',
-                    fontSize: 12
-                  }}>
-                    <div style={{
-                      width: 12,
-                      height: 12,
-                      border: '2px solid #e5e7eb',
-                      borderTop: '2px solid #3b82f6',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    Testing {variationProgress.current}/{variationProgress.total} variations...
-                  </div>
-                )}
-              </div>
-            )}
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" fill="currentColor"/>
+                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" fill="currentColor"/>
+              </svg>
+              View Full Business Plan
+            </button>
           </div>
         )}
         
         {/* Continue button (hide at Launch stage) */}
         {currentStage < STAGES.length - 1 && (
-          <button
-            style={{ 
-              marginTop: 32, 
-              background: validationScore && !validationScore.shouldProceed ? '#6b7280' : '#181a1b', 
-              color: '#fff', 
-              border: 'none', 
-              borderRadius: 8, 
-              padding: '0.8rem 1.5rem', 
-              fontSize: '1rem', 
-              fontWeight: 600, 
-              cursor: validationScore && !validationScore.shouldProceed ? 'not-allowed' : 'pointer',
-              opacity: validationScore && !validationScore.shouldProceed ? 0.6 : 1
-            }}
-            onClick={() => setCurrentStage((s) => Math.min(s + 1, STAGES.length - 1))}
-            disabled={validationScore ? !validationScore.shouldProceed : false}
-          >
-            {validationScore && !validationScore.shouldProceed ? 'Please improve your problem statement first' : 'Continue'}
-          </button>
+          <div style={{ width: 420, marginTop: 32 }}>
+            {validationScore && !validationScore.shouldProceed ? (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: 8,
+                padding: '16px',
+                marginBottom: 16,
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  color: '#dc2626',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  marginBottom: 8
+                }}>
+                  ⚠️ Improvement Needed
+                </div>
+                <div style={{
+                  color: '#6b7280',
+                  fontSize: 13,
+                  lineHeight: 1.4,
+                  marginBottom: 12
+                }}>
+                  Your problem statement needs refinement before proceeding. 
+                  Focus on the recommendations above to improve your score.
+                </div>
+                
+                {/* Auto-Improve Button */}
+                <button
+                  onClick={handleAutoImprove}
+                  disabled={isAutoImproving}
+                  style={{
+                    background: isAutoImproving ? '#6b7280' : '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '10px 20px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: isAutoImproving ? 'not-allowed' : 'pointer',
+                    opacity: isAutoImproving ? 0.6 : 1,
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    margin: '0 auto'
+                  }}
+                >
+                  {isAutoImproving ? (
+                    <>
+                      <div style={{
+                        width: 16,
+                        height: 16,
+                        border: '2px solid #fff',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      AI Improving...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Auto-Improve with AI
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : null}
+            
+            <button
+              style={{ 
+                width: '100%',
+                background: validationScore && !validationScore.shouldProceed ? '#6b7280' : '#181a1b', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: 8, 
+                padding: '0.8rem 1.5rem', 
+                fontSize: '1rem', 
+                fontWeight: 600, 
+                cursor: validationScore && !validationScore.shouldProceed ? 'not-allowed' : 'pointer',
+                opacity: validationScore && !validationScore.shouldProceed ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => {
+                if (validationScore && !validationScore.shouldProceed) {
+                  return; // Prevent progression
+                }
+                setCurrentStage((s) => Math.min(s + 1, STAGES.length - 1));
+              }}
+              disabled={validationScore ? !validationScore.shouldProceed : false}
+            >
+              {validationScore && !validationScore.shouldProceed 
+                ? 'Please improve your problem statement first' 
+                : 'Continue to Next Stage'
+              }
+            </button>
+          </div>
         )}
       </main>
 
@@ -1184,7 +1635,7 @@ export function AutomatedDiscoveryPage() {
               <div className="fade-slide-in" style={{ color: '#444', fontSize: 15, marginBottom: 8 }}>{collectiveSummary}</div>
             )}
             
-            {/* Problem Validation Criteria Explanation */}
+            {/* Problem Discovery Criteria Explanation */}
             {currentStage === 0 && (
               <div style={{ 
                 background: '#f8fafc', 
@@ -1195,19 +1646,19 @@ export function AutomatedDiscoveryPage() {
                 fontSize: 13
               }}>
                 <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
-                  📋 What Makes a Valid Problem Statement?
+                  🔍 Problem Discovery Assessment
                 </div>
                 <div style={{ color: '#475569', lineHeight: 1.5 }}>
-                  <strong>Clarity (7-10):</strong> Clear, specific problem that customers can easily understand<br/>
-                  <strong>Pain Level (7-10):</strong> Problem is painful enough that customers will pay to solve it<br/>
-                  <strong>Market Size (6-10):</strong> Enough people have this problem to build a business<br/>
-                  <strong>Urgency (6-10):</strong> Problem needs solving now, not "someday"<br/>
-                  <strong>Specificity (7-10):</strong> Specific enough to build a targeted solution
+                  <strong>Problem Identification (7-10):</strong> Clearly identifies specific problems with evidence<br/>
+                  <strong>Problem Validation (7-10):</strong> Validates that problems actually exist in the real world<br/>
+                  <strong>Problem Scope (6-10):</strong> Understands the full scope of related problems<br/>
+                  <strong>Problem Urgency (6-10):</strong> Problems are urgent enough that customers need solutions now<br/>
+                  <strong>Problem Impact (7-10):</strong> Problems are impactful enough that customers will pay to solve them
                 </div>
               </div>
             )}
             
-            {/* Problem Validation Score Display */}
+            {/* Expert Entrepreneur Assessment Display */}
             {currentStage === 0 && (validationScore || isGeneratingValidationScore) && (
               <div style={{ 
                 background: validationScore?.shouldProceed ? '#f0f9ff' : '#fef2f2', 
@@ -1224,7 +1675,7 @@ export function AutomatedDiscoveryPage() {
                     fontWeight: 600, 
                     color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
                   }}>
-                    Problem Validation Score: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+                    Expert Assessment: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
                   </h3>
                   {validationScore && (
                     <div style={{ 
@@ -1266,7 +1717,7 @@ export function AutomatedDiscoveryPage() {
                 {validationScore && (
                   <>
                     <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Validation Criteria:</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Expert Evaluation Criteria:</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                         {Object.entries(validationScore.criteria).map(([key, value]) => (
                           <div key={key} style={{ 
@@ -1302,9 +1753,17 @@ export function AutomatedDiscoveryPage() {
                     <div style={{ 
                       fontSize: 13, 
                       color: '#6b7280',
-                      fontStyle: 'italic'
+                      fontStyle: 'italic',
+                      marginBottom: 8
                     }}>
                       Confidence: {validationScore.confidence.charAt(0).toUpperCase() + validationScore.confidence.slice(1)}
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, 
+                      color: '#9ca3af',
+                      fontStyle: 'italic'
+                    }}>
+                      Assessment by Sarah Chen, experienced entrepreneur & business coach
                     </div>
                   </>
                 )}
@@ -1412,19 +1871,117 @@ export function AutomatedDiscoveryPage() {
                       aria-expanded={isExpanded}
                       role="button"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
                         <div style={{
                           marginRight: 10,
                           animation: isThinking ? 'pulseAvatar 1s infinite' : undefined,
                         }}>
                           <RobotFace size={32} />
                         </div>
-                        <span style={{ fontWeight: 600, color: '#181a1b' }}>{persona.name}</span>
-                        <span style={{ color: '#444', fontSize: 13, marginLeft: 8 }}>{persona.summary}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                            <span style={{ fontWeight: 600, color: '#181a1b', fontSize: 14 }}>{persona.name}</span>
+                            {persona.role && (
+                              <span style={{ 
+                                background: '#f3f4f6', 
+                                color: '#374151', 
+                                fontSize: 11, 
+                                padding: '2px 6px', 
+                                borderRadius: 4,
+                                fontWeight: 500
+                              }}>
+                                {persona.role}
+                              </span>
+                            )}
+                            {persona.companySize && (
+                              <span style={{ 
+                                background: '#e0f2fe', 
+                                color: '#0c4a6e', 
+                                fontSize: 11, 
+                                padding: '2px 6px', 
+                                borderRadius: 4,
+                                fontWeight: 500
+                              }}>
+                                {persona.companySize}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ color: '#6b7280', fontSize: 12, lineHeight: 1.3 }}>
+                            {persona.summary}
+                          </div>
+                          {persona.budget && (
+                            <div style={{ 
+                              color: '#059669', 
+                              fontSize: 11, 
+                              fontWeight: 500, 
+                              marginTop: 2 
+                            }}>
+                              Budget: {persona.budget}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {/* Expand/collapse feedback section */}
                       {isExpanded && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 180, overflowY: 'auto', width: '100%', maxWidth: '100%', minWidth: 0 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: '100%', minWidth: 0 }}>
+                          {/* Persona Details Section */}
+                          <div style={{ 
+                            background: '#f8fafc', 
+                            border: '1px solid #e2e8f0', 
+                            borderRadius: 8, 
+                            padding: 12, 
+                            marginBottom: 8,
+                            fontSize: 12
+                          }}>
+                            <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b', fontSize: 13 }}>
+                              📋 {persona.name}'s Profile
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                              {persona.age && (
+                                <div>
+                                  <span style={{ fontWeight: 500, color: '#475569' }}>Age:</span> {persona.age}
+                                </div>
+                              )}
+                              {persona.experience && (
+                                <div>
+                                  <span style={{ fontWeight: 500, color: '#475569' }}>Experience:</span> {persona.experience}
+                                </div>
+                              )}
+                              {persona.techSavviness && (
+                                <div>
+                                  <span style={{ fontWeight: 500, color: '#475569' }}>Tech Level:</span> {persona.techSavviness}
+                                </div>
+                              )}
+                              {persona.communicationStyle && (
+                                <div>
+                                  <span style={{ fontWeight: 500, color: '#475569' }}>Style:</span> {persona.communicationStyle}
+                                </div>
+                              )}
+                            </div>
+                            {persona.painPoints && persona.painPoints.length > 0 && (
+                              <div style={{ marginBottom: 6 }}>
+                                <span style={{ fontWeight: 500, color: '#dc2626' }}>Pain Points:</span>
+                                <ul style={{ margin: '4px 0 0 16px', padding: 0, fontSize: 11, color: '#6b7280' }}>
+                                  {persona.painPoints.slice(0, 2).map((point, idx) => (
+                                    <li key={idx}>{point}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {persona.goals && persona.goals.length > 0 && (
+                              <div style={{ marginBottom: 6 }}>
+                                <span style={{ fontWeight: 500, color: '#059669' }}>Goals:</span>
+                                <ul style={{ margin: '4px 0 0 16px', padding: 0, fontSize: 11, color: '#6b7280' }}>
+                                  {persona.goals.slice(0, 2).map((goal, idx) => (
+                                    <li key={idx}>{goal}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Feedback Section */}
+                          <div style={{ maxHeight: 180, overflowY: 'auto' }}>
                           {feedbackArr.slice(0, feedbackCount).map((fb: string, i: number) => (
                             <div
                               key={i}
@@ -1512,6 +2069,7 @@ export function AutomatedDiscoveryPage() {
                             </div>
                           )}
                         </div>
+                      </div>
                       )}
                     </div>
                   );
@@ -1566,111 +2124,714 @@ export function AutomatedDiscoveryPage() {
           }
         `}</style>
       </aside>
-      {/* Pitch Deck Modal Editor */}
+      {/* Business Idea Modal */}
+      {showBusinessPlanModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            // Close modal when clicking on the overlay (not the modal content)
+            if (e.target === e.currentTarget) {
+              setShowBusinessPlanModal(false);
+            }
+          }}
+        >
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: '24px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
+          }}>
+            <button
+              onClick={() => setShowBusinessPlanModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#6b7280',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              ×
+            </button>
+            
+            <h2 style={{
+              margin: '0 0 16px 0',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#1f2937'
+            }}>
+              Your Business Plan
+            </h2>
+            
+            <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+              {/* Problem Statement */}
+              {planData?.idea?.existingIdeaText && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 12,
+                  padding: '20px',
+                  marginBottom: '16px'
+                }}>
+                  <h3 style={{
+                    margin: '0 0 12px 0',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    textTransform: 'capitalize'
+                  }}>
+                    📄 Problem Statement
+                  </h3>
+                  <div style={{
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    color: '#374151',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {planData.idea.existingIdeaText}
+                  </div>
+                </div>
+              )}
+
+              {/* Solution */}
+              {planData?.solution?.description && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 12,
+                  padding: '20px',
+                  marginBottom: '16px'
+                }}>
+                  <h3 style={{
+                    margin: '0 0 12px 0',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    textTransform: 'capitalize'
+                  }}>
+                    🎯 Solution
+                  </h3>
+                  <div style={{
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    color: '#374151',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {planData.solution.description}
+                  </div>
+                </div>
+              )}
+
+              {/* Customer Pain Points */}
+              {planData?.customer?.painPoints && (
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 12,
+                  padding: '20px',
+                  marginBottom: '16px'
+                }}>
+                  <h3 style={{
+                    margin: '0 0 12px 0',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    textTransform: 'capitalize'
+                  }}>
+                    👥 Customer Pain Points
+                  </h3>
+                  <div style={{
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    color: '#374151',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {planData.customer.painPoints}
+                  </div>
+                </div>
+              )}
+
+              {/* Other sections from planData.sections */}
+              {planData?.sections && Object.keys(planData.sections).length > 0 && 
+                Object.entries(planData.sections).map(([sectionName, content]) => (
+                  <div key={sectionName} style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 12,
+                    padding: '20px',
+                    marginBottom: '16px'
+                  }}>
+                    <h3 style={{
+                      margin: '0 0 12px 0',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      textTransform: 'capitalize'
+                    }}>
+                      📄 {sectionName}
+                    </h3>
+                    <div style={{
+                      fontSize: 15,
+                      lineHeight: 1.6,
+                      color: '#374151'
+                    }}>
+                      {(() => {
+                        const contentStr = content as string;
+                        // Check if content contains list-like patterns
+                        const lines = contentStr.split('\n');
+                        const hasListItems = lines.some(line => 
+                          line.trim().startsWith('-') || 
+                          line.trim().startsWith('•') || 
+                          line.trim().startsWith('*') ||
+                          line.trim().match(/^\d+\./) ||
+                          line.trim().match(/^[a-z]\./)
+                        );
+                        
+                        if (hasListItems) {
+                          return (
+                            <div>
+                              {lines.map((line, index) => {
+                                const trimmedLine = line.trim();
+                                const isListItem = trimmedLine.startsWith('-') || 
+                                                  trimmedLine.startsWith('•') || 
+                                                  trimmedLine.startsWith('*') ||
+                                                  trimmedLine.match(/^\d+\./) ||
+                                                  trimmedLine.match(/^[a-z]\./);
+                                
+                                if (isListItem) {
+                                  // Extract the content after the list marker
+                                  const listContent = trimmedLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/^[a-z]\.\s*/, '');
+                                  return (
+                                    <div key={index} style={{
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      marginBottom: '8px',
+                                      paddingLeft: '0'
+                                    }}>
+                                      <span style={{
+                                        marginRight: '8px',
+                                        color: '#6b7280',
+                                        fontSize: '14px',
+                                        lineHeight: '1.4'
+                                      }}>
+                                        •
+                                      </span>
+                                      <span style={{
+                                        flex: 1,
+                                        lineHeight: '1.4'
+                                      }}>
+                                        {listContent}
+                                      </span>
+                                    </div>
+                                  );
+                                } else if (trimmedLine === '') {
+                                  return <div key={index} style={{ height: '8px' }} />;
+                                } else {
+                                  return (
+                                    <div key={index} style={{
+                                      marginBottom: '12px',
+                                      lineHeight: '1.4'
+                                    }}>
+                                      {line}
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          );
+                        } else {
+                          // Regular paragraph content
+                          return contentStr;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                ))
+              }
+
+              {/* Fallback if no sections found */}
+              {(!planData?.sections || Object.keys(planData.sections).length === 0) && 
+               !planData?.idea?.existingIdeaText && 
+               !planData?.solution?.description && 
+               !planData?.customer?.painPoints && (
+                <div style={{
+                  background: '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 8,
+                  padding: '16px',
+                  fontSize: '14px',
+                  lineHeight: 1.6,
+                  color: '#374151',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {businessIdea || 'No business plan content available yet.'}
+                </div>
+              )}
+            </div>
+            
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              background: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: 8,
+              fontSize: '13px',
+              color: '#0c4a6e'
+            }}>
+              💡 <strong>Tip:</strong> This is your complete business plan. The AI analyzes this content to provide personalized recommendations and validation scores for your automated discovery process.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pitch Deck Editor Modal */}
       {showPitchDeckEditor && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.18)',
-          zIndex: 2000,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
         }}>
           <div style={{
             background: '#fff',
-            borderRadius: 16,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            width: 1100,
-            minHeight: 600,
+            borderRadius: 12,
+            padding: '24px',
+            maxWidth: '800px',
+            width: '100%',
             maxHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'row',
-            overflow: 'hidden',
-            position: 'relative',
+            overflow: 'auto',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
           }}>
-            {/* Right sidebar: all slides */}
-            <div style={{ width: 220, background: '#f7f8fa', borderLeft: '1.5px solid #eee', padding: '1.5rem 0.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>Pitch Deck Editor</h2>
+              <button
+                onClick={() => setShowPitchDeckEditor(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Slide Title:</label>
+              <input
+                type="text"
+                value={pitchDeckSlides[currentSlideIdx].title}
+                onChange={(e) => handleSlideFieldChange(currentSlideIdx, 'title', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Content:</label>
+              <textarea
+                value={pitchDeckSlides[currentSlideIdx].content}
+                onChange={(e) => handleSlideFieldChange(currentSlideIdx, 'content', e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '200px',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+                placeholder="Enter slide content..."
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               {pitchDeckSlides.map((slide, idx) => (
-                <div
-                  key={slide.key}
+                <button
+                  key={idx}
                   onClick={() => setCurrentSlideIdx(idx)}
                   style={{
-                    background: idx === currentSlideIdx ? 'linear-gradient(90deg, #5ad6ff22 0%, #5a6ee622 100%)' : '#fff',
-                    border: idx === currentSlideIdx ? '2px solid #5ad6ff' : '1.5px solid #eee',
-                    borderRadius: 10,
-                    padding: '10px 12px',
+                    padding: '8px 12px',
+                    border: idx === currentSlideIdx ? '2px solid #007AFF' : '1px solid #d1d5db',
+                    borderRadius: 6,
+                    background: idx === currentSlideIdx ? '#f0f9ff' : '#fff',
                     cursor: 'pointer',
-                    fontWeight: 600,
-                    fontSize: 15,
-                    marginBottom: 2,
-                    boxShadow: idx === currentSlideIdx ? '0 2px 8px #5ad6ff22' : undefined,
-                    transition: 'all 0.18s cubic-bezier(.4,0,.2,1)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    fontSize: '12px',
+                    fontWeight: idx === currentSlideIdx ? 600 : 400
                   }}
                 >
-                  {PITCH_DECK_SLIDES[idx].label}
-                </div>
+                  {slide.key}
+                </button>
               ))}
             </div>
-            {/* Center: current slide editor */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f7fa' }}>
-              <div style={{
-                width: 600,
-                minHeight: 340,
-                background: '#fff',
-                borderRadius: 12,
-                boxShadow: '0 4px 24px rgba(90,110,230,0.10)',
-                padding: '2.5rem 2.5rem 2rem 2.5rem',
+            
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowPitchDeckEditor(false)}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  background: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={downloadCustomPitchDeck}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: 6,
+                  background: '#007AFF',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Download Pitch Deck
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Improvement Modal with Preview Mode */}
+      {showImprovementModal && improvedSections && editableSections && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowImprovementModal(false);
+            }
+          }}
+        >
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: '24px',
+            maxWidth: '90vw',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
+          }}>
+            <button
+              onClick={() => setShowImprovementModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#6b7280',
+                width: '32px',
+                height: '32px',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                position: 'relative',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              ×
+            </button>
+            
+            <h2 style={{
+              margin: '0 0 20px 0',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#1f2937'
+            }}>
+              🤖 AI Business Plan Improvements
+            </h2>
+            
+            {/* Section Selection */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              padding: '16px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                margin: '0 0 12px 0',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#374151'
               }}>
-                <input
-                  style={{ fontSize: 26, fontWeight: 700, border: 'none', borderBottom: '2px solid #e5e5e5', marginBottom: 18, outline: 'none', background: 'transparent', padding: 2 }}
-                  value={pitchDeckSlides[currentSlideIdx].title}
-                  onChange={e => handleSlideFieldChange(currentSlideIdx, 'title', e.target.value)}
-                  placeholder={PITCH_DECK_SLIDES[currentSlideIdx].defaultTitle}
-                />
-                <textarea
-                  style={{ minHeight: 180, fontSize: 17, padding: 12, borderRadius: 8, border: '1.5px solid #e5e5e5', resize: 'vertical', background: '#fafbfc', fontWeight: 500 }}
-                  value={pitchDeckSlides[currentSlideIdx].content}
-                  onChange={e => handleSlideFieldChange(currentSlideIdx, 'content', e.target.value)}
-                  placeholder={`Enter content for ${PITCH_DECK_SLIDES[currentSlideIdx].label}...`}
-                />
-                {/* Navigation buttons */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-                  <button
-                    style={{ background: '#e5e5e5', color: '#222', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: currentSlideIdx === 0 ? 'not-allowed' : 'pointer', opacity: currentSlideIdx === 0 ? 0.5 : 1 }}
-                    onClick={() => setCurrentSlideIdx(idx => Math.max(0, idx - 1))}
-                    disabled={currentSlideIdx === 0}
-                  >
-                    Back
-                  </button>
-                  <button
-                    style={{ background: '#181a1b', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: currentSlideIdx === pitchDeckSlides.length - 1 ? 'not-allowed' : 'pointer', opacity: currentSlideIdx === pitchDeckSlides.length - 1 ? 0.5 : 1 }}
-                    onClick={() => setCurrentSlideIdx(idx => Math.min(pitchDeckSlides.length - 1, idx + 1))}
-                    disabled={currentSlideIdx === pitchDeckSlides.length - 1}
-                  >
-                    Next
-                  </button>
-                </div>
+                📋 Select Sections to Apply:
+              </h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px'
+              }}>
+                {Object.entries(selectedSections).map(([key, selected]) => (
+                  <label key={key} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: selected ? '#e0f2fe' : 'transparent',
+                    border: selected ? '1px solid #0284c7' : '1px solid #e5e7eb'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={(e) => setSelectedSections(prev => ({
+                        ...prev,
+                        [key]: e.target.checked
+                      }))}
+                      style={{ margin: 0 }}
+                    />
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: selected ? 600 : 500,
+                      color: selected ? '#0c4a6e' : '#374151'
+                    }}>
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
-            {/* Modal close and download controls */}
-            <button onClick={() => setShowPitchDeckEditor(false)} style={{ position: 'absolute', top: 18, right: 24, fontSize: 28, background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}>&times;</button>
-            <button
-              style={{ position: 'absolute', bottom: 28, right: 38, background: '#181a1b', color: '#fff', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px #181a1b22' }}
-              onClick={downloadCustomPitchDeck}
-            >
-              Download Pitch Deck
-            </button>
+            
+            {/* Section Comparisons */}
+            <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+              {Object.entries(improvedSections).map(([sectionKey, originalContent]) => {
+                const currentContent = getCurrentSectionContent(sectionKey);
+                const editableContent = editableSections[sectionKey as keyof typeof editableSections];
+                
+                return (
+                  <div key={sectionKey} style={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    marginBottom: '16px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      background: '#f9fafb',
+                      padding: '12px 16px',
+                      borderBottom: '1px solid #e5e7eb',
+                      fontWeight: 600,
+                      color: '#374151'
+                    }}>
+                      {sectionKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </div>
+                    
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '16px',
+                      padding: '16px'
+                    }}>
+                      {/* Original */}
+                      <div>
+                        <h4 style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#6b7280'
+                        }}>
+                          Original
+                        </h4>
+                        <div style={{
+                          background: '#f3f4f6',
+                          padding: '12px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          lineHeight: 1.5,
+                          color: '#6b7280',
+                          minHeight: '100px'
+                        }}>
+                          {Array.isArray(currentContent) 
+                            ? currentContent.join('\n• ')
+                            : currentContent || 'No content available'
+                          }
+                        </div>
+                      </div>
+                      
+                      {/* Improved */}
+                      <div>
+                        <h4 style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#059669'
+                        }}>
+                          AI Improved
+                        </h4>
+                        {Array.isArray(editableContent) ? (
+                          <div style={{
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            minHeight: '100px'
+                          }}>
+                            {editableContent.map((item, idx) => (
+                              <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                marginBottom: '8px'
+                              }}>
+                                <span style={{
+                                  marginRight: '8px',
+                                  color: '#059669',
+                                  fontSize: '14px'
+                                }}>•</span>
+                                <input
+                                  type="text"
+                                  value={item}
+                                  onChange={(e) => {
+                                    const newArray = [...editableContent];
+                                    newArray[idx] = e.target.value;
+                                    updateEditableSection(sectionKey, newArray);
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    border: 'none',
+                                    background: 'transparent',
+                                    fontSize: '13px',
+                                    color: '#374151',
+                                    outline: 'none'
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={editableContent as string}
+                            onChange={(e) => updateEditableSection(sectionKey, e.target.value)}
+                            style={{
+                              width: '100%',
+                              minHeight: '100px',
+                              background: '#f0fdf4',
+                              border: '1px solid #bbf7d0',
+                              borderRadius: '6px',
+                              padding: '12px',
+                              fontSize: '13px',
+                              lineHeight: 1.5,
+                              color: '#374151',
+                              resize: 'vertical',
+                              outline: 'none'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Action Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <button
+                onClick={() => setShowImprovementModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  background: '#fff',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log('Button clicked!');
+                  console.log('Button disabled:', !Object.values(selectedSections).some(Boolean));
+                  console.log('Selected sections:', selectedSections);
+                  applyImprovement();
+                }}
+                disabled={!Object.values(selectedSections).some(Boolean)}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: 6,
+                  background: Object.values(selectedSections).some(Boolean) ? '#10b981' : '#6b7280',
+                  color: '#fff',
+                  cursor: Object.values(selectedSections).some(Boolean) ? 'pointer' : 'not-allowed',
+                  fontWeight: 600
+                }}
+              >
+                Apply Selected Improvements
+              </button>
+            </div>
           </div>
         </div>
       )}

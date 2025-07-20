@@ -105,6 +105,7 @@ export function AutomatedDiscoveryPage() {
   const [completedStages, setCompletedStages] = React.useState<string[]>([]);
   const [currentSavedStage, setCurrentSavedStage] = React.useState(0);
   const [isLoadingSavedData, setIsLoadingSavedData] = React.useState(false);
+  const [showCompletedStagesModal, setShowCompletedStagesModal] = React.useState(false);
 
   // Custom setCurrentStage function that saves to localStorage
   const updateCurrentStage = React.useCallback((newStage: number) => {
@@ -2068,44 +2069,91 @@ export function AutomatedDiscoveryPage() {
       {/* This button is now moved to the main section */}
 
       {/* Progress Sidebar */}
-      <aside style={{ width: 120, background: '#fff', borderRight: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 32 }}>
-        {STAGES.map((stage, idx) => (
+      <aside style={{ width: 120, background: '#fff', borderRight: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 32, height: '100vh', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {STAGES.map((stage, idx) => (
+            <div 
+              key={stage} 
+              style={{ 
+                marginBottom: 32, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                cursor: (idx <= currentStage || completedStages.includes(idx.toString())) ? 'pointer' : 'default',
+                opacity: (idx <= currentStage || completedStages.includes(idx.toString())) ? 1 : 0.5,
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => {
+                // Allow navigation to any stage that has been reached, is current, or is completed
+                if (idx <= currentStage || completedStages.includes(idx.toString())) {
+                  handleStageNavigation(idx);
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (idx <= currentStage || completedStages.includes(idx.toString())) {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title={idx <= currentStage || completedStages.includes(idx.toString()) ? `Go to ${stage}` : `${stage} (not yet available)`}
+            >
+              <div style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: (idx < currentStage || completedStages.includes(idx.toString()))
+                  ? '#232323'
+                  : idx === currentStage
+                    ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
+                    : '#e5e5e5',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: 16,
+                marginBottom: 4,
+                boxShadow: idx === currentStage ? '0 2px 8px #5ad6ff44' : undefined,
+                transition: 'all 0.2s ease'
+              }}>{(idx < currentStage || completedStages.includes(idx.toString())) ? '✓' : idx + 1}</div>
+              <span style={{ 
+                fontSize: 12, 
+                color: idx === currentStage ? '#181a1b' : (idx < currentStage || completedStages.includes(idx.toString())) ? '#666' : '#888', 
+                textAlign: 'center', 
+                maxWidth: 80,
+                fontWeight: idx === currentStage ? 600 : 400
+              }}>{stage}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Completed Stages Icon */}
+        {completedStages.length > 0 && (
           <div 
-            key={stage} 
-            style={{ 
-              marginBottom: 32, 
-              display: 'flex', 
-              flexDirection: 'column', 
+            style={{
+              marginBottom: 32,
+              display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              cursor: (idx <= currentStage || completedStages.includes(idx.toString())) ? 'pointer' : 'default',
-              opacity: (idx <= currentStage || completedStages.includes(idx.toString())) ? 1 : 0.5,
+              cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            onClick={() => {
-              // Allow navigation to any stage that has been reached, is current, or is completed
-              if (idx <= currentStage || completedStages.includes(idx.toString())) {
-                handleStageNavigation(idx);
-              }
-            }}
+            onClick={() => setShowCompletedStagesModal(true)}
             onMouseEnter={(e) => {
-              if (idx <= currentStage || completedStages.includes(idx.toString())) {
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }
+              e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
-            title={idx <= currentStage || completedStages.includes(idx.toString()) ? `Go to ${stage}` : `${stage} (not yet available)`}
+            title="View completed stages"
           >
             <div style={{
               width: 28,
               height: 28,
               borderRadius: '50%',
-              background: (idx < currentStage || completedStages.includes(idx.toString()))
-                ? '#232323'
-                : idx === currentStage
-                  ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
-                  : '#e5e5e5',
+              background: '#10b981',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -2113,18 +2161,18 @@ export function AutomatedDiscoveryPage() {
               fontWeight: 700,
               fontSize: 16,
               marginBottom: 4,
-              boxShadow: idx === currentStage ? '0 2px 8px #5ad6ff44' : undefined,
+              boxShadow: '0 2px 8px #10b98144',
               transition: 'all 0.2s ease'
-            }}>{(idx < currentStage || completedStages.includes(idx.toString())) ? '✓' : idx + 1}</div>
+            }}>📊</div>
             <span style={{ 
-              fontSize: 12, 
-              color: idx === currentStage ? '#181a1b' : (idx < currentStage || completedStages.includes(idx.toString())) ? '#666' : '#888', 
+              fontSize: 10, 
+              color: '#10b981', 
               textAlign: 'center', 
               maxWidth: 80,
-              fontWeight: idx === currentStage ? 600 : 400
-            }}>{stage}</span>
+              fontWeight: 600
+            }}>Progress</span>
           </div>
-        ))}
+        )}
       </aside>
 
       {/* Center Visualization */}
@@ -4175,88 +4223,186 @@ export function AutomatedDiscoveryPage() {
         </div>
       )}
 
-      {/* Completed Stages Overview */}
-      {completedStages.length > 0 && (
+      {/* Completed Stages Modal */}
+      {showCompletedStagesModal && (
         <div style={{
           position: 'fixed',
-          top: '1rem',
-          right: '1rem',
-          background: '#fff',
-          borderRadius: 12,
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-          padding: '1rem',
-          maxWidth: 320,
-          zIndex: 9999,
-          border: '1px solid #e5e7eb'
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
         }}>
-          <h4 style={{
-            margin: '0 0 0.75rem 0',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            color: '#374151'
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 480,
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: '1px solid #e5e5e5',
           }}>
-            Completed Stages
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {completedStages.map((stage, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '1.5rem'
+            }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: '#181a1b',
               }}>
-                <span style={{
-                  fontSize: '0.75rem',
-                  color: '#6b7280'
+                📊 Completed Stages
+              </h3>
+              <button
+                onClick={() => setShowCompletedStagesModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0.25rem',
+                  borderRadius: '50%',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f3f4f6';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {completedStages.map((stage, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem',
+                  background: '#f9fafb',
+                  borderRadius: 8,
+                  border: '1px solid #e5e7eb'
                 }}>
-                  {STAGES[parseInt(stage)]}
-                </span>
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  <button
-                    onClick={() => {
-                      setStageToReevaluate(parseInt(stage));
-                      setShowReevaluateModal(true);
-                    }}
-                    style={{
-                      fontSize: '0.625rem',
-                      padding: '0.25rem 0.5rem',
-                      background: '#dbeafe',
-                      color: '#1d4ed8',
-                      borderRadius: 4,
-                      border: 'none',
-                      cursor: 'pointer',
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: '#10b981',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: 12
+                    }}>✓</div>
+                    <span style={{
+                      fontSize: '1rem',
+                      color: '#374151',
                       fontWeight: 500
-                    }}
-                  >
-                    Re-evaluate
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsViewingPreviousResults(true);
-                      setSkipReevaluation(true);
-                      updateCurrentStage(parseInt(stage));
-                      loadStageEvaluation(parseInt(stage));
-                      // Reset the flags after a delay to allow the data to load
-                      setTimeout(() => {
-                        setIsViewingPreviousResults(false);
-                        setSkipReevaluation(false);
-                      }, 2000);
-                    }}
-                    style={{
-                      fontSize: '0.625rem',
-                      padding: '0.25rem 0.5rem',
-                      background: '#dcfce7',
-                      color: '#16a34a',
-                      borderRadius: 4,
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontWeight: 500
-                    }}
-                  >
-                    View
-                  </button>
+                    }}>
+                      {STAGES[parseInt(stage)]}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => {
+                        setStageToReevaluate(parseInt(stage));
+                        setShowReevaluateModal(true);
+                        setShowCompletedStagesModal(false);
+                      }}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.5rem 0.75rem',
+                        background: '#dbeafe',
+                        color: '#1d4ed8',
+                        borderRadius: 6,
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#bfdbfe';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#dbeafe';
+                      }}
+                    >
+                      Re-evaluate
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsViewingPreviousResults(true);
+                        setSkipReevaluation(true);
+                        updateCurrentStage(parseInt(stage));
+                        loadStageEvaluation(parseInt(stage));
+                        setShowCompletedStagesModal(false);
+                        // Reset the flags after a delay to allow the data to load
+                        setTimeout(() => {
+                          setIsViewingPreviousResults(false);
+                          setSkipReevaluation(false);
+                        }, 2000);
+                      }}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.5rem 0.75rem',
+                        background: '#dcfce7',
+                        color: '#16a34a',
+                        borderRadius: 6,
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#bbf7d0';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#dcfce7';
+                      }}
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              background: '#f0f9ff',
+              borderRadius: 8,
+              border: '1px solid #bae6fd'
+            }}>
+              <p style={{
+                margin: 0,
+                fontSize: '0.875rem',
+                color: '#0c4a6e',
+                lineHeight: 1.5
+              }}>
+                <strong>💡 Tip:</strong> Click "View" to see your previous evaluation results, or "Re-evaluate" to generate new feedback for that stage.
+              </p>
+            </div>
           </div>
         </div>
       )}

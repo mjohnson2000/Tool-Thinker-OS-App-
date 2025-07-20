@@ -2259,7 +2259,7 @@ export function AutomatedDiscoveryPage() {
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                     <div style={{ 
-                      color: value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
+                      color: (value && value >= 7) ? '#059669' : (value && value >= 4) ? '#d97706' : '#374151',
                       fontWeight: 700,
                       fontSize: 14
                     }}>
@@ -2976,7 +2976,7 @@ export function AutomatedDiscoveryPage() {
                               {key.replace(/([A-Z])/g, ' $1').trim()}
                             </div>
                             <div style={{ 
-                              color: value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
+                              color: (value && value >= 7) ? '#059669' : (value && value >= 4) ? '#d97706' : '#374151',
                               fontWeight: 600
                             }}>
                               {value}/10

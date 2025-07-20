@@ -2159,4 +2159,314 @@ Provide improved versions of the market validation sections in this JSON format:
   }
 });
 
+// Save evaluation endpoint
+router.post('/save-evaluation', async (req, res) => {
+  try {
+    const { businessPlanId, stage, score, feedback, personas } = req.body;
+    
+    if (!businessPlanId || stage === undefined || score === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Here you would typically save to a database
+    // For now, we'll return a mock response
+    const evaluation = {
+      businessPlanId,
+      stage: stage.toString(),
+      score,
+      feedback,
+      personas,
+      completedAt: new Date(),
+      validationScore: {
+        score,
+        criteria: getStageCriteria(stage),
+        recommendations: [],
+        confidence: score >= 7 ? 'high' : score >= 4 ? 'medium' : 'low',
+        shouldProceed: score >= 7
+      }
+    };
+
+    // Mock database save - in real implementation, save to database
+    console.log('Saving evaluation:', evaluation);
+
+    // Determine completed stages based on the current stage
+    const completedStages = [];
+    for (let i = 0; i <= parseInt(stage); i++) {
+      completedStages.push(i.toString());
+    }
+
+    res.json({
+      success: true,
+      evaluation,
+      completedStages,
+      currentStage: parseInt(stage)
+    });
+
+  } catch (error) {
+    console.error('Save evaluation error:', error);
+    res.status(500).json({ error: 'Failed to save evaluation' });
+  }
+});
+
+// Load evaluation for a specific stage
+router.get('/evaluation/:businessPlanId/:stage', async (req, res) => {
+  try {
+    const { businessPlanId, stage } = req.params;
+    
+    if (!businessPlanId || stage === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Mock database retrieval - in real implementation, fetch from database
+    const mockEvaluation = {
+      businessPlanId,
+      stage: stage.toString(),
+      score: Math.floor(Math.random() * 4) + 6, // Mock score between 6-9
+      feedback: `Mock feedback for stage ${stage}`,
+      personas: [
+        {
+          id: '1',
+          name: 'Mock Persona',
+          summary: 'This is a mock persona for testing',
+          role: 'Decision Maker',
+          companySize: '10-50 employees',
+          industry: 'Technology',
+          feedback: ['Positive feedback'],
+          feedbackQuality: 'good' as const
+        }
+      ],
+      completedAt: new Date(),
+      validationScore: {
+        score: Math.floor(Math.random() * 4) + 6,
+        criteria: getStageCriteria(parseInt(stage)),
+        recommendations: ['Mock recommendation'],
+        confidence: 'medium' as const,
+        shouldProceed: true
+      }
+    };
+
+    res.json({
+      success: true,
+      evaluation: mockEvaluation
+    });
+
+  } catch (error) {
+    console.error('Load evaluation error:', error);
+    res.status(500).json({ error: 'Failed to load evaluation' });
+  }
+});
+
+// Load all evaluations for a business plan
+router.get('/load-evaluations/:businessPlanId', async (req, res) => {
+  try {
+    const { businessPlanId } = req.params;
+    
+    if (!businessPlanId) {
+      return res.status(400).json({ error: 'Missing business plan ID' });
+    }
+
+    // Mock database retrieval - in real implementation, fetch from database
+    const mockEvaluations: { [key: number]: any } = {};
+    const completedStages = [];
+    
+    // Mock data for all 7 stages (0-6, including Launch)
+    for (let stage = 0; stage <= 6; stage++) {
+      const score = Math.floor(Math.random() * 4) + 6; // Mock score between 6-9
+      mockEvaluations[stage] = {
+        businessPlanId,
+        stage: stage.toString(),
+        score,
+        feedback: `Mock feedback for stage ${stage}`,
+        personas: [
+          {
+            id: '1',
+            name: `Mock Persona ${stage + 1}`,
+            summary: `This is a mock persona for stage ${stage}`,
+            role: 'Decision Maker',
+            companySize: '10-50 employees',
+            industry: 'Technology',
+            feedback: ['Positive feedback'],
+            feedbackQuality: 'good' as const
+          }
+        ],
+        completedAt: new Date(),
+        validationScore: {
+          score,
+          criteria: getStageCriteria(stage),
+          recommendations: [`Mock recommendation for stage ${stage}`],
+          confidence: 'medium' as const,
+          shouldProceed: true
+        }
+      };
+      completedStages.push(stage.toString());
+    }
+
+    res.json({
+      success: true,
+      evaluations: mockEvaluations,
+      completedStages,
+      currentStage: 6 // Mock as completed (including Launch stage)
+    });
+
+  } catch (error) {
+    console.error('Load evaluations error:', error);
+    res.status(500).json({ error: 'Failed to load evaluations' });
+  }
+});
+
+// Re-evaluate a specific stage
+router.post('/reevaluate-stage', async (req, res) => {
+  try {
+    const { businessPlanId, stage, businessIdea, customerDescription } = req.body;
+    
+    if (!businessPlanId || stage === undefined || !businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Mock re-evaluation - in real implementation, run actual evaluation
+    const mockEvaluation = {
+      businessPlanId,
+      stage: stage.toString(),
+      score: Math.floor(Math.random() * 4) + 6, // Mock score between 6-9
+      feedback: `Re-evaluated feedback for stage ${stage}`,
+      personas: [
+        {
+          id: '1',
+          name: 'Re-evaluated Persona',
+          summary: 'This is a re-evaluated persona',
+          role: 'Decision Maker',
+          companySize: '10-50 employees',
+          industry: 'Technology',
+          feedback: ['Updated feedback'],
+          feedbackQuality: 'good' as const
+        }
+      ],
+      completedAt: new Date(),
+      validationScore: {
+        score: Math.floor(Math.random() * 4) + 6,
+        criteria: getStageCriteria(parseInt(stage)),
+        recommendations: ['Updated recommendation'],
+        confidence: 'medium' as const,
+        shouldProceed: true
+      }
+    };
+
+    res.json({
+      success: true,
+      evaluation: mockEvaluation
+    });
+
+  } catch (error) {
+    console.error('Re-evaluate stage error:', error);
+    res.status(500).json({ error: 'Failed to re-evaluate stage' });
+  }
+});
+
+// Helper function to get stage-specific criteria
+function getStageCriteria(stage: number) {
+  const baseCriteria = {
+    problemIdentification: 0,
+    problemValidation: 0,
+    problemScope: 0,
+    problemUrgency: 0,
+    problemImpact: 0,
+    customerClarity: 0,
+    customerSpecificity: 0,
+    customerRelevance: 0,
+    customerAccessibility: 0,
+    customerValue: 0,
+    struggleIdentification: 0,
+    struggleValidation: 0,
+    struggleUrgency: 0,
+    struggleFrequency: 0,
+    struggleImpact: 0,
+    solutionAlignment: 0,
+    solutionEffectiveness: 0,
+    solutionDifferentiation: 0,
+    solutionValue: 0,
+    solutionFeasibility: 0,
+    modelViability: 0,
+    revenuePotential: 0,
+    costEfficiency: 0,
+    competitiveAdvantage: 0,
+    scalability: 0,
+    marketSize: 0,
+    marketDemand: 0,
+    marketTiming: 0,
+    competitiveLandscape: 0,
+    marketAccess: 0,
+  };
+
+  // Set stage-specific criteria based on stage number
+  switch (stage) {
+    case 0: // Problem Discovery
+      return {
+        ...baseCriteria,
+        problemIdentification: 8,
+        problemValidation: 7,
+        problemScope: 7,
+        problemUrgency: 8,
+        problemImpact: 8,
+      };
+    case 1: // Customer Profile
+      return {
+        ...baseCriteria,
+        customerClarity: 8,
+        customerSpecificity: 7,
+        customerRelevance: 8,
+        customerAccessibility: 7,
+        customerValue: 8,
+      };
+    case 2: // Customer Struggle
+      return {
+        ...baseCriteria,
+        struggleIdentification: 8,
+        struggleValidation: 7,
+        struggleUrgency: 7,
+        struggleFrequency: 8,
+        struggleImpact: 8,
+      };
+    case 3: // Solution Fit
+      return {
+        ...baseCriteria,
+        solutionAlignment: 8,
+        solutionEffectiveness: 7,
+        solutionDifferentiation: 8,
+        solutionValue: 8,
+        solutionFeasibility: 7,
+      };
+    case 4: // Business Model
+      return {
+        ...baseCriteria,
+        modelViability: 8,
+        revenuePotential: 8,
+        costEfficiency: 7,
+        competitiveAdvantage: 8,
+        scalability: 7,
+      };
+    case 5: // Market Validation
+      return {
+        ...baseCriteria,
+        marketSize: 8,
+        marketDemand: 8,
+        marketTiming: 7,
+        competitiveLandscape: 7,
+        marketAccess: 8,
+      };
+    case 6: // Launch
+      return {
+        ...baseCriteria,
+        // Launch stage doesn't have specific validation criteria
+        // It's a summary/completion stage
+        problemIdentification: 8,
+        problemValidation: 8,
+        problemScope: 8,
+        problemUrgency: 8,
+        problemImpact: 8,
+      };
+    default:
+      return baseCriteria;
+  }
+}
+
 export default router; 

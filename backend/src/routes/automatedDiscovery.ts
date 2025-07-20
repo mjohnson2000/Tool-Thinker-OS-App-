@@ -221,11 +221,42 @@ const AutoImproveSchema = z.object({
   customerDescription: z.string().min(5),
   currentValidationScore: z.number().min(0).max(10),
   validationCriteria: z.object({
-    problemIdentification: z.number(),
-    problemValidation: z.number(),
-    problemScope: z.number(),
-    problemUrgency: z.number(),
-    problemImpact: z.number(),
+    // Problem Discovery criteria
+    problemIdentification: z.number().optional(),
+    problemValidation: z.number().optional(),
+    problemScope: z.number().optional(),
+    problemUrgency: z.number().optional(),
+    problemImpact: z.number().optional(),
+    // Customer Profile criteria
+    customerClarity: z.number().optional(),
+    customerSpecificity: z.number().optional(),
+    customerRelevance: z.number().optional(),
+    customerAccessibility: z.number().optional(),
+    customerValue: z.number().optional(),
+    // Customer Struggle criteria
+    struggleIdentification: z.number().optional(),
+    struggleValidation: z.number().optional(),
+    struggleUrgency: z.number().optional(),
+    struggleFrequency: z.number().optional(),
+    struggleImpact: z.number().optional(),
+    // Solution Fit criteria
+    solutionAlignment: z.number().optional(),
+    solutionEffectiveness: z.number().optional(),
+    solutionDifferentiation: z.number().optional(),
+    solutionValue: z.number().optional(),
+    solutionFeasibility: z.number().optional(),
+    // Business Model criteria
+    modelViability: z.number().optional(),
+    revenuePotential: z.number().optional(),
+    costEfficiency: z.number().optional(),
+    competitiveAdvantage: z.number().optional(),
+    scalability: z.number().optional(),
+    // Market Validation criteria
+    marketSize: z.number().optional(),
+    marketDemand: z.number().optional(),
+    marketTiming: z.number().optional(),
+    competitiveLandscape: z.number().optional(),
+    marketAccess: z.number().optional(),
   }),
   recommendations: z.array(z.string()),
   discoveredProblems: z.array(z.string()).optional(),
@@ -573,7 +604,7 @@ Return ONLY a JSON array of feedback points.`
       summary = 'Could not generate summary.';
     }
 
-    // Generate problem discovery insights for Problem Discovery stage
+    // Generate validation scores for different stages
     let validationScore = null;
     if (stage === 'Problem Discovery') {
       const industryContext = getIndustryContext(businessIdea, customerDescription);
@@ -688,6 +719,576 @@ Return as JSON:
         validationScore = JSON.parse(cleanResponse);
       } catch (e) {
         console.error('Failed to generate validation score:', e);
+      }
+    } else if (stage === 'Customer Profile') {
+      const industryContext = getIndustryContext(businessIdea, customerDescription);
+      
+      const customerProfilePrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+CUSTOMER DEVELOPMENT EXPERTISE:
+- Customer persona development and validation
+- Customer segmentation and targeting strategies
+- Customer interview and research methodologies
+- Customer journey mapping and optimization
+- Customer acquisition and retention strategies
+- Customer feedback analysis and implementation
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate customer profiles through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between real customers and assumed customers
+
+Your job is to VALIDATE customer profiles, not just rate an existing customer description.
+Focus on:
+- How well is the target customer defined?
+- Is this customer specific enough to be actionable?
+- How relevant is this customer to the business idea?
+- How accessible and reachable is this customer?
+- How valuable is this customer segment?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+        },
+        { 
+          role: 'user', 
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for CUSTOMER PROFILE validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Based on your experience building startups and coaching entrepreneurs, evaluate this customer profile through the lens of:
+
+1. Customer Clarity (1-10): How clearly and specifically is the customer defined?
+   - 1-3: Vague, unclear who the customer is (like most failed startups)
+   - 4-6: Somewhat clear customer identified (typical early-stage confusion)
+   - 7-10: Crystal clear, specific customer with evidence (like successful startups)
+
+2. Customer Specificity (1-10): How detailed and actionable is the customer profile?
+   - 1-3: Generic customer description (common startup mistake)
+   - 4-6: Some specificity but could be stronger (needs more detail)
+   - 7-10: Highly specific, actionable customer profile (validated through research)
+
+3. Customer Relevance (1-10): How relevant is this customer to the business idea?
+   - 1-3: Customer doesn't align with solution (wrong target market)
+   - 4-6: Some relevance but could be stronger (partial alignment)
+   - 7-10: Highly relevant customer for the solution (perfect fit)
+
+4. Customer Accessibility (1-10): How accessible and reachable is this customer?
+   - 1-3: Hard to reach, expensive to acquire (not viable)
+   - 4-6: Moderately accessible (viable but challenging)
+   - 7-10: Highly accessible, easy to reach (ideal customer segment)
+
+5. Customer Value (1-10): How valuable is this customer segment to the business?
+   - 1-3: Low value, not worth pursuing (not viable business)
+   - 4-6: Moderate value, worth pursuing (viable business)
+   - 7-10: High value, strong business opportunity (ideal customer)
+
+Also provide:
+- Overall customer profile score (average of all criteria)
+- 3 specific customer insights discovered (based on your startup experience)
+- 3 recommendations for better customer development (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "customerClarity": number,
+    "customerSpecificity": number,
+    "customerRelevance": number,
+    "customerAccessibility": number,
+    "customerValue": number
+  },
+  "discoveredProblems": [string],
+  "recommendations": [string],
+  "confidence": "high"|"medium"|"low",
+  "shouldProceed": boolean
+}` },
+      ];
+      try {
+        const validationResponse = await chatCompletion(customerProfilePrompt) || '';
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      } catch (e) {
+        console.error('Failed to generate customer profile validation score:', e);
+      }
+    } else if (stage === 'Customer Struggle') {
+      const industryContext = getIndustryContext(businessIdea, customerDescription);
+      
+      const customerStrugglePrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+CUSTOMER DEVELOPMENT EXPERTISE:
+- Customer pain point identification and validation
+- Jobs-to-be-Done framework implementation
+- Customer interview and research methodologies
+- Customer journey mapping and optimization
+- Customer feedback analysis and implementation
+- Problem-solution fit analysis
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate customer struggles through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between real struggles and perceived struggles
+
+Your job is to VALIDATE customer struggles, not just rate an existing struggle description.
+Focus on:
+- How well are the customer struggles identified?
+- Are these real struggles that customers actually face?
+- How urgent and frequent are these struggles?
+- How impactful are these struggles on customers?
+- What evidence supports these struggles exist?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+        },
+        { 
+          role: 'user', 
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for CUSTOMER STRUGGLE validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Based on your experience building startups and coaching entrepreneurs, evaluate this customer struggle through the lens of:
+
+1. Struggle Identification (1-10): How clearly and specifically are the customer struggles identified?
+   - 1-3: Vague, unclear what struggles customers face (like most failed startups)
+   - 4-6: Somewhat clear struggles identified (typical early-stage confusion)
+   - 7-10: Crystal clear, specific struggles with evidence (like successful startups)
+
+2. Struggle Validation (1-10): How well does this validate that struggles actually exist?
+   - 1-3: Assumes struggles exist without validation (common startup mistake)
+   - 4-6: Some validation but could be stronger (needs more customer interviews)
+   - 7-10: Strong evidence that struggles are real and impactful (validated through customer development)
+
+3. Struggle Urgency (1-10): How urgent are these struggles for customers?
+   - 1-3: Low urgency, customers can wait (not a viable startup)
+   - 4-6: Moderate urgency, customers want solutions soon (potential market)
+   - 7-10: High urgency, customers need solutions now (strong market pull)
+
+4. Struggle Frequency (1-10): How frequently do customers experience these struggles?
+   - 1-3: Rare occurrence, not worth building for (not viable)
+   - 4-6: Occasional occurrence, some market potential (viable)
+   - 7-10: Frequent occurrence, strong market demand (ideal opportunity)
+
+5. Struggle Impact (1-10): How impactful are these struggles on customers?
+   - 1-3: Minor inconvenience, low willingness to pay (not worth building)
+   - 4-6: Moderate impact, some willingness to pay (viable business)
+   - 7-10: High impact, strong willingness to pay (strong business opportunity)
+
+Also provide:
+- Overall customer struggle score (average of all criteria)
+- 3 specific struggles discovered or validated (based on your startup experience)
+- 3 recommendations for better struggle validation (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "struggleIdentification": number,
+    "struggleValidation": number,
+    "struggleUrgency": number,
+    "struggleFrequency": number,
+    "struggleImpact": number
+  },
+  "discoveredProblems": [string],
+  "recommendations": [string],
+  "confidence": "high"|"medium"|"low",
+  "shouldProceed": boolean
+}` },
+      ];
+      try {
+        const validationResponse = await chatCompletion(customerStrugglePrompt) || '';
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      } catch (e) {
+        console.error('Failed to generate customer struggle validation score:', e);
+      }
+    } else if (stage === 'Solution Fit') {
+      const industryContext = getIndustryContext(businessIdea, customerDescription);
+      
+      const solutionFitPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+PRODUCT DEVELOPMENT EXPERTISE:
+- Product-market fit analysis and validation
+- Solution design and user experience optimization
+- Feature prioritization and MVP development
+- User testing and feedback integration
+- Competitive differentiation strategies
+- Value proposition development
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate solution fit through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between good solutions and great solutions
+
+Your job is to VALIDATE solution fit, not just rate an existing solution description.
+Focus on:
+- How well does the solution align with customer needs?
+- How effective is the solution at solving the problem?
+- How differentiated is the solution from alternatives?
+- How valuable is the solution to customers?
+- How feasible is the solution to implement?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+        },
+        { 
+          role: 'user', 
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for SOLUTION FIT validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Based on your experience building startups and coaching entrepreneurs, evaluate this solution fit through the lens of:
+
+1. Solution Alignment (1-10): How well does the solution align with customer needs?
+   - 1-3: Poor alignment, doesn't address real needs (like most failed startups)
+   - 4-6: Some alignment but could be stronger (typical early-stage confusion)
+   - 7-10: Perfect alignment with customer needs (like successful startups)
+
+2. Solution Effectiveness (1-10): How effective is the solution at solving the problem?
+   - 1-3: Ineffective, doesn't solve the problem (common startup mistake)
+   - 4-6: Somewhat effective but could be better (needs improvement)
+   - 7-10: Highly effective, solves the problem completely (validated solution)
+
+3. Solution Differentiation (1-10): How differentiated is the solution from alternatives?
+   - 1-3: No differentiation, easily replaceable (not viable)
+   - 4-6: Some differentiation but could be stronger (viable but challenging)
+   - 7-10: Highly differentiated, unique value proposition (strong competitive advantage)
+
+4. Solution Value (1-10): How valuable is the solution to customers?
+   - 1-3: Low value, customers won't pay (not worth building)
+   - 4-6: Moderate value, customers might pay (viable business)
+   - 7-10: High value, customers will pay premium (strong business opportunity)
+
+5. Solution Feasibility (1-10): How feasible is the solution to implement?
+   - 1-3: Not feasible, too complex or expensive (not viable)
+   - 4-6: Moderately feasible, some challenges (viable with effort)
+   - 7-10: Highly feasible, easy to implement (ideal solution)
+
+Also provide:
+- Overall solution fit score (average of all criteria)
+- 3 specific solution insights discovered (based on your startup experience)
+- 3 recommendations for better solution development (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "solutionAlignment": number,
+    "solutionEffectiveness": number,
+    "solutionDifferentiation": number,
+    "solutionValue": number,
+    "solutionFeasibility": number
+  },
+  "discoveredProblems": [string],
+  "recommendations": [string],
+  "confidence": "high"|"medium"|"low",
+  "shouldProceed": boolean
+}` },
+      ];
+      try {
+        const validationResponse = await chatCompletion(solutionFitPrompt) || '';
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      } catch (e) {
+        console.error('Failed to generate solution fit validation score:', e);
+      }
+    } else if (stage === 'Business Model') {
+      const industryContext = getIndustryContext(businessIdea, customerDescription);
+      
+      const businessModelPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+BUSINESS MODEL EXPERTISE:
+- Revenue model design and optimization
+- Pricing strategy and market positioning
+- Cost structure and profitability analysis
+- Competitive advantage development
+- Scalability and growth planning
+- Financial modeling and projections
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate business models through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between viable and scalable business models
+
+Your job is to VALIDATE business models, not just rate an existing business model description.
+Focus on:
+- How viable is the business model?
+- What is the revenue potential?
+- How efficient is the cost structure?
+- What competitive advantages exist?
+- How scalable is the business model?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+        },
+        { 
+          role: 'user', 
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for BUSINESS MODEL validation:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Based on your experience building startups and coaching entrepreneurs, evaluate this business model through the lens of:
+
+1. Model Viability (1-10): How viable is the overall business model?
+   - 1-3: Not viable, fundamental flaws (like most failed startups)
+   - 4-6: Somewhat viable but needs work (typical early-stage confusion)
+   - 7-10: Highly viable, strong foundation (like successful startups)
+
+2. Revenue Potential (1-10): What is the revenue potential of this business model?
+   - 1-3: Low revenue potential, not worth pursuing (not viable)
+   - 4-6: Moderate revenue potential, worth pursuing (viable business)
+   - 7-10: High revenue potential, strong opportunity (ideal business model)
+
+3. Cost Efficiency (1-10): How efficient is the cost structure?
+   - 1-3: High costs, poor margins (not sustainable)
+   - 4-6: Moderate costs, acceptable margins (viable with optimization)
+   - 7-10: Low costs, high margins (ideal cost structure)
+
+4. Competitive Advantage (1-10): What competitive advantages exist?
+   - 1-3: No competitive advantages, easily replaceable (not viable)
+   - 4-6: Some competitive advantages but could be stronger (viable but challenging)
+   - 7-10: Strong competitive advantages, hard to replicate (ideal position)
+
+5. Scalability (1-10): How scalable is the business model?
+   - 1-3: Not scalable, limited growth potential (not viable)
+   - 4-6: Moderately scalable, some growth potential (viable business)
+   - 7-10: Highly scalable, strong growth potential (ideal model)
+
+Also provide:
+- Overall business model score (average of all criteria)
+- 3 specific business model insights discovered (based on your startup experience)
+- 3 recommendations for better business model development (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "modelViability": number,
+    "revenuePotential": number,
+    "costEfficiency": number,
+    "competitiveAdvantage": number,
+    "scalability": number
+  },
+  "discoveredProblems": [string],
+  "recommendations": [string],
+  "confidence": "high"|"medium"|"low",
+  "shouldProceed": boolean
+}` },
+      ];
+      try {
+        const validationResponse = await chatCompletion(businessModelPrompt) || '';
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      } catch (e) {
+        console.error('Failed to generate business model validation score:', e);
+      }
+    } else if (stage === 'Market Validation') {
+      const industryContext = getIndustryContext(businessIdea, customerDescription);
+      
+      const marketValidationPrompt = [
+        { 
+          role: 'system', 
+          content: `You are Sarah Chen, a seasoned entrepreneur and business coach with 15+ years of experience in:
+
+ENTREPRENEURIAL EXPERTISE:
+- Founded and scaled 3 successful startups (2 exits, 1 IPO)
+- Coached 200+ entrepreneurs through Y Combinator, Techstars, and 500 Startups
+- Expert in Lean Startup methodology and Customer Development
+- Specialized in Blue Ocean Strategy and disruptive innovation
+- Deep experience in startup incubation and accelerator programs
+
+MARKET RESEARCH EXPERTISE:
+- Market size analysis and TAM/SAM/SOM calculations
+- Market demand validation and customer research
+- Market timing and entry strategy analysis
+- Competitive landscape analysis
+- Market access and distribution strategies
+- Market trend analysis and forecasting
+
+INDUSTRY KNOWLEDGE:
+Industry Context: ${industryContext.marketDynamics}
+Key Validation Metrics: ${industryContext.validationMetrics}
+Common Challenges: ${industryContext.commonChallenges}
+
+YOUR APPROACH:
+You evaluate market validation through the lens of an experienced entrepreneur who has:
+- Built products from idea to market
+- Conducted hundreds of customer interviews
+- Made critical go/no-go decisions
+- Seen what makes startups succeed or fail
+- Understood the difference between good markets and great markets
+
+Your job is to VALIDATE market opportunities, not just rate an existing market description.
+Focus on:
+- What is the market size and opportunity?
+- How strong is the market demand?
+- What is the market timing and entry strategy?
+- What is the competitive landscape?
+- How accessible is the market?
+
+Market Research Methods to Consider:
+- Customer Interviews: ${MARKET_RESEARCH_METHODS.customerInterviews.description}
+- Competitive Analysis: ${MARKET_RESEARCH_METHODS.competitiveAnalysis.description}
+- Market Trends: ${MARKET_RESEARCH_METHODS.marketTrends.description}
+- TAM/SAM/SOM: ${MARKET_RESEARCH_METHODS.tamSamSom.description}`
+        },
+        { 
+          role: 'user', 
+          content: `As an experienced entrepreneur and business coach, analyze this business idea for MARKET VALIDATION:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+
+Based on your experience building startups and coaching entrepreneurs, evaluate this market validation through the lens of:
+
+1. Market Size (1-10): What is the market size and opportunity?
+   - 1-3: Small market, limited opportunity (not viable)
+   - 4-6: Moderate market, some opportunity (viable business)
+   - 7-10: Large market, significant opportunity (ideal market)
+
+2. Market Demand (1-10): How strong is the market demand?
+   - 1-3: Weak demand, customers don't want it (not viable)
+   - 4-6: Moderate demand, some customer interest (viable business)
+   - 7-10: Strong demand, customers actively seeking solutions (ideal market)
+
+3. Market Timing (1-10): What is the market timing and entry strategy?
+   - 1-3: Poor timing, market not ready (not viable)
+   - 4-6: Moderate timing, market developing (viable with patience)
+   - 7-10: Perfect timing, market ready now (ideal entry)
+
+4. Competitive Landscape (1-10): What is the competitive landscape?
+   - 1-3: Highly competitive, hard to differentiate (not viable)
+   - 4-6: Moderate competition, some differentiation possible (viable business)
+   - 7-10: Low competition, easy to differentiate (ideal market)
+
+5. Market Access (1-10): How accessible is the market?
+   - 1-3: Hard to access, expensive to reach (not viable)
+   - 4-6: Moderately accessible, some challenges (viable business)
+   - 7-10: Highly accessible, easy to reach (ideal market)
+
+Also provide:
+- Overall market validation score (average of all criteria)
+- 3 specific market insights discovered (based on your startup experience)
+- 3 recommendations for better market validation (as you would give to a founder)
+- Confidence level (high/medium/low) - your gut feeling as an experienced entrepreneur
+- Whether to proceed (score >= 7 and confidence high/medium) - your go/no-go decision
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "marketSize": number,
+    "marketDemand": number,
+    "marketTiming": number,
+    "competitiveLandscape": number,
+    "marketAccess": number
+  },
+  "discoveredProblems": [string],
+  "recommendations": [string],
+  "confidence": "high"|"medium"|"low",
+  "shouldProceed": boolean
+}` },
+      ];
+      try {
+        const validationResponse = await chatCompletion(marketValidationPrompt) || '';
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      } catch (e) {
+        console.error('Failed to generate market validation score:', e);
       }
     }
 
@@ -1044,6 +1645,517 @@ Provide improved versions of ALL sections in this JSON format:
   } catch (error) {
     console.error('Auto-improve error:', error);
     res.status(500).json({ error: 'Failed to improve business plan sections' });
+  }
+});
+
+// Customer Profile improvement endpoint
+router.post('/customer-profile-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of customer profile sections
+    const improvementPrompt = `You are an expert business consultant helping to improve the customer profile section of a business plan.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Customer Clarity: ${validationCriteria.customerClarity || validationCriteria.problemIdentification || 0}/10
+- Customer Specificity: ${validationCriteria.customerSpecificity || validationCriteria.problemValidation || 0}/10
+- Customer Relevance: ${validationCriteria.customerRelevance || validationCriteria.problemScope || 0}/10
+- Customer Accessibility: ${validationCriteria.customerAccessibility || validationCriteria.problemUrgency || 0}/10
+- Customer Value: ${validationCriteria.customerValue || validationCriteria.problemImpact || 0}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve the customer profile sections to address validation gaps and create a more specific, actionable customer description. Focus on:
+
+1. **Customer Clarity**: Make the customer description crystal clear and unambiguous
+2. **Customer Specificity**: Add specific demographics, behaviors, and characteristics
+3. **Customer Relevance**: Ensure the customer description directly relates to the business idea
+4. **Customer Accessibility**: Show how these customers can be reached and engaged
+5. **Customer Value**: Demonstrate the value these customers bring to the business
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete about customer characteristics
+- Include quantifiable demographics where possible
+- Add behavioral patterns and preferences
+- Show clear customer segments if applicable
+- Include customer pain points and motivations
+- Demonstrate how customers can be reached
+- Show the business value of serving these customers
+- Use active voice and clear language
+- Keep sections concise but comprehensive
+
+Provide improved versions of the customer profile sections in this JSON format:
+{
+  "customerDescription": "improved customer description with specific demographics and behaviors",
+  "customerSegments": ["segment 1", "segment 2", "segment 3"],
+  "customerPainPoints": ["pain point 1", "pain point 2", "pain point 3"],
+  "customerMotivations": ["motivation 1", "motivation 2", "motivation 3"],
+  "customerAccessibility": "how to reach and engage these customers",
+  "customerValue": "the business value of serving these customers"
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in customer profile development and market segmentation. You help startups create clear, specific, and actionable customer descriptions that drive business success.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved customer profile sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the customer description
+      improvedSections = {
+        customerDescription: response,
+        customerSegments: ["Customer segments will be refined"],
+        customerPainPoints: ["Customer pain points will be refined"],
+        customerMotivations: ["Customer motivations will be refined"],
+        customerAccessibility: "Customer accessibility will be enhanced",
+        customerValue: "Customer value will be clarified"
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved customer profile should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Customer profile improve error:', error);
+    res.status(500).json({ error: 'Failed to improve customer profile sections' });
+  }
+});
+
+// Customer Struggle improvement endpoint
+router.post('/customer-struggle-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of customer struggle sections
+    const improvementPrompt = `You are an expert business consultant helping to improve the customer struggle section of a business plan.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Struggle Identification: ${validationCriteria.struggleIdentification || 0}/10
+- Struggle Validation: ${validationCriteria.struggleValidation || 0}/10
+- Struggle Urgency: ${validationCriteria.struggleUrgency || 0}/10
+- Struggle Frequency: ${validationCriteria.struggleFrequency || 0}/10
+- Struggle Impact: ${validationCriteria.struggleImpact || 0}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve the customer struggle sections to address validation gaps and create more compelling, evidence-based customer pain points. Focus on:
+
+1. **Struggle Identification**: Make customer struggles crystal clear and specific
+2. **Struggle Validation**: Provide evidence that these struggles actually exist
+3. **Struggle Urgency**: Show how urgent these problems are for customers
+4. **Struggle Frequency**: Demonstrate how often customers face these problems
+5. **Struggle Impact**: Show the significant impact these problems have on customers
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete about customer struggles
+- Include quantifiable evidence where possible
+- Add behavioral patterns and pain point frequency
+- Show clear impact on customer productivity, costs, or satisfaction
+- Include customer quotes or feedback if available
+- Demonstrate urgency and willingness to pay
+- Use active voice and clear language
+- Keep sections concise but comprehensive
+
+Provide improved versions of the customer struggle sections in this JSON format:
+{
+  "customerStruggles": ["struggle 1 with evidence", "struggle 2 with evidence", "struggle 3 with evidence"],
+  "struggleEvidence": ["evidence 1", "evidence 2", "evidence 3"],
+  "struggleFrequency": "how often these struggles occur",
+  "struggleImpact": "specific impact on customers",
+  "struggleUrgency": "why customers need solutions now",
+  "customerQuotes": ["quote 1", "quote 2", "quote 3"]
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in customer pain point identification and validation. You help startups create compelling, evidence-based customer struggle descriptions that drive product development and market validation.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved customer struggle sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the customer struggles
+      improvedSections = {
+        customerStruggles: [response],
+        struggleEvidence: ["Evidence will be refined"],
+        struggleFrequency: "Frequency will be clarified",
+        struggleImpact: "Impact will be quantified",
+        struggleUrgency: "Urgency will be demonstrated",
+        customerQuotes: ["Customer quotes will be added"]
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved customer struggles should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Customer struggle improve error:', error);
+    res.status(500).json({ error: 'Failed to improve customer struggle sections' });
+  }
+});
+
+// Solution Fit improvement endpoint
+router.post('/solution-fit-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of solution fit sections
+    const improvementPrompt = `You are an expert business consultant helping to improve the solution fit section of a business plan.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Solution Alignment: ${validationCriteria.solutionAlignment || 0}/10
+- Solution Effectiveness: ${validationCriteria.solutionEffectiveness || 0}/10
+- Solution Differentiation: ${validationCriteria.solutionDifferentiation || 0}/10
+- Solution Value: ${validationCriteria.solutionValue || 0}/10
+- Solution Feasibility: ${validationCriteria.solutionFeasibility || 0}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve the solution fit sections to address validation gaps and create a more compelling, differentiated solution. Focus on:
+
+1. **Solution Alignment**: Ensure the solution perfectly matches customer needs
+2. **Solution Effectiveness**: Show how the solution effectively solves the problem
+3. **Solution Differentiation**: Highlight unique advantages over alternatives
+4. **Solution Value**: Demonstrate clear value proposition to customers
+5. **Solution Feasibility**: Show how the solution can be implemented
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete about the solution
+- Include quantifiable benefits where possible
+- Add unique features and capabilities
+- Show clear competitive advantages
+- Include implementation roadmap if relevant
+- Demonstrate customer value clearly
+- Use active voice and clear language
+- Keep sections concise but comprehensive
+
+Provide improved versions of the solution fit sections in this JSON format:
+{
+  "solutionDescription": "improved solution description with specific features",
+  "solutionFeatures": ["feature 1", "feature 2", "feature 3"],
+  "solutionBenefits": ["benefit 1", "benefit 2", "benefit 3"],
+  "competitiveAdvantages": ["advantage 1", "advantage 2", "advantage 3"],
+  "valueProposition": "clear value proposition for customers",
+  "implementationRoadmap": "how the solution will be implemented"
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in product-market fit and solution development. You help startups create compelling, differentiated solutions that effectively address customer needs and provide clear competitive advantages.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved solution fit sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the solution description
+      improvedSections = {
+        solutionDescription: response,
+        solutionFeatures: ["Features will be refined"],
+        solutionBenefits: ["Benefits will be clarified"],
+        competitiveAdvantages: ["Advantages will be highlighted"],
+        valueProposition: "Value proposition will be enhanced",
+        implementationRoadmap: "Implementation roadmap will be detailed"
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved solution fit should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Solution fit improve error:', error);
+    res.status(500).json({ error: 'Failed to improve solution fit sections' });
+  }
+});
+
+// Business Model improvement endpoint
+router.post('/business-model-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of business model sections
+    const improvementPrompt = `You are an expert business consultant helping to improve the business model section of a business plan.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Model Viability: ${validationCriteria.modelViability || 0}/10
+- Revenue Potential: ${validationCriteria.revenuePotential || 0}/10
+- Cost Efficiency: ${validationCriteria.costEfficiency || 0}/10
+- Competitive Advantage: ${validationCriteria.competitiveAdvantage || 0}/10
+- Scalability: ${validationCriteria.scalability || 0}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve the business model sections to address validation gaps and create a more viable, scalable business model. Focus on:
+
+1. **Model Viability**: Ensure the business model is fundamentally sound
+2. **Revenue Potential**: Show strong revenue generation capabilities
+3. **Cost Efficiency**: Demonstrate efficient cost structure and margins
+4. **Competitive Advantage**: Highlight sustainable competitive advantages
+5. **Scalability**: Show how the model can scale effectively
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete about revenue streams
+- Include quantifiable financial projections where possible
+- Add detailed cost structure analysis
+- Show clear competitive positioning
+- Include scalability factors and growth strategy
+- Demonstrate sustainable competitive advantages
+- Use active voice and clear language
+- Keep sections concise but comprehensive
+
+Provide improved versions of the business model sections in this JSON format:
+{
+  "revenueModel": "detailed revenue model with pricing strategy",
+  "costStructure": "efficient cost structure with breakdown",
+  "pricingStrategy": "competitive pricing strategy with justification",
+  "competitiveAdvantages": ["advantage 1", "advantage 2", "advantage 3"],
+  "scalabilityFactors": ["factor 1", "factor 2", "factor 3"],
+  "growthStrategy": "how the business will scale and grow"
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in business model design and financial planning. You help startups create viable, scalable business models with strong revenue potential and sustainable competitive advantages.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved business model sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the revenue model
+      improvedSections = {
+        revenueModel: response,
+        costStructure: "Cost structure will be detailed",
+        pricingStrategy: "Pricing strategy will be refined",
+        competitiveAdvantages: ["Advantages will be highlighted"],
+        scalabilityFactors: ["Scalability factors will be identified"],
+        growthStrategy: "Growth strategy will be developed"
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved business model should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Business model improve error:', error);
+    res.status(500).json({ error: 'Failed to improve business model sections' });
+  }
+});
+
+// Market Validation improvement endpoint
+router.post('/market-validation-improve', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+
+    // Create a comprehensive prompt for AI improvement of market validation sections
+    const improvementPrompt = `You are an expert business consultant helping to improve the market validation section of a business plan.
+
+CURRENT BUSINESS PLAN:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+CURRENT VALIDATION SCORE: ${currentValidationScore}/10
+
+VALIDATION CRITERIA SCORES:
+- Market Size: ${validationCriteria.marketSize || 0}/10
+- Market Demand: ${validationCriteria.marketDemand || 0}/10
+- Market Timing: ${validationCriteria.marketTiming || 0}/10
+- Competitive Landscape: ${validationCriteria.competitiveLandscape || 0}/10
+- Market Access: ${validationCriteria.marketAccess || 0}/10
+
+SPECIFIC RECOMMENDATIONS TO ADDRESS:
+${recommendations.map(rec => `- ${rec}`).join('\n')}
+
+${discoveredProblems && discoveredProblems.length > 0 ? `DISCOVERED PROBLEMS TO INCORPORATE:
+${discoveredProblems.map(prob => `- ${prob}`).join('\n')}` : ''}
+
+EXISTING BUSINESS PLAN SECTIONS:
+${planData?.sections ? Object.entries(planData.sections).map(([key, content]) => `${key}: ${content}`).join('\n') : 'No existing sections'}
+
+TASK: Improve the market validation sections to address validation gaps and create a more compelling market opportunity. Focus on:
+
+1. **Market Size**: Show significant market opportunity with TAM/SAM/SOM
+2. **Market Demand**: Demonstrate strong customer demand and willingness to pay
+3. **Market Timing**: Show why now is the right time to enter the market
+4. **Competitive Landscape**: Position effectively against competition
+5. **Market Access**: Show how to reach and serve the market effectively
+
+IMPROVEMENT GUIDELINES:
+- Be specific and concrete about market size
+- Include quantifiable market data where possible
+- Add detailed competitive analysis
+- Show clear market entry strategy
+- Include customer demand evidence
+- Demonstrate market timing advantages
+- Use active voice and clear language
+- Keep sections concise but comprehensive
+
+Provide improved versions of the market validation sections in this JSON format:
+{
+  "marketSize": "detailed market size analysis with TAM/SAM/SOM",
+  "marketDemand": "evidence of strong customer demand",
+  "marketTiming": "why now is the right time to enter",
+  "competitiveAnalysis": "detailed competitive landscape analysis",
+  "marketEntryStrategy": "how to enter and capture the market",
+  "customerDemand": "specific evidence of customer demand"
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are an expert business consultant specializing in market research and validation. You help startups identify compelling market opportunities with strong demand, favorable timing, and clear competitive positioning.'
+      },
+      {
+        role: 'user',
+        content: improvementPrompt
+      }
+    ], 'gpt-4', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate improved market validation sections' });
+    }
+
+    // Parse the JSON response
+    let improvedSections;
+    try {
+      improvedSections = JSON.parse(response);
+    } catch (parseError) {
+      // If JSON parsing fails, create a fallback with just the market size
+      improvedSections = {
+        marketSize: response,
+        marketDemand: "Market demand will be validated",
+        marketTiming: "Market timing will be analyzed",
+        competitiveAnalysis: "Competitive analysis will be detailed",
+        marketEntryStrategy: "Market entry strategy will be developed",
+        customerDemand: "Customer demand will be quantified"
+      };
+    }
+
+    res.json({
+      improvedSections,
+      improvements: recommendations,
+      originalScore: currentValidationScore,
+      expectedImprovement: 'The improved market validation should address validation gaps and increase the overall score.'
+    });
+
+  } catch (error) {
+    console.error('Market validation improve error:', error);
+    res.status(500).json({ error: 'Failed to improve market validation sections' });
   }
 });
 

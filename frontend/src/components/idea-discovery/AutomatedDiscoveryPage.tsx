@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import robotLottie from '../../assets/robot-lottie.json';
@@ -34,6 +34,36 @@ interface ValidationScore {
     problemScope: number;
     problemUrgency: number;
     problemImpact: number;
+    // Customer Profile criteria
+    customerClarity: number;
+    customerSpecificity: number;
+    customerRelevance: number;
+    customerAccessibility: number;
+    customerValue: number;
+    // Customer Struggle criteria
+    struggleIdentification: number;
+    struggleValidation: number;
+    struggleUrgency: number;
+    struggleFrequency: number;
+    struggleImpact: number;
+    // Solution Fit criteria
+    solutionAlignment: number;
+    solutionEffectiveness: number;
+    solutionDifferentiation: number;
+    solutionValue: number;
+    solutionFeasibility: number;
+    // Business Model criteria
+    modelViability: number;
+    revenuePotential: number;
+    costEfficiency: number;
+    competitiveAdvantage: number;
+    scalability: number;
+    // Market Validation criteria
+    marketSize: number;
+    marketDemand: number;
+    marketTiming: number;
+    competitiveLandscape: number;
+    marketAccess: number;
   };
   discoveredProblems?: string[];
   recommendations: string[];
@@ -57,7 +87,274 @@ export function AutomatedDiscoveryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [currentStage, setCurrentStage] = React.useState(0);
+  const [currentStage, setCurrentStage] = React.useState(() => {
+    // Load current stage from localStorage, default to 0
+    const savedStage = localStorage.getItem(`automated-discovery-stage-${id}`);
+    return savedStage ? parseInt(savedStage, 10) : 0;
+  });
+  
+  // Add state for re-evaluation confirmation
+  const [showReevaluationModal, setShowReevaluationModal] = React.useState(false);
+  const [pendingStageNavigation, setPendingStageNavigation] = React.useState<number | null>(null);
+  const [hasDataForStage, setHasDataForStage] = React.useState<{ [key: number]: boolean }>({});
+  const [skipReevaluation, setSkipReevaluation] = React.useState(false);
+  const [isViewingPreviousResults, setIsViewingPreviousResults] = React.useState(false);
+  
+  // Saved evaluations state
+  const [savedEvaluations, setSavedEvaluations] = React.useState<{ [key: string]: any }>({});
+  const [completedStages, setCompletedStages] = React.useState<string[]>([]);
+  const [currentSavedStage, setCurrentSavedStage] = React.useState(0);
+  const [isLoadingSavedData, setIsLoadingSavedData] = React.useState(false);
+
+  // Custom setCurrentStage function that saves to localStorage
+  const updateCurrentStage = React.useCallback((newStage: number) => {
+    setCurrentStage(newStage);
+    localStorage.setItem(`automated-discovery-stage-${id}`, newStage.toString());
+  }, [id]);
+
+  // Function to handle stage navigation with re-evaluation confirmation
+  const handleStageNavigation = React.useCallback((targetStage: number) => {
+    // If navigating forward or to current stage, proceed normally
+    if (targetStage >= currentStage) {
+      updateCurrentStage(targetStage);
+      return;
+    }
+
+    // If navigating backward and we have data for this stage, show confirmation
+    if (hasDataForStage[targetStage]) {
+      setPendingStageNavigation(targetStage);
+      setShowReevaluationModal(true);
+    } else {
+      // No data for this stage, proceed without confirmation
+      updateCurrentStage(targetStage);
+    }
+  }, [currentStage, hasDataForStage, updateCurrentStage]);
+
+  // Function to confirm re-evaluation
+  const confirmReevaluation = React.useCallback(() => {
+    if (pendingStageNavigation !== null) {
+      setSkipReevaluation(false);
+      updateCurrentStage(pendingStageNavigation);
+      setShowReevaluationModal(false);
+      setPendingStageNavigation(null);
+    }
+  }, [pendingStageNavigation, updateCurrentStage]);
+
+  // Function to view previous results without re-evaluation
+  const viewPreviousResults = React.useCallback(() => {
+    if (pendingStageNavigation !== null) {
+      setSkipReevaluation(true);
+      setIsViewingPreviousResults(true);
+      updateCurrentStage(pendingStageNavigation);
+      setShowReevaluationModal(false);
+      setPendingStageNavigation(null);
+      // Don't trigger re-evaluation - just show existing data
+      // Reset the flag after a longer delay to ensure all animations are blocked
+      setTimeout(() => {
+        setIsViewingPreviousResults(false);
+        setSkipReevaluation(false);
+      }, 3000);
+    }
+  }, [pendingStageNavigation, updateCurrentStage]);
+
+  // Load saved evaluations for this business plan
+  const loadSavedEvaluations = React.useCallback(async () => {
+    if (!id) return;
+    
+    setIsLoadingSavedData(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/automated-discovery/load-evaluations/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSavedEvaluations(data.evaluations || {});
+        setCompletedStages(data.completedStages || []);
+        setCurrentSavedStage(data.currentStage || 0);
+        
+        // Update hasDataForStage based on saved evaluations
+        const stageData: { [key: number]: boolean } = {};
+        Object.keys(data.evaluations || {}).forEach(stage => {
+          stageData[parseInt(stage)] = true;
+        });
+        setHasDataForStage(stageData);
+        
+        console.log('Loaded saved evaluations:', data);
+      }
+    } catch (error) {
+      console.error('Error loading saved evaluations:', error);
+    } finally {
+      setIsLoadingSavedData(false);
+    }
+  }, [id]);
+
+  // Save evaluation for current stage
+  const saveEvaluation = React.useCallback(async (stage: number, score: number, feedback: string, personas: any[]) => {
+    if (!id) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/automated-discovery/save-evaluation`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          businessPlanId: id,
+          stage: stage.toString(),
+          score,
+          feedback,
+          personas
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Saved evaluation:', data);
+        
+        // Update local state
+        setSavedEvaluations(prev => ({
+          ...prev,
+          [stage]: { score, feedback, personas, completedAt: new Date() }
+        }));
+        setCompletedStages(data.completedStages || []);
+        setCurrentSavedStage(data.currentStage || 0);
+        
+        // Update hasDataForStage
+        setHasDataForStage(prev => ({
+          ...prev,
+          [stage]: true
+        }));
+      }
+    } catch (error) {
+      console.error('Error saving evaluation:', error);
+    }
+  }, [id]);
+
+  // Load evaluation for a specific stage
+  const loadStageEvaluation = React.useCallback(async (stage: number) => {
+    if (!id) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/automated-discovery/evaluation/${id}/${stage}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const evaluation = data.evaluation;
+        
+        // Load the evaluation data into the UI
+        setPersonas(evaluation.personas || []);
+        
+        // Create a proper validation score object with criteria
+        const validationScoreObj = {
+          score: evaluation.score,
+          criteria: {
+            // Initialize all criteria to 0
+            problemIdentification: 0,
+            problemValidation: 0,
+            problemScope: 0,
+            problemUrgency: 0,
+            problemImpact: 0,
+            customerClarity: 0,
+            customerSpecificity: 0,
+            customerRelevance: 0,
+            customerAccessibility: 0,
+            customerValue: 0,
+            struggleIdentification: 0,
+            struggleValidation: 0,
+            struggleUrgency: 0,
+            struggleFrequency: 0,
+            struggleImpact: 0,
+            solutionAlignment: 0,
+            solutionEffectiveness: 0,
+            solutionDifferentiation: 0,
+            solutionValue: 0,
+            solutionFeasibility: 0,
+            modelViability: 0,
+            revenuePotential: 0,
+            costEfficiency: 0,
+            competitiveAdvantage: 0,
+            scalability: 0,
+            marketSize: 0,
+            marketDemand: 0,
+            marketTiming: 0,
+            competitiveLandscape: 0,
+            marketAccess: 0,
+            // Set only the relevant criteria for the current stage
+            ...(stage === 0 ? {
+              problemIdentification: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              problemValidation: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              problemScope: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              problemUrgency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              problemImpact: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 1 ? {
+              customerClarity: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerSpecificity: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerRelevance: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerAccessibility: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              customerValue: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 2 ? {
+              struggleIdentification: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              struggleValidation: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              struggleUrgency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              struggleFrequency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              struggleImpact: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 3 ? {
+              solutionAlignment: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionEffectiveness: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionDifferentiation: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              solutionValue: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionFeasibility: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+            } : {}),
+            ...(stage === 4 ? {
+              modelViability: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              revenuePotential: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              costEfficiency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              competitiveAdvantage: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              scalability: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+            } : {}),
+            ...(stage === 5 ? {
+              marketSize: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              marketDemand: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              marketTiming: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              competitiveLandscape: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              marketAccess: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+          },
+          recommendations: [],
+          confidence: 'medium' as const,
+          shouldProceed: evaluation.score >= 7
+        };
+        
+        setValidationScore(validationScoreObj);
+        setCollectiveSummary(evaluation.feedback || '');
+        
+        console.log('Loaded stage evaluation:', evaluation);
+        return evaluation;
+      }
+    } catch (error) {
+      console.error('Error loading stage evaluation:', error);
+    }
+    return null;
+  }, [id]);
+
+
+
   const [personas, setPersonas] = React.useState<Persona[]>([]);
   const [collectiveSummary, setCollectiveSummary] = React.useState('');
   const [loading, setLoading] = React.useState(true);
@@ -67,6 +364,135 @@ export function AutomatedDiscoveryPage() {
   const [logs, setLogs] = React.useState<string[]>([]);
   const logRef = React.useRef<HTMLDivElement>(null);
 
+  // Re-evaluate a specific stage
+  const reevaluateStage = React.useCallback(async (stage: number) => {
+    if (!id || !businessIdea || !customerDescription) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/automated-discovery/reevaluate-stage`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          businessPlanId: id,
+          stage: stage.toString(),
+          businessIdea,
+          customerDescription
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const evaluation = data.evaluation;
+        
+        // Update UI with new evaluation
+        setPersonas(evaluation.personas || []);
+        
+        // Create a proper validation score object with criteria
+        const validationScoreObj = {
+          score: evaluation.score,
+          criteria: {
+            // Initialize all criteria to 0
+            problemIdentification: 0,
+            problemValidation: 0,
+            problemScope: 0,
+            problemUrgency: 0,
+            problemImpact: 0,
+            customerClarity: 0,
+            customerSpecificity: 0,
+            customerRelevance: 0,
+            customerAccessibility: 0,
+            customerValue: 0,
+            struggleIdentification: 0,
+            struggleValidation: 0,
+            struggleUrgency: 0,
+            struggleFrequency: 0,
+            struggleImpact: 0,
+            solutionAlignment: 0,
+            solutionEffectiveness: 0,
+            solutionDifferentiation: 0,
+            solutionValue: 0,
+            solutionFeasibility: 0,
+            modelViability: 0,
+            revenuePotential: 0,
+            costEfficiency: 0,
+            competitiveAdvantage: 0,
+            scalability: 0,
+            marketSize: 0,
+            marketDemand: 0,
+            marketTiming: 0,
+            competitiveLandscape: 0,
+            marketAccess: 0,
+            // Set only the relevant criteria for the current stage
+            ...(stage === 0 ? {
+              problemIdentification: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              problemValidation: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              problemScope: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              problemUrgency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              problemImpact: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 1 ? {
+              customerClarity: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerSpecificity: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerRelevance: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              customerAccessibility: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              customerValue: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 2 ? {
+              struggleIdentification: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              struggleValidation: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              struggleUrgency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              struggleFrequency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              struggleImpact: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+            ...(stage === 3 ? {
+              solutionAlignment: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionEffectiveness: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionDifferentiation: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              solutionValue: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              solutionFeasibility: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+            } : {}),
+            ...(stage === 4 ? {
+              modelViability: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              revenuePotential: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              costEfficiency: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              competitiveAdvantage: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              scalability: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+            } : {}),
+            ...(stage === 5 ? {
+              marketSize: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              marketDemand: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+              marketTiming: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              competitiveLandscape: evaluation.score >= 7 ? 7 : evaluation.score >= 4 ? 5 : 3,
+              marketAccess: evaluation.score >= 7 ? 8 : evaluation.score >= 4 ? 6 : 4,
+            } : {}),
+          },
+          recommendations: [],
+          confidence: 'medium' as const,
+          shouldProceed: evaluation.score >= 7
+        };
+        
+        setValidationScore(validationScoreObj);
+        setCollectiveSummary(evaluation.feedback || '');
+        
+        // Update saved evaluations
+        setSavedEvaluations(prev => ({
+          ...prev,
+          [stage]: evaluation
+        }));
+        
+        console.log('Re-evaluated stage:', evaluation);
+        return evaluation;
+      }
+    } catch (error) {
+      console.error('Error re-evaluating stage:', error);
+    }
+    return null;
+  }, [id, businessIdea, customerDescription]);
+
   // Add state to control how many feedback bubbles are visible per persona
   const [visibleFeedbackCounts, setVisibleFeedbackCounts] = React.useState<number[]>([]);
   // Add state to track expanded/collapsed personas
@@ -74,6 +500,10 @@ export function AutomatedDiscoveryPage() {
   // Add state for collapsible summary and feedback sections
   const [showSummary, setShowSummary] = React.useState(true);
   const [showFeedback, setShowFeedback] = React.useState(true);
+  
+  // Add state for re-evaluation modal
+  const [showReevaluateModal, setShowReevaluateModal] = React.useState(false);
+  const [stageToReevaluate, setStageToReevaluate] = React.useState<number | null>(null);
   
   // Add validation scoring state
   const [validationScore, setValidationScore] = React.useState<ValidationScore | null>(null);
@@ -149,6 +579,86 @@ export function AutomatedDiscoveryPage() {
   // Add ref for progress container auto-scroll
   const progressContainerRef = React.useRef<HTMLDivElement>(null);
 
+
+  
+  // Business Model data interface and state
+  interface BusinessModelData {
+    // Business Model Canvas
+    keyPartners: string[];
+    keyActivities: string[];
+    valuePropositions: string[];
+    customerRelationships: string[];
+    customerSegments: string[];
+    keyResources: string[];
+    channels: string[];
+    costStructure: {
+      fixedCosts: number;
+      variableCosts: number;
+      costBreakdown: Record<string, number>;
+    };
+    revenueStreams: {
+      streams: Array<{
+        name: string;
+        type: 'subscription' | 'one-time' | 'freemium' | 'licensing';
+        price: number;
+        frequency: string;
+        projectedVolume: number;
+      }>;
+      totalProjectedRevenue: number;
+    };
+    
+    // Financial Metrics
+    financialProjections: {
+      monthlyRevenue: number[];
+      annualRevenue: number[];
+      grossMargin: number;
+      netMargin: number;
+      breakEvenPoint: number;
+      customerLifetimeValue: number;
+      customerAcquisitionCost: number;
+      paybackPeriod: number;
+    };
+    
+    // Competitive Analysis
+    competitiveLandscape: {
+      competitors: Array<{
+        name: string;
+        pricing: number;
+        features: string[];
+        marketShare: number;
+        strengths: string[];
+        weaknesses: string[];
+      }>;
+      competitiveAdvantages: string[];
+      differentiationStrategy: string;
+    };
+    
+    // Risk Assessment
+    riskAssessment: {
+      businessModelRisks: string[];
+      marketRisks: string[];
+      operationalRisks: string[];
+      financialRisks: string[];
+      regulatoryRisks: string[];
+      mitigationStrategies: Record<string, string>;
+    };
+    
+    // Scalability & Growth
+    scalabilityAnalysis: {
+      marketSize: {
+        tam: number; // Total Addressable Market
+        sam: number; // Serviceable Addressable Market
+        som: number; // Serviceable Obtainable Market
+      };
+      growthStrategy: string;
+      expansionPlans: string[];
+      scaleFactors: string[];
+    };
+  }
+  
+  const [businessModelData, setBusinessModelData] = useState<BusinessModelData | null>(null);
+  const [isBusinessModelComplete, setIsBusinessModelComplete] = useState(false);
+
   // Helper to toggle expand/collapse
   function togglePersonaExpand(id: string) {
     setExpandedPersonas(prev => ({ ...prev, [id]: !prev[id] }));
@@ -156,7 +666,7 @@ export function AutomatedDiscoveryPage() {
 
   // When personas or their feedback changes, reset and start sequential reveal
   React.useEffect(() => {
-    if (personas.length === 0 || !personas.some(p => p.feedback && p.feedback.length > 0)) return;
+    if (personas.length === 0 || !personas.some(p => p.feedback && p.feedback.length > 0) || skipReevaluation || isViewingPreviousResults) return;
     setVisibleFeedbackCounts(Array(personas.length).fill(0));
     let personaIdx = 0;
     let feedbackIdx = 0;
@@ -227,7 +737,7 @@ export function AutomatedDiscoveryPage() {
       setCollectiveSummary('');
       setValidationScore(null);
       setIsGeneratingValidationScore(false);
-      setCurrentStage(0);
+      // Don't reset currentStage - preserve user's progress
       setVisibleFeedbackCounts([]);
       setExpandedPersonas({});
       setShowSummary(true);
@@ -248,6 +758,9 @@ export function AutomatedDiscoveryPage() {
         setCustomerDescription(data.customer?.description || '');
         setPlanData(data);
         setLogs((prev) => [...prev, 'Business plan loaded.']);
+        
+        // Load saved evaluations after business plan is loaded
+        await loadSavedEvaluations();
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setLogs((prev) => [...prev, 'Error loading business plan.']);
@@ -260,14 +773,26 @@ export function AutomatedDiscoveryPage() {
 
   // Fetch personas when businessIdea and customerDescription are loaded
   React.useEffect(() => {
-    if (!businessIdea || !customerDescription) return;
+    if (!businessIdea || !customerDescription || isViewingPreviousResults) return;
     async function fetchPersonas() {
       setLoading(true);
       setError(null);
+      
+      // Check if we have saved evaluation data for this stage
+      if (savedEvaluations[currentStage.toString()] && !skipReevaluation && !isViewingPreviousResults) {
+        const evaluation = savedEvaluations[currentStage.toString()];
+        setPersonas(evaluation.personas || []);
+        setValidationScore({ score: evaluation.score, criteria: {} as any, recommendations: [], confidence: 'medium', shouldProceed: true });
+        setCollectiveSummary(evaluation.feedback || '');
+        setLoading(false);
+        setLogs((prev) => [...prev, 'Loaded saved evaluation for this stage.']);
+        return;
+      }
+      
       setLogs((prev) => [...prev, 'Generating AI personas...']);
       
-      // Initialize process steps for Problem Discovery
-      if (currentStage === 0) {
+      // Initialize process steps for Problem Discovery (only if not viewing previous results)
+      if (!isViewingPreviousResults && currentStage === 0) {
         setProcessSteps([
           'Analyzing business idea and customer description...',
           'Identifying industry context and market dynamics...',
@@ -278,6 +803,66 @@ export function AutomatedDiscoveryPage() {
         ]);
         setCompletedSteps([]);
         setCurrentProcessStep('Analyzing business idea and customer description...');
+      } else if (!isViewingPreviousResults && currentStage === 1) {
+        // Customer Profile stage
+        setProcessSteps([
+          'Analyzing customer segmentation and targeting...',
+          'Identifying customer demographics and psychographics...',
+          'Mapping customer journey and touchpoints...',
+          'Generating detailed customer personas...',
+          'Validating customer accessibility and reach...',
+          'Preparing customer profile assessment...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing customer segmentation and targeting...');
+      } else if (!isViewingPreviousResults && currentStage === 2) {
+        // Customer Struggle stage
+        setProcessSteps([
+          'Analyzing customer pain points and struggles...',
+          'Identifying struggle patterns and frequency...',
+          'Mapping customer journey touchpoints...',
+          'Generating struggle-focused personas...',
+          'Validating struggle urgency and impact...',
+          'Preparing customer struggle assessment...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing customer pain points and struggles...');
+      } else if (!isViewingPreviousResults && currentStage === 3) {
+        // Solution Fit stage
+        setProcessSteps([
+          'Analyzing solution alignment with customer needs...',
+          'Evaluating solution effectiveness and impact...',
+          'Assessing solution differentiation and uniqueness...',
+          'Validating solution value proposition...',
+          'Testing solution feasibility and implementation...',
+          'Preparing solution fit assessment...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing solution alignment with customer needs...');
+      } else if (!isViewingPreviousResults && currentStage === 4) {
+        // Business Model stage
+        setProcessSteps([
+          'Analyzing business model viability and sustainability...',
+          'Evaluating revenue potential and pricing strategy...',
+          'Assessing cost structure and profitability...',
+          'Validating competitive positioning and differentiation...',
+          'Testing scalability and growth potential...',
+          'Preparing business model assessment...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing business model viability and sustainability...');
+      } else if (!isViewingPreviousResults && currentStage === 5) {
+        // Market Validation stage
+        setProcessSteps([
+          'Analyzing market size and opportunity...',
+          'Evaluating market demand and readiness...',
+          'Assessing market timing and entry strategy...',
+          'Validating competitive landscape...',
+          'Testing market access and reach...',
+          'Preparing market validation assessment...'
+        ]);
+        setCompletedSteps([]);
+        setCurrentProcessStep('Analyzing market size and opportunity...');
       }
       
       try {
@@ -298,6 +883,111 @@ export function AutomatedDiscoveryPage() {
         setCompletedSteps(prev => [...prev, 'Generating realistic customer personas...']);
         setCurrentProcessStep('Preparing validation questions...');
         
+        // Stage-specific progress updates
+        if (currentStage === 0) {
+          // Problem Discovery stage
+          setCurrentProcessStep('Identifying industry context and market dynamics...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing business idea and customer description...']);
+          setCurrentProcessStep('Generating realistic customer personas...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Identifying industry context and market dynamics...']);
+          setCurrentProcessStep('Creating detailed behavioral profiles...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Generating realistic customer personas...']);
+          setCurrentProcessStep('Preparing validation questions...');
+        } else if (currentStage === 1) {
+          // Customer Profile stage
+          setCurrentProcessStep('Identifying customer demographics and psychographics...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing customer segmentation and targeting...']);
+          setCurrentProcessStep('Mapping customer journey and touchpoints...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Identifying customer demographics and psychographics...']);
+          setCurrentProcessStep('Generating detailed customer personas...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Mapping customer journey and touchpoints...']);
+          setCurrentProcessStep('Validating customer accessibility and reach...');
+        } else if (currentStage === 2) {
+          // Customer Struggle stage
+          setCurrentProcessStep('Analyzing customer pain points and struggles...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing customer pain points and struggles...']);
+          setCurrentProcessStep('Identifying struggle patterns and frequency...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Analyzing customer pain points and struggles...']);
+          setCurrentProcessStep('Mapping customer journey touchpoints...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Generating struggle-focused personas...']);
+          setCurrentProcessStep('Validating struggle urgency and impact...');
+        } else if (currentStage === 3) {
+          // Solution Fit stage
+          setCurrentProcessStep('Analyzing solution alignment with customer needs...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing solution alignment with customer needs...']);
+          setCurrentProcessStep('Evaluating solution effectiveness and impact...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Analyzing solution alignment with customer needs...']);
+          setCurrentProcessStep('Assessing solution differentiation and uniqueness...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Validating solution value proposition...']);
+          setCurrentProcessStep('Testing solution feasibility and implementation...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+          
+          setCompletedSteps(prev => [...prev, 'Preparing solution fit assessment...']);
+          setCurrentProcessStep('Finalizing solution fit assessment...');
+        } else if (currentStage === 4) {
+          // Business Model stage
+          setCurrentProcessStep('Analyzing business model viability and sustainability...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing business model viability and sustainability...']);
+          setCurrentProcessStep('Evaluating revenue potential and pricing strategy...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Analyzing business model viability and sustainability...']);
+          setCurrentProcessStep('Assessing cost structure and profitability...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Validating competitive positioning and differentiation...']);
+          setCurrentProcessStep('Testing scalability and growth potential...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+          
+          setCompletedSteps(prev => [...prev, 'Preparing business model assessment...']);
+          setCurrentProcessStep('Finalizing business model assessment...');
+        } else if (currentStage === 5) {
+          // Market Validation stage
+          setCurrentProcessStep('Analyzing market size and opportunity...');
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          setCompletedSteps(['Analyzing market size and opportunity...']);
+          setCurrentProcessStep('Evaluating market demand and readiness...');
+          await new Promise(resolve => setTimeout(resolve, 600));
+          
+          setCompletedSteps(prev => [...prev, 'Evaluating market demand and readiness...']);
+          setCurrentProcessStep('Assessing market timing and entry strategy...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setCompletedSteps(prev => [...prev, 'Validating competitive landscape...']);
+          setCurrentProcessStep('Testing market access and reach...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+          
+          setCompletedSteps(prev => [...prev, 'Preparing market validation assessment...']);
+          setCurrentProcessStep('Finalizing market validation assessment...');
+        }
+        
         const res = await fetch(`${API_URL}/automated-discovery/personas`, {
           method: 'POST',
           headers: {
@@ -314,6 +1004,33 @@ export function AutomatedDiscoveryPage() {
         setCompletedSteps(prev => [...prev, 'Creating detailed behavioral profiles...', 'Preparing validation questions...']);
         setCurrentProcessStep('Personas ready for feedback generation...');
         await new Promise(resolve => setTimeout(resolve, 400));
+        
+        // Stage-specific completion steps
+        if (currentStage === 0) {
+          setCompletedSteps(prev => [...prev, 'Creating detailed behavioral profiles...', 'Preparing validation questions...']);
+          setCurrentProcessStep('Personas ready for feedback generation...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+        } else if (currentStage === 1) {
+          setCompletedSteps(prev => [...prev, 'Generating detailed customer personas...', 'Validating customer accessibility and reach...']);
+          setCurrentProcessStep('Preparing customer profile assessment...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+        } else if (currentStage === 2) {
+          setCompletedSteps(prev => [...prev, 'Generating struggle-focused personas...', 'Validating struggle urgency and impact...']);
+          setCurrentProcessStep('Preparing customer struggle assessment...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+        } else if (currentStage === 3) {
+          setCompletedSteps(prev => [...prev, 'Finalizing solution fit assessment...']);
+          setCurrentProcessStep('Preparing recommendations and insights...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } else if (currentStage === 4) {
+          setCompletedSteps(prev => [...prev, 'Finalizing business model assessment...']);
+          setCurrentProcessStep('Preparing recommendations and insights...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } else if (currentStage === 5) {
+          setCompletedSteps(prev => [...prev, 'Finalizing market validation assessment...']);
+          setCurrentProcessStep('Preparing recommendations and insights...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
         
         setPersonas(data.personas.map((p: any) => ({ ...p, feedback: [] })));
         setLogs((prev) => [...prev, 'AI personas generated.']);
@@ -336,11 +1053,40 @@ export function AutomatedDiscoveryPage() {
       }
     }
     fetchPersonas();
-  }, [businessIdea, customerDescription]);
+  }, [currentStage, businessIdea, customerDescription]);
 
   // Fetch feedback for current stage
   React.useEffect(() => {
     if (personas.length === 0 || !businessIdea || !customerDescription) return;
+    
+    // If skipReevaluation is true, we still want to load existing data but not trigger new evaluation
+    if (skipReevaluation || isViewingPreviousResults) {
+      // Load existing validation score from localStorage or cached data
+      const cachedValidationScore = localStorage.getItem(`validation-score-${id}-${currentStage}`);
+      if (cachedValidationScore) {
+        try {
+          const score = JSON.parse(cachedValidationScore);
+          setValidationScore(score);
+        } catch (err) {
+          console.log('Could not parse cached validation score:', err);
+        }
+      }
+      // Also load cached personas and feedback if available
+      const cachedPersonas = localStorage.getItem(`personas-${id}-${currentStage}`);
+      if (cachedPersonas) {
+        try {
+          const personas = JSON.parse(cachedPersonas);
+          setPersonas(personas);
+        } catch (err) {
+          console.log('Could not parse cached personas:', err);
+        }
+      }
+      const cachedSummary = localStorage.getItem(`summary-${id}-${currentStage}`);
+      if (cachedSummary) {
+        setCollectiveSummary(cachedSummary);
+      }
+      return;
+    }
     async function fetchFeedback() {
       setLoading(true);
       setError(null);
@@ -362,26 +1108,55 @@ export function AutomatedDiscoveryPage() {
             stage: STAGES[currentStage],
             businessIdea,
             customerDescription,
+            businessPlanId: id, // Pass the business plan ID for saving data
           }),
           credentials: 'include'
         });
         if (!res.ok) throw new Error('Failed to fetch feedback');
         const data = await res.json();
-        setPersonas((prev) => prev.map((p) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) })));
+        setPersonas((prev) => {
+          const updatedPersonas = prev.map((p: any) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) }));
+          
+          // Save evaluation to database
+          if (data.validationScore) {
+            const score = data.validationScore.score || 0;
+            const feedback = data.summary || '';
+            saveEvaluation(currentStage, score, feedback, updatedPersonas);
+          }
+          
+          return updatedPersonas;
+        });
         setCollectiveSummary(data.summary);
+        
         if (data.validationScore) {
           setValidationScore(data.validationScore);
         }
-        setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded.`]);
+        // Mark this stage as having data
+        setHasDataForStage(prev => ({ ...prev, [currentStage]: true }));
+        setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded and saved.`]);
       } catch (err: any) {
         setError(err.message || 'Unknown error');
         setLogs((prev) => [...prev, 'Error fetching feedback.']);
       } finally {
         setLoading(false);
+        // Reset skip flag after processing (but only if we're not in the middle of viewing previous results)
+        if (skipReevaluation && !showReevaluationModal) {
+          setSkipReevaluation(false);
+        }
       }
     }
+    
+    // Check if all stages are completed and we have saved data for the current stage
+    if (completedStages.length === STAGES.length && savedEvaluations[currentStage.toString()]) {
+      // All stages are completed, just load the saved data for current stage
+      console.log('All stages completed, loading saved data for current stage');
+      loadStageEvaluation(currentStage);
+      setLoading(false);
+      return;
+    }
+    
     fetchFeedback();
-  }, [currentStage, personas.length, businessIdea, customerDescription]);
+  }, [currentStage, personas.length, businessIdea, customerDescription, id, skipReevaluation, completedStages.length, savedEvaluations]);
 
   // Extract fetchFeedback as a standalone function
   async function fetchFeedback() {
@@ -392,6 +1167,16 @@ export function AutomatedDiscoveryPage() {
     
     if (personas.length === 0 || !businessIdea || !customerDescription) {
       console.log('Early return from fetchFeedback - missing data');
+      // Reset validation score generation flag on early return
+      setIsGeneratingValidationScore(false);
+      return;
+    }
+    
+    // Early return if viewing previous results or skipping re-evaluation
+    if (skipReevaluation || isViewingPreviousResults) {
+      console.log('Early return from fetchFeedback - viewing previous results or skipping re-evaluation');
+      // Reset validation score generation flag on early return
+      setIsGeneratingValidationScore(false);
       return;
     }
     
@@ -399,23 +1184,87 @@ export function AutomatedDiscoveryPage() {
     setError(null);
     setLogs((prev) => [...prev, `Getting feedback for stage: ${STAGES[currentStage]}...`]);
     
-    // Initialize feedback generation steps
-    if (currentStage === 0) {
+          // Initialize feedback generation steps (only if not skipping re-evaluation)
+      if (!skipReevaluation && !isViewingPreviousResults) {
+        if (currentStage === 0) {
+          setProcessSteps([
+            'Analyzing customer personas and business context...',
+            'Generating problem-focused feedback from each persona...',
+            'Validating problem identification and scope...',
+            'Assessing problem urgency and impact...',
+            'Calculating expert validation score...',
+            'Preparing recommendations and insights...'
+          ]);
+          setCompletedSteps([]);
+          setCurrentProcessStep('Analyzing customer personas and business context...');
+    } else if (currentStage === 1) {
+      // Customer Profile feedback generation
       setProcessSteps([
-        'Analyzing customer personas and business context...',
-        'Generating problem-focused feedback from each persona...',
-        'Validating problem identification and scope...',
-        'Assessing problem urgency and impact...',
+        'Analyzing customer personas and profile data...',
+        'Generating customer-focused feedback from each persona...',
+        'Validating customer clarity and specificity...',
+        'Assessing customer relevance and accessibility...',
+        'Calculating customer profile validation score...',
+        'Preparing customer development recommendations...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing customer personas and profile data...');
+    } else if (currentStage === 2) {
+      // Customer Struggle feedback generation
+      setProcessSteps([
+        'Analyzing customer pain points and struggles...',
+        'Generating struggle-focused feedback from each persona...',
+        'Validating struggle identification and scope...',
+        'Assessing struggle urgency and impact...',
         'Calculating expert validation score...',
         'Preparing recommendations and insights...'
       ]);
       setCompletedSteps([]);
-      setCurrentProcessStep('Analyzing customer personas and business context...');
+      setCurrentProcessStep('Analyzing customer pain points and struggles...');
+    } else if (currentStage === 3) {
+      // Solution Fit feedback generation
+      setProcessSteps([
+        'Analyzing solution alignment with customer needs...',
+        'Evaluating solution effectiveness and impact...',
+        'Assessing solution differentiation and uniqueness...',
+        'Validating solution value proposition...',
+        'Testing solution feasibility and implementation...',
+        'Preparing solution fit assessment...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing solution alignment with customer needs...');
+    } else if (currentStage === 4) {
+      // Business Model feedback generation
+      setProcessSteps([
+        'Analyzing business model viability and sustainability...',
+        'Evaluating revenue potential and pricing strategy...',
+        'Assessing cost structure and profitability...',
+        'Validating competitive positioning and differentiation...',
+        'Testing scalability and growth potential...',
+        'Preparing business model assessment...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing business model viability and sustainability...');
+    } else if (currentStage === 5) {
+      // Market Validation feedback generation
+      setProcessSteps([
+        'Analyzing market size and opportunity...',
+        'Evaluating market demand and readiness...',
+        'Assessing market timing and entry strategy...',
+        'Validating competitive landscape...',
+        'Testing market access and reach...',
+        'Preparing market validation assessment...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing market size and opportunity...');
+    }
     }
     
     try {
       const token = localStorage.getItem('token');
       console.log('Making feedback request to:', `${API_URL}/automated-discovery/feedback`);
+      console.log('Stage being sent:', STAGES[currentStage]);
+      console.log('Current stage index:', currentStage);
       
       // Update progress
       setCurrentProcessStep('Generating problem-focused feedback from each persona...');
@@ -424,6 +1273,81 @@ export function AutomatedDiscoveryPage() {
       setCompletedSteps(['Analyzing customer personas and business context...']);
       setCurrentProcessStep('Validating problem identification and scope...');
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Stage-specific progress updates
+      if (currentStage === 0) {
+        // Problem Discovery stage
+        setCurrentProcessStep('Generating problem-focused feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing customer personas and business context...']);
+        setCurrentProcessStep('Validating problem identification and scope...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else if (currentStage === 1) {
+        // Customer Profile stage
+        setCurrentProcessStep('Generating customer-focused feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing customer personas and profile data...']);
+        setCurrentProcessStep('Validating customer clarity and specificity...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else if (currentStage === 2) {
+        // Customer Struggle stage
+        setCurrentProcessStep('Generating struggle-focused feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing customer pain points and struggles...']);
+        setCurrentProcessStep('Validating struggle identification and scope...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else if (currentStage === 3) {
+        // Solution Fit stage
+        setCurrentProcessStep('Generating solution-focused feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing solution alignment with customer needs...']);
+        setCurrentProcessStep('Evaluating solution effectiveness and impact...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setCompletedSteps(prev => [...prev, 'Analyzing solution differentiation and uniqueness...']);
+        setCurrentProcessStep('Validating solution value proposition...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Testing solution feasibility and implementation...']);
+        setCurrentProcessStep('Preparing solution fit assessment...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 4) {
+        // Business Model stage
+        setCurrentProcessStep('Generating business model feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing business model viability and sustainability...']);
+        setCurrentProcessStep('Evaluating revenue potential and pricing strategy...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing cost structure and profitability...']);
+        setCurrentProcessStep('Validating competitive positioning and differentiation...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Testing scalability and growth potential...']);
+        setCurrentProcessStep('Preparing business model assessment...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 5) {
+        // Market Validation stage
+        setCurrentProcessStep('Generating market validation feedback from each persona...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setCompletedSteps(['Analyzing market size and opportunity...']);
+        setCurrentProcessStep('Evaluating market demand and readiness...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing market timing and entry strategy...']);
+        setCurrentProcessStep('Validating competitive landscape...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Testing market access and reach...']);
+        setCurrentProcessStep('Preparing market validation assessment...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
       
       // Add timeout to prevent infinite hanging
       const controller = new AbortController();
@@ -444,6 +1368,7 @@ export function AutomatedDiscoveryPage() {
           stage: STAGES[currentStage],
           businessIdea,
           customerDescription,
+          businessPlanId: id, // Pass the business plan ID for saving data
         }),
         credentials: 'include',
         signal: controller.signal
@@ -470,16 +1395,103 @@ export function AutomatedDiscoveryPage() {
       setCurrentProcessStep('Calculating expert validation score...');
       await new Promise(resolve => setTimeout(resolve, 300));
       
+      // Stage-specific completion steps
+      if (currentStage === 0) {
+        // Problem Discovery stage
+        setCompletedSteps(prev => [...prev, 'Generating problem-focused feedback from each persona...', 'Validating problem identification and scope...']);
+        setCurrentProcessStep('Assessing problem urgency and impact...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing problem urgency and impact...']);
+        setCurrentProcessStep('Calculating expert validation score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 1) {
+        // Customer Profile stage
+        setCompletedSteps(prev => [...prev, 'Generating customer-focused feedback from each persona...', 'Validating customer clarity and specificity...']);
+        setCurrentProcessStep('Assessing customer relevance and accessibility...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing customer relevance and accessibility...']);
+        setCurrentProcessStep('Calculating customer profile validation score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 2) {
+        // Customer Struggle stage
+        setCompletedSteps(prev => [...prev, 'Generating struggle-focused feedback from each persona...', 'Validating struggle identification and scope...']);
+        setCurrentProcessStep('Assessing struggle urgency and impact...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing struggle urgency and impact...']);
+        setCurrentProcessStep('Calculating expert validation score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 3) {
+        // Solution Fit stage
+        setCompletedSteps(prev => [...prev, 'Generating solution-focused feedback from each persona...', 'Validating solution value proposition...']);
+        setCurrentProcessStep('Assessing solution fit and impact...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing solution fit and impact...']);
+        setCurrentProcessStep('Calculating solution fit score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 4) {
+        // Business Model stage
+        setCompletedSteps(prev => [...prev, 'Generating business model feedback from each persona...', 'Validating business model viability and sustainability...']);
+        setCurrentProcessStep('Assessing business model viability and sustainability...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing business model viability and sustainability...']);
+        setCurrentProcessStep('Calculating business model validation score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else if (currentStage === 5) {
+        // Market Validation stage
+        setCompletedSteps(prev => [...prev, 'Generating market validation feedback from each persona...', 'Validating market size and opportunity...']);
+        setCurrentProcessStep('Assessing market demand and readiness...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        setCompletedSteps(prev => [...prev, 'Assessing market demand and readiness...']);
+        setCurrentProcessStep('Calculating market validation score...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
       setPersonas((prev) => prev.map((p) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) })));
       setCollectiveSummary(data.summary);
       if (data.validationScore) {
+        console.log('Setting validation score for stage', currentStage, ':', data.validationScore);
         setValidationScore(data.validationScore);
         console.log('Updated validation score:', data.validationScore);
+      } else {
+        console.log('No validation score received for stage', currentStage);
       }
       
       setCompletedSteps(prev => [...prev, 'Calculating expert validation score...']);
       setCurrentProcessStep('Preparing recommendations and insights...');
       await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Stage-specific final completion step
+      if (currentStage === 0) {
+        setCompletedSteps(prev => [...prev, 'Calculating expert validation score...']);
+        setCurrentProcessStep('Preparing recommendations and insights...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else if (currentStage === 1) {
+        setCompletedSteps(prev => [...prev, 'Calculating customer profile validation score...']);
+        setCurrentProcessStep('Preparing customer development recommendations...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else if (currentStage === 2) {
+        setCompletedSteps(prev => [...prev, 'Calculating struggle-focused validation score...']);
+        setCurrentProcessStep('Preparing recommendations and insights...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else if (currentStage === 3) {
+        setCompletedSteps(prev => [...prev, 'Calculating solution fit score...']);
+        setCurrentProcessStep('Preparing recommendations and insights...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else if (currentStage === 4) {
+        setCompletedSteps(prev => [...prev, 'Calculating business model validation score...']);
+        setCurrentProcessStep('Preparing recommendations and insights...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else if (currentStage === 5) {
+        setCompletedSteps(prev => [...prev, 'Calculating market validation score...']);
+        setCurrentProcessStep('Preparing recommendations and insights...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
       
       setLogs((prev) => [...prev, `Feedback for stage "${STAGES[currentStage]}" loaded.`]);
       console.log('fetchFeedback completed successfully');
@@ -510,39 +1522,66 @@ export function AutomatedDiscoveryPage() {
     }
   }
 
-  // Persist discovery data after each stage
-  React.useEffect(() => {
-    if (!businessIdea || !customerDescription || personas.length === 0) return;
-    async function persistDiscoveryData() {
-      try {
-        const token = localStorage.getItem('token');
-        // TODO: Create discovery-data endpoint in backend
-        // await fetch(`${API_URL}/business-plan/${id}/discovery-data`, {
-        //   method: 'PUT',
-        //   headers: {
-        //     'Authorization': token ? `Bearer ${token}` : '',
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify({
-        //     stage: STAGES[currentStage],
-        //     personas,
-        //     summary: collectiveSummary,
-        //     businessIdea,
-        //     customerDescription,
-        //     logs,
-        //   }),
-        //   credentials: 'include'
-        // });
-        console.log('Discovery data persistence temporarily disabled - endpoint not implemented');
-      } catch (err) {
-        // Optionally handle error
-        console.error('Failed to persist discovery data', err);
-      }
+  // Helper function to get validation criteria based on current stage
+  function getValidationCriteria(validationScore: ValidationScore) {
+    if (currentStage === 0) {
+      // Problem Discovery stage
+      return {
+        problemIdentification: validationScore.criteria.problemIdentification,
+        problemValidation: validationScore.criteria.problemValidation,
+        problemScope: validationScore.criteria.problemScope,
+        problemUrgency: validationScore.criteria.problemUrgency,
+        problemImpact: validationScore.criteria.problemImpact,
+      };
+    } else if (currentStage === 1) {
+      // Customer Profile stage
+      return {
+        customerClarity: validationScore.criteria.customerClarity,
+        customerSpecificity: validationScore.criteria.customerSpecificity,
+        customerRelevance: validationScore.criteria.customerRelevance,
+        customerAccessibility: validationScore.criteria.customerAccessibility,
+        customerValue: validationScore.criteria.customerValue,
+      };
+    } else if (currentStage === 2) {
+      // Customer Struggle stage
+      return {
+        struggleIdentification: validationScore.criteria.struggleIdentification,
+        struggleValidation: validationScore.criteria.struggleValidation,
+        struggleUrgency: validationScore.criteria.struggleUrgency,
+        struggleFrequency: validationScore.criteria.struggleFrequency,
+        struggleImpact: validationScore.criteria.struggleImpact,
+      };
+    } else if (currentStage === 3) {
+      // Solution Fit stage
+      return {
+        solutionAlignment: validationScore.criteria.solutionAlignment,
+        solutionEffectiveness: validationScore.criteria.solutionEffectiveness,
+        solutionDifferentiation: validationScore.criteria.solutionDifferentiation,
+        solutionValue: validationScore.criteria.solutionValue,
+        solutionFeasibility: validationScore.criteria.solutionFeasibility,
+      };
+    } else if (currentStage === 4) {
+      // Business Model stage
+      return {
+        modelViability: validationScore.criteria.modelViability,
+        revenuePotential: validationScore.criteria.revenuePotential,
+        costEfficiency: validationScore.criteria.costEfficiency,
+        competitiveAdvantage: validationScore.criteria.competitiveAdvantage,
+        scalability: validationScore.criteria.scalability,
+      };
+    } else if (currentStage === 5) {
+      // Market Validation stage
+      return {
+        marketSize: validationScore.criteria.marketSize,
+        marketDemand: validationScore.criteria.marketDemand,
+        marketTiming: validationScore.criteria.marketTiming,
+        competitiveLandscape: validationScore.criteria.competitiveLandscape,
+        marketAccess: validationScore.criteria.marketAccess,
+      };
     }
-    persistDiscoveryData();
-  }, [currentStage, personas, collectiveSummary, businessIdea, customerDescription, logs, id]);
-
-
+    // Default to all criteria
+    return validationScore.criteria;
+  }
 
   // Handlers for Launch stage buttons
   function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
@@ -602,9 +1641,11 @@ export function AutomatedDiscoveryPage() {
     setCurrentSlideIdx(0);
     setShowPitchDeckEditor(true);
   }
+
   function handleSlideFieldChange(idx: number, field: 'title' | 'content', value: string) {
     setPitchDeckSlides(prev => prev.map((slide, i) => i === idx ? { ...slide, [field]: value } : slide));
   }
+
   function downloadCustomPitchDeck() {
     if (!id) return;
     const slidesObj: Record<string, string> = {};
@@ -664,6 +1705,21 @@ export function AutomatedDiscoveryPage() {
     setCompletedSteps([]);
     setCurrentProcessStep('Analyzing current validation scores and recommendations...');
     
+    // Add Customer Profile specific process steps
+    if (currentStage === 1) {
+      setProcessSteps([
+        'Analyzing current customer profile validation scores...',
+        'Identifying customer profile improvement opportunities...',
+        'Generating enhanced customer clarity and specificity...',
+        'Creating improved customer relevance and accessibility...',
+        'Refining customer value proposition and targeting...',
+        'Updating customer journey and touchpoint analysis...',
+        'Preparing comprehensive customer profile improvements...'
+      ]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('Analyzing current customer profile validation scores...');
+    }
+    
     try {
       const token = localStorage.getItem('token');
       
@@ -690,7 +1746,31 @@ export function AutomatedDiscoveryPage() {
       setCompletedSteps(prev => [...prev, 'Refining customer pain points and value proposition...']);
       setCurrentProcessStep('Preparing comprehensive business plan improvements...');
       
-      const res = await fetch(`${API_URL}/automated-discovery/auto-improve`, {
+      // Use stage-specific endpoints for different stages
+      let endpoint;
+      switch (currentStage) {
+        case 0: // Problem Discovery
+          endpoint = 'improve-problem';
+          break;
+        case 1: // Customer Profile
+          endpoint = 'customer-profile-improve';
+          break;
+        case 2: // Customer Struggle
+          endpoint = 'customer-struggle-improve';
+          break;
+        case 3: // Solution Fit
+          endpoint = 'solution-fit-improve';
+          break;
+        case 4: // Business Model
+          endpoint = 'business-model-improve';
+          break;
+        case 5: // Market Validation
+          endpoint = 'market-validation-improve';
+          break;
+        default:
+          endpoint = 'auto-improve';
+      }
+      const res = await fetch(`${API_URL}/automated-discovery/${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -708,7 +1788,11 @@ export function AutomatedDiscoveryPage() {
         credentials: 'include'
       });
       
-      if (!res.ok) throw new Error('Failed to improve business plan');
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Auto-improve failed:', res.status, errorText);
+        throw new Error(`Failed to improve business plan: ${res.status} ${errorText}`);
+      }
       
       const data = await res.json();
       
@@ -921,7 +2005,12 @@ export function AutomatedDiscoveryPage() {
       
       // Trigger re-validation
       setIsGeneratingValidationScore(true);
-      await fetchFeedback();
+      try {
+        await fetchFeedback();
+      } finally {
+        // Always reset the validation score generation flag
+        setIsGeneratingValidationScore(false);
+      }
       
       setCompletedSteps(prev => [...prev, 'Generating updated validation scores...']);
       setCurrentProcessStep('Finalizing improvement application...');
@@ -981,12 +2070,38 @@ export function AutomatedDiscoveryPage() {
       {/* Progress Sidebar */}
       <aside style={{ width: 120, background: '#fff', borderRight: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 32 }}>
         {STAGES.map((stage, idx) => (
-          <div key={stage} style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div 
+            key={stage} 
+            style={{ 
+              marginBottom: 32, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              cursor: (idx <= currentStage || completedStages.includes(idx.toString())) ? 'pointer' : 'default',
+              opacity: (idx <= currentStage || completedStages.includes(idx.toString())) ? 1 : 0.5,
+              transition: 'all 0.2s ease'
+            }}
+            onClick={() => {
+              // Allow navigation to any stage that has been reached, is current, or is completed
+              if (idx <= currentStage || completedStages.includes(idx.toString())) {
+                handleStageNavigation(idx);
+              }
+            }}
+            onMouseEnter={(e) => {
+              if (idx <= currentStage || completedStages.includes(idx.toString())) {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title={idx <= currentStage || completedStages.includes(idx.toString()) ? `Go to ${stage}` : `${stage} (not yet available)`}
+          >
             <div style={{
               width: 28,
               height: 28,
               borderRadius: '50%',
-              background: idx < currentStage
+              background: (idx < currentStage || completedStages.includes(idx.toString()))
                 ? '#232323'
                 : idx === currentStage
                   ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
@@ -999,8 +2114,15 @@ export function AutomatedDiscoveryPage() {
               fontSize: 16,
               marginBottom: 4,
               boxShadow: idx === currentStage ? '0 2px 8px #5ad6ff44' : undefined,
-            }}>{idx < currentStage ? '✓' : idx + 1}</div>
-            <span style={{ fontSize: 12, color: idx === currentStage ? '#181a1b' : '#888', textAlign: 'center', maxWidth: 80 }}>{stage}</span>
+              transition: 'all 0.2s ease'
+            }}>{(idx < currentStage || completedStages.includes(idx.toString())) ? '✓' : idx + 1}</div>
+            <span style={{ 
+              fontSize: 12, 
+              color: idx === currentStage ? '#181a1b' : (idx < currentStage || completedStages.includes(idx.toString())) ? '#666' : '#888', 
+              textAlign: 'center', 
+              maxWidth: 80,
+              fontWeight: idx === currentStage ? 600 : 400
+            }}>{stage}</span>
           </div>
         ))}
       </aside>
@@ -1062,7 +2184,7 @@ export function AutomatedDiscoveryPage() {
         </div>
         
         {/* Validation Score Display - Center Top */}
-        {currentStage === 0 && (validationScore || isGeneratingValidationScore) && (
+        {(currentStage === 0 || currentStage === 1 || currentStage === 2 || currentStage === 3 || currentStage === 4 || currentStage === 5) && (validationScore || isGeneratingValidationScore) && (
           <div style={{ 
             width: 420, 
             marginBottom: 16,
@@ -1124,7 +2246,7 @@ export function AutomatedDiscoveryPage() {
             
             {validationScore && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {Object.entries(validationScore.criteria).map(([key, value]) => (
+                {Object.entries(getValidationCriteria(validationScore)).map(([key, value]) => (
                   <div key={key} style={{ 
                     background: '#fff', 
                     padding: '10px 12px', 
@@ -1546,12 +2668,20 @@ export function AutomatedDiscoveryPage() {
                 if (validationScore && !validationScore.shouldProceed) {
                   return; // Prevent progression
                 }
-                setCurrentStage((s) => Math.min(s + 1, STAGES.length - 1));
+                updateCurrentStage(Math.min(currentStage + 1, STAGES.length - 1));
               }}
               disabled={validationScore ? !validationScore.shouldProceed : false}
             >
               {validationScore && !validationScore.shouldProceed 
-                ? 'Please improve your problem statement first' 
+                ? currentStage === 0 
+                  ? 'Please improve your problem statement first' 
+                  : currentStage === 1
+                    ? 'Please improve your customer profile first'
+                    : currentStage === 2
+                      ? 'Please improve your customer struggles first'
+                      : currentStage === 3
+                        ? 'Please improve your solution fit first'
+                        : 'Please improve your business model first'
                 : 'Continue to Next Stage'
               }
             </button>
@@ -1658,8 +2788,123 @@ export function AutomatedDiscoveryPage() {
               </div>
             )}
             
+            {/* Customer Profile Criteria Explanation */}
+            {currentStage === 1 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  👥 Customer Profile Assessment
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Customer Clarity (7-10):</strong> Clearly defines who the target customer is<br/>
+                  <strong>Customer Specificity (7-10):</strong> Provides detailed, actionable customer characteristics<br/>
+                  <strong>Customer Relevance (7-10):</strong> Customer is relevant to the business idea<br/>
+                  <strong>Customer Accessibility (6-10):</strong> Customer segment is reachable and accessible<br/>
+                  <strong>Customer Value (7-10):</strong> Customer segment has sufficient value for the business
+                </div>
+              </div>
+            )}
+            
+            {/* Customer Struggle Criteria Explanation */}
+            {currentStage === 2 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  💪 Customer Struggle Assessment
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Struggle Identification (7-10):</strong> Clearly identifies specific customer struggles<br/>
+                  <strong>Struggle Validation (7-10):</strong> Validates that struggles actually exist<br/>
+                  <strong>Struggle Urgency (6-10):</strong> Struggles are urgent enough to need solutions<br/>
+                  <strong>Struggle Frequency (6-10):</strong> Struggles occur frequently enough to matter<br/>
+                  <strong>Struggle Impact (7-10):</strong> Struggles have significant impact on customers
+                </div>
+              </div>
+            )}
+            
+            {/* Solution Fit Criteria Explanation */}
+            {currentStage === 3 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  🎯 Solution Fit Assessment
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Solution Alignment (7-10):</strong> Solution aligns well with customer struggles<br/>
+                  <strong>Solution Effectiveness (7-10):</strong> Solution effectively solves identified problems<br/>
+                  <strong>Solution Differentiation (6-10):</strong> Solution is unique and differentiated<br/>
+                  <strong>Solution Value (7-10):</strong> Solution provides significant value to customers<br/>
+                  <strong>Solution Feasibility (6-10):</strong> Solution is practical and feasible to implement
+                </div>
+              </div>
+            )}
+            
+            {/* Business Model Criteria Explanation */}
+            {currentStage === 4 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  🏗️ Business Model Assessment
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Model Viability (7-10):</strong> Business model is fundamentally sound and sustainable<br/>
+                  <strong>Revenue Potential (7-10):</strong> Business model can generate significant revenue<br/>
+                  <strong>Cost Efficiency (6-10):</strong> Costs are manageable and scalable<br/>
+                  <strong>Competitive Advantage (6-10):</strong> Model is defensible and differentiated<br/>
+                  <strong>Scalability (7-10):</strong> Business model can scale effectively
+                </div>
+              </div>
+            )}
+            
+            {/* Market Validation Criteria Explanation */}
+            {currentStage === 5 && (
+              <div style={{ 
+                background: '#f8fafc', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: 12, 
+                padding: 16, 
+                marginBottom: 12,
+                fontSize: 13
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, color: '#1e293b' }}>
+                  📊 Market Validation Assessment
+                </div>
+                <div style={{ color: '#475569', lineHeight: 1.5 }}>
+                  <strong>Market Size (7-10):</strong> Target market is large and accessible<br/>
+                  <strong>Market Demand (7-10):</strong> Genuine demand exists for this solution<br/>
+                  <strong>Market Timing (6-10):</strong> Market is ready for this solution now<br/>
+                  <strong>Competitive Landscape (6-10):</strong> Competitive environment is favorable<br/>
+                  <strong>Market Access (6-10):</strong> Can easily reach and serve this market
+                </div>
+              </div>
+            )}
+            
             {/* Expert Entrepreneur Assessment Display */}
-            {currentStage === 0 && (validationScore || isGeneratingValidationScore) && (
+            {(currentStage === 0 || currentStage === 1 || currentStage === 2 || currentStage === 3 || currentStage === 4 || currentStage === 5) && (validationScore || isGeneratingValidationScore) && (
               <div style={{ 
                 background: validationScore?.shouldProceed ? '#f0f9ff' : '#fef2f2', 
                 border: `2px solid ${validationScore?.shouldProceed ? '#0ea5e9' : '#ef4444'}`, 
@@ -1719,7 +2964,7 @@ export function AutomatedDiscoveryPage() {
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Expert Evaluation Criteria:</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                        {Object.entries(validationScore.criteria).map(([key, value]) => (
+                        {Object.entries(getValidationCriteria(validationScore)).map(([key, value]) => (
                           <div key={key} style={{ 
                             background: '#fff', 
                             padding: '8px 12px', 
@@ -2830,6 +4075,273 @@ export function AutomatedDiscoveryPage() {
                 }}
               >
                 Apply Selected Improvements
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Re-evaluation Confirmation Modal */}
+      {showReevaluationModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 480,
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: '1px solid #e5e5e5',
+          }}>
+            <h3 style={{
+              margin: '0 0 1rem 0',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: '#181a1b',
+            }}>
+              Re-evaluate Previous Stage?
+            </h3>
+            <p style={{
+              margin: '0 0 1.5rem 0',
+              fontSize: '1rem',
+              color: '#666',
+              lineHeight: 1.5,
+            }}>
+              You're navigating back to "{STAGES[pendingStageNavigation || 0]}". This will trigger a new AI analysis and may take a few minutes. Would you like to:
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={() => setShowReevaluationModal(false)}
+                style={{
+                  background: '#fff',
+                  color: '#666',
+                  border: '1px solid #e5e5e5',
+                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={viewPreviousResults}
+                style={{
+                  background: '#fff',
+                  color: '#181a1b',
+                  border: '1px solid #181a1b',
+                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                View Previous Results
+              </button>
+              <button
+                onClick={confirmReevaluation}
+                style={{
+                  background: '#181a1b',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Re-evaluate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Completed Stages Overview */}
+      {completedStages.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          background: '#fff',
+          borderRadius: 12,
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+          padding: '1rem',
+          maxWidth: 320,
+          zIndex: 9999,
+          border: '1px solid #e5e7eb'
+        }}>
+          <h4 style={{
+            margin: '0 0 0.75rem 0',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            color: '#374151'
+          }}>
+            Completed Stages
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {completedStages.map((stage, index) => (
+              <div key={index} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <span style={{
+                  fontSize: '0.75rem',
+                  color: '#6b7280'
+                }}>
+                  {STAGES[parseInt(stage)]}
+                </span>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <button
+                    onClick={() => {
+                      setStageToReevaluate(parseInt(stage));
+                      setShowReevaluateModal(true);
+                    }}
+                    style={{
+                      fontSize: '0.625rem',
+                      padding: '0.25rem 0.5rem',
+                      background: '#dbeafe',
+                      color: '#1d4ed8',
+                      borderRadius: 4,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 500
+                    }}
+                  >
+                    Re-evaluate
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsViewingPreviousResults(true);
+                      setSkipReevaluation(true);
+                      updateCurrentStage(parseInt(stage));
+                      loadStageEvaluation(parseInt(stage));
+                      // Reset the flags after a delay to allow the data to load
+                      setTimeout(() => {
+                        setIsViewingPreviousResults(false);
+                        setSkipReevaluation(false);
+                      }, 2000);
+                    }}
+                    style={{
+                      fontSize: '0.625rem',
+                      padding: '0.25rem 0.5rem',
+                      background: '#dcfce7',
+                      color: '#16a34a',
+                      borderRadius: 4,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 500
+                    }}
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Re-evaluate Stage Modal */}
+      {showReevaluateModal && stageToReevaluate !== null && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 480,
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: '1px solid #e5e5e5',
+          }}>
+            <h3 style={{
+              margin: '0 0 1rem 0',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: '#181a1b',
+            }}>
+              Re-evaluate Stage
+            </h3>
+            <p style={{
+              margin: '0 0 1.5rem 0',
+              fontSize: '1rem',
+              color: '#666',
+              lineHeight: 1.5,
+            }}>
+              Are you sure you want to re-evaluate the "{STAGES[stageToReevaluate]}" stage? This will generate new personas and feedback.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={() => {
+                  setShowReevaluateModal(false);
+                  setStageToReevaluate(null);
+                }}
+                style={{
+                  background: '#fff',
+                  color: '#666',
+                  border: '1px solid #e5e5e5',
+                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowReevaluateModal(false);
+                  setStageToReevaluate(null);
+                  updateCurrentStage(stageToReevaluate);
+                  await reevaluateStage(stageToReevaluate);
+                }}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Re-evaluate
               </button>
             </div>
           </div>

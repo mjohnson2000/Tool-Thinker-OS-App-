@@ -6,6 +6,7 @@ export interface MarketValidationStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function MarketValidationStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: MarketValidationStageProps) {
@@ -120,6 +122,9 @@ export function MarketValidationStage({
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
+        // Save market validation data to the business plan
+        await saveMarketValidationData(data);
+        
         onStageComplete({
           marketData: data.marketData,
           competitors: data.competitors,
@@ -145,6 +150,51 @@ export function MarketValidationStage({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Function to save market validation data to the business plan
+  const saveMarketValidationData = async (data: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare market validation sections to save
+      const marketValidationSections = {
+        marketData: JSON.stringify(data.marketData || {}),
+        marketValidationAnalysis: data.analysis?.summary || '',
+        competitors: JSON.stringify(data.competitors || []),
+        validationTests: JSON.stringify(data.validationTests || []),
+        marketSize: data.marketData?.marketSize ? JSON.stringify(data.marketData.marketSize) : '',
+        marketDemand: data.marketData?.marketDemand || '',
+        marketTiming: data.marketData?.marketTiming || '',
+        marketEntryStrategy: data.marketData?.marketEntryStrategy || '',
+        customerDemand: data.marketData?.customerDemand || '',
+        marketTrends: data.marketData?.marketTrends ? JSON.stringify(data.marketData.marketTrends) : '',
+        growthPotential: data.marketData?.growthPotential || ''
+      };
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sections: marketValidationSections
+        }),
+      });
+
+      if (saveResponse.ok) {
+        console.log('Market validation data saved successfully');
+      } else {
+        console.error('Failed to save market validation data');
+      }
+    } catch (error) {
+      console.error('Error saving market validation data:', error);
+    }
   };
 
   const formatNumber = (num: number) => {

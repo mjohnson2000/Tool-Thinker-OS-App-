@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import robotLottie from '../../assets/robot-lottie.json';
 import { RobotFace } from './RobotFace';
+import { BusinessPlanModal } from './shared/BusinessPlanModal';
 
 interface Persona {
   id: string;
@@ -1156,7 +1157,15 @@ export function AutomatedDiscoveryPage() {
       setLogs((prev) => [...prev, `Getting feedback for stage: ${STAGES[currentStage]}...`]);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/automated-discovery/feedback`, {
+        // Use stage-specific endpoints for better data generation
+        const endpoint = currentStage === 0 ? 'problem-discovery' :
+                        currentStage === 1 ? 'customer-profiles' :
+                        currentStage === 2 ? 'customer-struggles' :
+                        currentStage === 3 ? 'solution-fit' :
+                        currentStage === 4 ? 'business-models' :
+                        currentStage === 5 ? 'market-validation' : 'feedback';
+        
+        const res = await fetch(`${API_URL}/automated-discovery/${endpoint}`, {
           method: 'POST',
           headers: {
             'Authorization': token ? `Bearer ${token}` : '',
@@ -1177,19 +1186,45 @@ export function AutomatedDiscoveryPage() {
         });
         if (!res.ok) throw new Error('Failed to fetch feedback');
         const data = await res.json();
-        setPersonas((prev) => {
-          const updatedPersonas = prev.map((p: any) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) }));
-          
-          // Save evaluation to database
-          if (data.validationScore) {
-            const score = data.validationScore.score || 0;
-            const feedback = data.summary || '';
-            saveEvaluation(currentStage, score, feedback, updatedPersonas);
-          }
-          
-          return updatedPersonas;
-        });
-        setCollectiveSummary(data.summary);
+        console.log(`Stage ${currentStage} response data:`, data);
+        
+        // Handle different response formats based on stage
+        if (currentStage === 0) {
+          // Problem Discovery - data.problem and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else if (currentStage === 1) {
+          // Customer Profile - data.profiles and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else if (currentStage === 2) {
+          // Customer Struggle - data.struggles and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else if (currentStage === 3) {
+          // Solution Fit - data.solutions and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else if (currentStage === 4) {
+          // Business Model - data.businessModels and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else if (currentStage === 5) {
+          // Market Validation - data.marketData and data.analysis
+          setCollectiveSummary(data.summary || data.analysis?.summary || '');
+        } else {
+          // Fallback to original format for feedback endpoint
+          setPersonas((prev) => {
+            const updatedPersonas = prev.map((p: any) => ({ ...p, feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) }));
+            return updatedPersonas;
+          });
+          setCollectiveSummary(data.summary);
+        }
+        
+        // Save evaluation to database
+        if (data.validationScore) {
+          const score = data.validationScore.score || 0;
+          const feedback = data.summary || data.analysis?.summary || '';
+          saveEvaluation(currentStage, score, feedback, []);
+        }
+        
+        // Save stage-specific data to business plan
+        await saveStageDataToBusinessPlan(currentStage, data);
         
         if (data.validationScore) {
           setValidationScore(data.validationScore);
@@ -1869,7 +1904,8 @@ export function AutomatedDiscoveryPage() {
           validationCriteria: validationScore.criteria,
           recommendations: validationScore.recommendations,
           discoveredProblems: validationScore.discoveredProblems || [],
-          planData: planData // Include current business plan sections
+          planData: planData, // Include current business plan sections
+          businessPlanId: id // Add the business plan ID
         }),
         credentials: 'include'
       });
@@ -2122,20 +2158,75 @@ export function AutomatedDiscoveryPage() {
 
   // Helper function to get current section content
   function getCurrentSectionContent(sectionKey: string) {
-    if (sectionKey === 'problemStatement') {
-      return businessIdea;
-    }
-    
-    // Map section keys to planData properties
     const sectionMap: { [key: string]: string } = {
-      solution: planData?.solution?.description || '',
-      customerPainPoints: planData?.customer?.painPoints?.join('\n• ') || '',
-      valueProposition: planData?.valueProposition?.description || '',
-      marketAnalysis: planData?.marketAnalysis?.description || '',
-      competitiveAnalysis: planData?.competitiveAnalysis?.description || ''
+      // Problem Discovery - Enhanced mapping for all expected fields
+      problemStatement: planData?.problem?.description || planData?.idea?.existingIdeaText || planData?.summary || planData?.sections?.problemStatement || '',
+      customerPainPoints: planData?.customer?.painPoints?.join('\n• ') || planData?.sections?.customerPainPoints || '',
+      problemDiscovery: planData?.sections?.problemDiscovery || '',
+      problemDiscoveryAnalysis: planData?.sections?.problemDiscoveryAnalysis || '',
+      problemScope: planData?.sections?.problemScope || '',
+      problemUrgency: planData?.sections?.problemUrgency || '',
+      problemImpact: planData?.sections?.problemImpact || '',
+      problemEvidence: planData?.sections?.problemEvidence || '',
+      rootCauses: planData?.sections?.rootCauses || '',
+      customerInsights: planData?.sections?.customerInsights || '',
+      problemValidation: planData?.sections?.problemValidation || '',
+      // Customer Profile - Enhanced mapping for all expected fields
+      customerDescription: planData?.customer?.description || planData?.customer?.persona?.description || planData?.sections?.customerDescription || '',
+      customerSegments: planData?.customer?.persona?.segments?.join('\n• ') || planData?.customer?.segments?.join('\n• ') || planData?.sections?.customerSegments || '',
+      customerMotivations: planData?.customer?.persona?.motivations?.join('\n• ') || planData?.customer?.motivations?.join('\n• ') || planData?.sections?.customerMotivations || '',
+      customerAccessibility: planData?.customer?.persona?.accessibility || planData?.customer?.accessibility || planData?.sections?.customerAccessibility || '',
+      customerValue: planData?.customer?.persona?.value || planData?.customer?.value || planData?.sections?.customerValue || '',
+      customerProfiles: planData?.sections?.customerProfiles || '',
+      customerProfileAnalysis: planData?.sections?.customerProfileAnalysis || '',
+      customerObjections: planData?.sections?.customerObjections || '',
+      // Customer Struggle - Enhanced mapping for all expected fields
+      customerStruggles: planData?.customer?.struggles?.join('\n• ') || planData?.sections?.customerStruggles || '',
+      struggleEvidence: planData?.customer?.struggleEvidence?.join('\n• ') || planData?.sections?.struggleEvidence || '',
+      struggleFrequency: planData?.customer?.struggleFrequency || planData?.sections?.struggleFrequency || '',
+      struggleImpact: planData?.customer?.struggleImpact || planData?.sections?.struggleImpact || '',
+      struggleUrgency: planData?.customer?.struggleUrgency || planData?.sections?.struggleUrgency || '',
+      customerQuotes: planData?.customer?.quotes?.join('\n• ') || planData?.sections?.customerQuotes || '',
+      customerStruggleAnalysis: planData?.sections?.customerStruggleAnalysis || '',
+      rootCause: planData?.sections?.rootCause || '',
+      // Solution Fit - Enhanced mapping for all expected fields
+      solutionDescription: planData?.solution?.description || planData?.sections?.solutionDescription || '',
+      solutionFeatures: planData?.solution?.keyFeatures?.join('\n• ') || planData?.sections?.keyFeatures || '',
+      solutionBenefits: planData?.solution?.benefits?.join('\n• ') || planData?.sections?.benefits || '',
+      competitiveAdvantages: planData?.solution?.competitiveAdvantages?.join('\n• ') || planData?.sections?.competitiveAdvantages || '',
+      valueProposition: planData?.valueProposition?.description || planData?.sections?.valueProposition || '',
+      implementationRoadmap: planData?.solution?.implementationRoadmap || planData?.sections?.implementationRoadmap || '',
+      solutionFit: planData?.sections?.solutionFit || '',
+      solutionFitAnalysis: planData?.sections?.solutionFitAnalysis || '',
+      technicalRequirements: planData?.sections?.technicalRequirements || '',
+      resourceRequirements: planData?.sections?.resourceRequirements || '',
+      // Business Model - Enhanced mapping for all expected fields
+      revenueModel: planData?.businessModel?.revenueModel || planData?.sections?.revenueStreams || '',
+      costStructure: planData?.businessModel?.costStructure || planData?.sections?.costStructure || '',
+      pricingStrategy: planData?.businessModel?.pricingStrategy || '',
+      competitiveAdvantagesBM: planData?.businessModel?.competitiveAdvantages?.join('\n• ') || planData?.sections?.competitiveAdvantages || '',
+      scalabilityFactors: planData?.businessModel?.scalabilityFactors?.join('\n• ') || planData?.sections?.scalability || '',
+      growthStrategy: planData?.businessModel?.growthStrategy || '',
+      businessModels: planData?.sections?.businessModels || '',
+      businessModelAnalysis: planData?.sections?.businessModelAnalysis || '',
+      financialProjections: planData?.sections?.financialProjections || '',
+      targetMarket: planData?.sections?.targetMarket || '',
+      // Market Validation - Enhanced mapping for all expected fields
+      marketSize: planData?.marketEvaluation?.marketSize || planData?.sections?.marketSize || '',
+      marketDemand: planData?.marketEvaluation?.marketDemand || planData?.sections?.marketDemand || '',
+      marketTiming: planData?.marketEvaluation?.marketTiming || planData?.sections?.marketTiming || '',
+      competitiveAnalysis: planData?.marketEvaluation?.competitors?.join('\n• ') || planData?.sections?.competitors || '',
+      marketEntryStrategy: planData?.marketEvaluation?.marketEntryStrategy || planData?.sections?.marketEntryStrategy || '',
+      customerDemand: planData?.marketEvaluation?.customerDemand || planData?.sections?.customerDemand || '',
+      marketData: planData?.sections?.marketData || '',
+      marketValidationAnalysis: planData?.sections?.marketValidationAnalysis || '',
+      validationTests: planData?.sections?.validationTests || '',
+      marketTrends: planData?.sections?.marketTrends || '',
+      growthPotential: planData?.sections?.growthPotential || '',
+      // Add more as needed
     };
-    
-    return sectionMap[sectionKey] || '';
+    // Fallback to improvedSections if original is missing
+    return sectionMap[sectionKey] || (fullPlanSections && fullPlanSections[sectionKey]) || '';
   }
 
   // Helper function to update editable section
@@ -2144,6 +2235,154 @@ export function AutomatedDiscoveryPage() {
       ...prev,
       [sectionKey]: value
     } : null);
+  }
+
+  const [showFullPlanModal, setShowFullPlanModal] = React.useState(false);
+  const [fullPlanSections, setFullPlanSections] = React.useState<any>({});
+
+  async function handleViewFullPlan() {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/business-plan/${id}`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch business plan');
+      const data = await res.json();
+      console.log('Full business plan data:', data);
+      console.log('Business plan sections:', data.sections);
+      setFullPlanSections(data.sections || {});
+      setShowFullPlanModal(true);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Function to save stage-specific data to the business plan
+  async function saveStageDataToBusinessPlan(stage: number, data: any) {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!id) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      let sectionsToSave: any = {};
+
+      switch (stage) {
+        case 0: // Problem Discovery
+          sectionsToSave = {
+            problemDiscovery: JSON.stringify(data.problem || {}),
+            problemDiscoveryAnalysis: data.analysis?.summary || '',
+            problemStatement: data.problem?.statement || '',
+            problemScope: data.problem?.scope || '',
+            problemUrgency: data.problem?.urgency || '',
+            problemImpact: data.problem?.impact || '',
+            problemEvidence: data.problem?.evidence || '',
+            rootCauses: data.problem?.rootCauses ? JSON.stringify(data.problem.rootCauses) : '',
+            customerInsights: data.problem?.customerInsights ? JSON.stringify(data.problem.customerInsights) : '',
+            problemValidation: data.problem?.validation || ''
+          };
+          break;
+        case 1: // Customer Profile
+          sectionsToSave = {
+            customerProfiles: JSON.stringify(data.profiles || []),
+            customerProfileAnalysis: data.analysis?.summary || '',
+            customerSegments: data.profiles?.[0]?.segments ? JSON.stringify(data.profiles[0].segments) : '',
+            customerPainPoints: data.profiles?.[0]?.painPoints ? JSON.stringify(data.profiles[0].painPoints) : '',
+            customerMotivations: data.profiles?.[0]?.motivations ? JSON.stringify(data.profiles[0].motivations) : '',
+            customerAccessibility: data.profiles?.[0]?.accessibility || '',
+            customerValue: data.profiles?.[0]?.value || '',
+            customerObjections: data.profiles?.[0]?.objections ? JSON.stringify(data.profiles[0].objections) : ''
+          };
+          break;
+        case 2: // Customer Struggle
+          sectionsToSave = {
+            customerStruggles: JSON.stringify(data.struggles || []),
+            customerStruggleAnalysis: data.analysis?.summary || '',
+            struggleEvidence: data.struggles?.[0]?.evidence ? JSON.stringify(data.struggles[0].evidence) : '',
+            struggleFrequency: data.struggles?.[0]?.frequency || '',
+            struggleImpact: data.struggles?.[0]?.impact || '',
+            struggleUrgency: data.struggles?.[0]?.urgency || '',
+            customerQuotes: data.struggles?.[0]?.quotes ? JSON.stringify(data.struggles[0].quotes) : '',
+            rootCause: data.analysis?.rootCause || ''
+          };
+          break;
+        case 3: // Solution Fit
+          sectionsToSave = {
+            solutionFit: JSON.stringify(data.solution || {}),
+            solutionFitAnalysis: data.analysis?.summary || '',
+            solutionDescription: data.solution?.description || '',
+            keyFeatures: data.solution?.keyFeatures ? JSON.stringify(data.solution.keyFeatures) : '',
+            benefits: data.solution?.benefits ? JSON.stringify(data.solution.benefits) : '',
+            competitiveAdvantages: data.solution?.competitiveAdvantages ? JSON.stringify(data.solution.competitiveAdvantages) : '',
+            valueProposition: data.solution?.valueProposition || '',
+            implementationRoadmap: data.solution?.implementationRoadmap || '',
+            technicalRequirements: data.solution?.technicalRequirements ? JSON.stringify(data.solution.technicalRequirements) : '',
+            resourceRequirements: data.solution?.resourceRequirements ? JSON.stringify(data.solution.resourceRequirements) : ''
+          };
+          break;
+        case 4: // Business Model
+          sectionsToSave = {
+            businessModels: JSON.stringify(data.models || []),
+            businessModelAnalysis: data.analysis?.summary || '',
+            revenueStreams: data.models?.[0]?.revenueStreams ? JSON.stringify(data.models[0].revenueStreams) : '',
+            costStructure: data.models?.[0]?.costStructure ? JSON.stringify(data.models[0].costStructure) : '',
+            competitiveAdvantages: data.models?.[0]?.advantages ? JSON.stringify(data.models[0].advantages) : '',
+            scalability: data.models?.[0]?.scalability || '',
+            financialProjections: data.financialProjections ? JSON.stringify(data.financialProjections) : '',
+            targetMarket: data.models?.[0]?.targetMarket || ''
+          };
+          break;
+        case 5: // Market Validation
+          sectionsToSave = {
+            marketData: JSON.stringify(data.marketData || []),
+            marketValidationAnalysis: data.analysis?.summary || '',
+            competitors: data.marketData?.[0]?.competitors ? JSON.stringify(data.marketData[0].competitors) : '',
+            validationTests: data.marketData?.[0]?.tests ? JSON.stringify(data.marketData[0].tests) : '',
+            marketSize: data.marketData?.[0]?.size || '',
+            marketDemand: data.marketData?.[0]?.demand || '',
+            marketTiming: data.marketData?.[0]?.timing || '',
+            marketEntryStrategy: data.marketData?.[0]?.entryStrategy || '',
+            customerDemand: data.marketData?.[0]?.customerDemand || '',
+            marketTrends: data.analysis?.marketTrends || '',
+            growthPotential: data.analysis?.growthPotential || ''
+          };
+          break;
+      }
+
+      if (Object.keys(sectionsToSave).length > 0) {
+        const saveResponse = await fetch(`${API_URL}/business-plan/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sections: sectionsToSave
+          }),
+        });
+
+        if (saveResponse.ok) {
+          console.log(`Stage ${stage} data saved successfully`);
+          console.log('Saved sections:', sectionsToSave);
+        } else {
+          console.error(`Failed to save stage ${stage} data`);
+          const errorText = await saveResponse.text();
+          console.error('Save error details:', errorText);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving stage data to business plan:', error);
+    }
   }
 
   return (
@@ -2846,6 +3085,29 @@ export function AutomatedDiscoveryPage() {
             </button>
           </div>
         )}
+        {/* Always show the View Full Business Plan button below main content */}
+        <div style={{ width: 420, marginTop: 16, marginBottom: 16 }}>
+          <button
+            style={{
+              width: '100%',
+              background: '#f8fafc',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              borderRadius: 8,
+              padding: '12px 16px',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 12
+            }}
+            onClick={handleViewFullPlan}
+          >
+            View Full Business Plan
+          </button>
+        </div>
       </main>
 
       {/* Right AI Feedback/Personas */}
@@ -4551,6 +4813,12 @@ export function AutomatedDiscoveryPage() {
           </div>
         </div>
       )}
+      <BusinessPlanModal
+        isOpen={showFullPlanModal}
+        onClose={() => setShowFullPlanModal(false)}
+        improvedSections={fullPlanSections}
+        getCurrentSectionContent={getCurrentSectionContent}
+      />
     </div>
   );
 }

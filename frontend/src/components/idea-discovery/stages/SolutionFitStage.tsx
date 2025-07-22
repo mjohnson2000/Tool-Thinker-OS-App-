@@ -6,6 +6,7 @@ export interface SolutionFitStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function SolutionFitStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: SolutionFitStageProps) {
@@ -90,7 +92,7 @@ export function SolutionFitStage({
       setError(null);
       
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/automated-discovery/solution-options`, {
+      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/automated-discovery/solution-fit`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -111,17 +113,20 @@ export function SolutionFitStage({
       if (response.ok) {
         const data = await response.json();
         
-        setSolutionOptions(data.solutions || []);
+        setSolutionOptions(data.solution ? [data.solution] : []);
         setSolutionAnalysis(data.analysis);
-        setFitScore(data.fitScore);
+        setFitScore(data.validationScore?.score || 0);
         setCollectiveSummary(data.summary);
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
+        // Save solution fit data to the business plan
+        await saveSolutionFitData(data);
+        
         onStageComplete({
-          solutionOptions: data.solutions,
+          solutionOptions: data.solution ? [data.solution] : [],
           analysis: data.analysis,
-          fitScore: data.fitScore,
+          fitScore: data.validationScore?.score || 0,
           summary: data.summary,
           validationScore: data.validationScore,
         });
@@ -152,6 +157,50 @@ export function SolutionFitStage({
     if (score >= 6) return 'Good Fit';
     if (score >= 4) return 'Moderate Fit';
     return 'Poor Fit';
+  };
+
+  // Function to save solution fit data to the business plan
+  const saveSolutionFitData = async (data: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare solution fit sections to save
+      const solutionFitSections = {
+        solutionFit: JSON.stringify(data.solution || {}),
+        solutionFitAnalysis: data.analysis?.summary || '',
+        solutionDescription: data.solution?.description || '',
+        keyFeatures: data.solution?.keyFeatures ? JSON.stringify(data.solution.keyFeatures) : '',
+        benefits: data.solution?.benefits ? JSON.stringify(data.solution.benefits) : '',
+        competitiveAdvantages: data.solution?.competitiveAdvantages ? JSON.stringify(data.solution.competitiveAdvantages) : '',
+        valueProposition: data.solution?.valueProposition || '',
+        implementationRoadmap: data.solution?.implementationRoadmap || '',
+        technicalRequirements: data.solution?.technicalRequirements ? JSON.stringify(data.solution.technicalRequirements) : '',
+        resourceRequirements: data.solution?.resourceRequirements ? JSON.stringify(data.solution.resourceRequirements) : ''
+      };
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sections: solutionFitSections
+        }),
+      });
+
+      if (saveResponse.ok) {
+        console.log('Solution fit data saved successfully');
+      } else {
+        console.error('Failed to save solution fit data');
+      }
+    } catch (error) {
+      console.error('Error saving solution fit data:', error);
+    }
   };
 
   return (

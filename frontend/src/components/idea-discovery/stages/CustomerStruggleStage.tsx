@@ -6,6 +6,7 @@ export interface CustomerStruggleStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function CustomerStruggleStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: CustomerStruggleStageProps) {
@@ -115,6 +117,9 @@ export function CustomerStruggleStage({
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
+        // Save customer struggle data to the business plan
+        await saveCustomerStruggleData(data);
+        
         onStageComplete({
           customerStruggles: data.struggles,
           analysis: data.analysis,
@@ -142,6 +147,48 @@ export function CustomerStruggleStage({
   const handleSaveSelectedStruggles = () => {
     onStageUpdate({ selectedStruggles });
     setLogs(prev => [...prev, `Selected ${selectedStruggles.length} struggles for analysis`]);
+  };
+
+  // Function to save customer struggle data to the business plan
+  const saveCustomerStruggleData = async (data: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare customer struggle sections to save
+      const customerStruggleSections = {
+        customerStruggles: JSON.stringify(data.struggles || []),
+        customerStruggleAnalysis: data.analysis?.summary || '',
+        struggleEvidence: data.struggles?.[0]?.evidence || '',
+        struggleFrequency: data.struggles?.[0]?.frequency || '',
+        struggleImpact: data.struggles?.[0]?.impact || '',
+        struggleUrgency: data.struggles?.[0]?.urgency || '',
+        customerQuotes: data.struggles?.[0]?.customerQuotes ? JSON.stringify(data.struggles[0].customerQuotes) : '',
+        rootCause: data.struggles?.[0]?.rootCause || ''
+      };
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sections: customerStruggleSections
+        }),
+      });
+
+      if (saveResponse.ok) {
+        console.log('Customer struggle data saved successfully');
+      } else {
+        console.error('Failed to save customer struggle data');
+      }
+    } catch (error) {
+      console.error('Error saving customer struggle data:', error);
+    }
   };
 
   return (

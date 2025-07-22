@@ -74,15 +74,19 @@ export function BusinessPlanModal({
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
-          {Object.entries(improvedSections).map(([sectionKey, originalContent]) => {
+          {Object.entries(improvedSections).map(([sectionKey, savedContent]) => {
             const currentContent = getCurrentSectionContent(sectionKey);
             const formattedCurrentContent = formatContent(currentContent);
-            const formattedOriginalContent = formatContent(originalContent as string);
+            const formattedSavedContent = formatContent(savedContent as string);
             
             console.log(`Modal section ${sectionKey}:`, { 
               currentContent: formattedCurrentContent, 
-              originalContent: formattedOriginalContent 
+              savedContent: formattedSavedContent 
             });
+            
+            // Check if we have saved content (from database) vs improved content (from auto-improve)
+            const hasSavedContent = formattedSavedContent && formattedSavedContent !== 'No content available';
+            const hasCurrentContent = formattedCurrentContent && formattedCurrentContent !== 'No content available';
             
             return (
               <div key={sectionKey} style={{
@@ -102,51 +106,80 @@ export function BusinessPlanModal({
                   {sectionKey.replace(/([A-Z])/g, ' $1').trim()}
                 </h3>
                 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ 
-                    marginBottom: '0.75rem', 
-                    color: '#6b7280', 
-                    fontSize: '14px',
-                    fontWeight: 600,
-                  }}>
-                    Original Content:
-                  </h4>
-                  <div style={{
-                    background: '#f9fafb',
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    color: '#374151',
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.6,
-                    border: '1px solid #e5e7eb',
-                  }}>
-                    {formattedCurrentContent}
+                {hasSavedContent && (
+                  <div>
+                    <h4 style={{ 
+                      marginBottom: '0.75rem', 
+                      color: '#059669', 
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}>
+                      Saved Content:
+                    </h4>
+                    <div style={{
+                      background: '#f0fdf4',
+                      padding: '1rem',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      color: '#166534',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.6,
+                      border: '1px solid #bbf7d0',
+                    }}>
+                      {formattedSavedContent}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <h4 style={{ 
-                    marginBottom: '0.75rem', 
-                    color: '#059669', 
-                    fontSize: '14px',
-                    fontWeight: 600,
-                  }}>
-                    AI Improved Version:
-                  </h4>
-                  <div style={{
-                    background: '#f0fdf4',
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    color: '#166534',
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.6,
-                    border: '1px solid #bbf7d0',
-                  }}>
-                    {formattedOriginalContent}
+                {hasCurrentContent && hasSavedContent && (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <h4 style={{ 
+                      marginBottom: '0.75rem', 
+                      color: '#6b7280', 
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}>
+                      Original Content:
+                    </h4>
+                    <div style={{
+                      background: '#f9fafb',
+                      padding: '1rem',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      color: '#374151',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.6,
+                      border: '1px solid #e5e7eb',
+                    }}>
+                      {formattedCurrentContent}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {!hasSavedContent && hasCurrentContent && (
+                  <div>
+                    <h4 style={{ 
+                      marginBottom: '0.75rem', 
+                      color: '#6b7280', 
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}>
+                      Content:
+                    </h4>
+                    <div style={{
+                      background: '#f9fafb',
+                      padding: '1rem',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      color: '#374151',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.6,
+                      border: '1px solid #e5e7eb',
+                    }}>
+                      {formattedCurrentContent}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

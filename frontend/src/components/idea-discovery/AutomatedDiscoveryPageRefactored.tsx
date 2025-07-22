@@ -112,6 +112,7 @@ export function AutomatedDiscoveryPageRefactored() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          businessPlanId: id, // <-- add this line
           businessIdea,
           customerDescription,
           planData,
@@ -192,6 +193,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />
@@ -202,6 +204,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />
@@ -212,6 +215,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />
@@ -222,6 +226,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />
@@ -232,6 +237,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />
@@ -242,6 +248,7 @@ export function AutomatedDiscoveryPageRefactored() {
             businessIdea={businessIdea}
             customerDescription={customerDescription}
             planData={planData}
+            businessPlanId={id || ''}
             onStageComplete={handleStageComplete}
             onStageUpdate={handleStageUpdate}
           />

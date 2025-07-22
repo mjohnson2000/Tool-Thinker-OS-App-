@@ -1,6 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { chatCompletion } from '../utils/openai';
+import { BusinessPlan } from '../models/BusinessPlan';
 
 const router = express.Router();
 
@@ -263,6 +264,7 @@ const AutoImproveSchema = z.object({
   planData: z.object({
     sections: z.record(z.string()).optional(),
   }).optional(),
+  businessPlanId: z.string().optional(),
 });
 
 const ImproveProblemSchema = z.object({
@@ -1625,7 +1627,7 @@ router.post('/auto-improve', async (req, res) => {
   console.log('Request method:', req.method);
   console.log('Request body:', req.body);
   try {
-    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData, businessPlanId } = AutoImproveSchema.extend({ businessPlanId: z.string() }).parse(req.body);
 
     // Create a comprehensive prompt for AI improvement of all sections
     const improvementPrompt = `You are an expert business consultant helping to improve a complete business plan for a startup idea.
@@ -1737,6 +1739,17 @@ Provide improved versions of ALL sections in this JSON format:
     
     console.log('Final improvedSections:', improvedSections);
 
+    // After improvedSections is finalized, merge into business plan
+    if (!businessPlanId) {
+      return res.status(400).json({ error: 'Missing businessPlanId' });
+    }
+    const plan = await BusinessPlan.findById(businessPlanId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+    plan.sections = { ...plan.sections, ...improvedSections };
+    await plan.save();
+
     res.json({
       improvedSections,
       improvements: recommendations,
@@ -1750,10 +1763,933 @@ Provide improved versions of ALL sections in this JSON format:
   }
 });
 
+// Problem Discovery generation endpoint
+router.post('/problem-discovery', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const problemDiscoveryPrompt = [
+      {
+        role: 'system',
+        content: `You are an expert in problem identification and customer research. Your goal is to identify and analyze problems that can be solved by business ideas.
+
+Key Principles:
+1. Focus on real, specific customer problems
+2. Identify the root causes of problems
+3. Assess the urgency and impact of problems
+4. Understand the scope and scale of problems
+5. Provide evidence and customer insights
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate comprehensive problem discovery analysis.`
+      },
+      {
+        role: 'user',
+        content: `Generate detailed problem discovery for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate comprehensive problem analysis. Include:
+
+1. problemStatement: clear description of the main problem
+2. problemScope: how widespread this problem is
+3. problemUrgency: how urgent this problem is
+4. problemImpact: the impact of this problem on customers
+5. problemEvidence: specific evidence or examples
+6. rootCauses: underlying causes of the problem
+7. customerInsights: what customers say about this problem
+8. problemValidation: how to validate this problem exists
+
+Return as JSON:
+{
+  "problem": {
+    "statement": "string",
+    "scope": "string",
+    "urgency": "string",
+    "impact": "string",
+    "evidence": "string",
+    "rootCauses": ["string"],
+    "customerInsights": ["string"],
+    "validation": "string"
+  },
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "insights": ["string"]
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(problemDiscoveryPrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate problem discovery' });
+    }
+
+    let problemDiscovery;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      problemDiscovery = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse problem discovery response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse problem discovery response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating problem discovery. Rate this problem analysis on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this problem discovery:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Problem: ${JSON.stringify(problemDiscovery.problem)}
+
+Rate on these criteria:
+- Problem Identification (1-10)
+- Problem Validation (1-10)
+- Problem Scope (1-10)
+- Problem Urgency (1-10)
+- Problem Impact (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "problemIdentification": number,
+    "problemValidation": number,
+    "problemScope": number,
+    "problemUrgency": number,
+    "problemImpact": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate problem discovery validation score:', e);
+    }
+
+    res.json({
+      problem: problemDiscovery.problem || {},
+      analysis: problemDiscovery.analysis || {},
+      summary: problemDiscovery.analysis?.summary || 'Problem discovery analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Problem discovery generation error:', error);
+    res.status(500).json({ error: 'Failed to generate problem discovery' });
+  }
+});
+
+// Customer Profile generation endpoint
+router.post('/customer-profiles', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const customerProfilePrompt = [
+      {
+        role: 'system',
+        content: `You are an expert customer researcher and market segmentation specialist. Your goal is to create detailed customer profiles and personas that help validate business ideas.
+
+Key Principles:
+1. Create specific, actionable customer segments
+2. Include detailed demographics and psychographics
+3. Focus on customer pain points and motivations
+4. Provide clear customer accessibility information
+5. Demonstrate customer value to the business
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate comprehensive customer profiles that can be used for business validation.`
+      },
+      {
+        role: 'user',
+        content: `Generate detailed customer profiles for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate 3-4 different customer profiles. For each profile, include:
+
+1. name: descriptive name for the customer segment
+2. description: detailed description of this customer type
+3. demographics: age, location, income, education, etc.
+4. painPoints: specific problems they face
+5. goals: what they're trying to achieve
+6. motivations: what drives their decisions
+7. accessibility: how to reach and engage them
+8. value: the business value of serving this customer
+9. segments: specific sub-segments within this profile
+10. objections: likely objections they would have
+
+Return as JSON:
+{
+  "profiles": [
+    {
+      "name": "string",
+      "description": "string",
+      "demographics": {
+        "age": "string",
+        "location": "string", 
+        "income": "string",
+        "education": "string"
+      },
+      "painPoints": ["string"],
+      "goals": ["string"],
+      "motivations": ["string"],
+      "accessibility": "string",
+      "value": "string",
+      "segments": ["string"],
+      "objections": ["string"]
+    }
+  ],
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "customerInsights": ["string"]
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(customerProfilePrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate customer profiles' });
+    }
+
+    let customerProfiles;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      customerProfiles = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse customer profiles response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse customer profiles response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating customer profiles. Rate this customer profile on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this customer profile:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Customer Profiles: ${JSON.stringify(customerProfiles.profiles)}
+
+Rate on these criteria:
+- Customer Clarity (1-10)
+- Customer Specificity (1-10)
+- Customer Relevance (1-10)
+- Customer Accessibility (1-10)
+- Customer Value (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "customerClarity": number,
+    "customerSpecificity": number,
+    "customerRelevance": number,
+    "customerAccessibility": number,
+    "customerValue": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate customer profile validation score:', e);
+    }
+
+    res.json({
+      profiles: customerProfiles.profiles || [],
+      analysis: customerProfiles.analysis || {},
+      summary: customerProfiles.analysis?.summary || 'Customer profile analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Customer profiles generation error:', error);
+    res.status(500).json({ error: 'Failed to generate customer profiles' });
+  }
+});
+
+// Customer Struggle generation endpoint
+router.post('/customer-struggles', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const customerStrugglePrompt = [
+      {
+        role: 'system',
+        content: `You are an expert in customer research and problem identification. Your goal is to identify and analyze customer struggles that can be solved by business ideas.
+
+Key Principles:
+1. Focus on real, specific customer problems
+2. Identify the root causes of struggles
+3. Assess the urgency and frequency of problems
+4. Understand the impact of these struggles
+5. Provide evidence and customer quotes
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate comprehensive customer struggle analysis.`
+      },
+      {
+        role: 'user',
+        content: `Generate detailed customer struggles for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate 5-7 different customer struggles. For each struggle, include:
+
+1. title: descriptive name for the struggle
+2. description: detailed description of the problem
+3. evidence: specific evidence or examples
+4. frequency: how often this problem occurs
+5. impact: the impact on the customer's life/business
+6. urgency: how urgent this problem is
+7. customerQuotes: hypothetical quotes from customers
+8. rootCause: underlying cause of the problem
+
+Return as JSON:
+{
+  "struggles": [
+    {
+      "title": "string",
+      "description": "string",
+      "evidence": "string",
+      "frequency": "string",
+      "impact": "string",
+      "urgency": "string",
+      "customerQuotes": ["string"],
+      "rootCause": "string"
+    }
+  ],
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "insights": ["string"]
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(customerStrugglePrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate customer struggles' });
+    }
+
+    let customerStruggles;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      customerStruggles = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse customer struggles response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse customer struggles response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating customer struggles. Rate this customer struggle analysis on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this customer struggle analysis:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Customer Struggles: ${JSON.stringify(customerStruggles.struggles)}
+
+Rate on these criteria:
+- Struggle Identification (1-10)
+- Struggle Validation (1-10)
+- Struggle Urgency (1-10)
+- Struggle Frequency (1-10)
+- Struggle Impact (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "struggleIdentification": number,
+    "struggleValidation": number,
+    "struggleUrgency": number,
+    "struggleFrequency": number,
+    "struggleImpact": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate customer struggle validation score:', e);
+    }
+
+    res.json({
+      struggles: customerStruggles.struggles || [],
+      analysis: customerStruggles.analysis || {},
+      summary: customerStruggles.analysis?.summary || 'Customer struggle analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Customer struggles generation error:', error);
+    res.status(500).json({ error: 'Failed to generate customer struggles' });
+  }
+});
+
+// Solution Fit generation endpoint
+router.post('/solution-fit', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const solutionFitPrompt = [
+      {
+        role: 'system',
+        content: `You are an expert in solution design and product-market fit. Your goal is to create solutions that effectively address customer problems and provide strong value propositions.
+
+Key Principles:
+1. Focus on solutions that directly solve customer problems
+2. Ensure solutions are feasible and implementable
+3. Create strong value propositions
+4. Consider competitive differentiation
+5. Plan for implementation and scaling
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate comprehensive solution fit analysis.`
+      },
+      {
+        role: 'user',
+        content: `Generate detailed solution fit for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate a comprehensive solution analysis. Include:
+
+1. solutionDescription: detailed description of the solution
+2. keyFeatures: main features and capabilities
+3. benefits: specific benefits to customers
+4. competitiveAdvantages: how it's different from alternatives
+5. valueProposition: clear value proposition
+6. implementationRoadmap: how to implement the solution
+7. technicalRequirements: technical needs
+8. resourceRequirements: resources needed
+
+Return as JSON:
+{
+  "solution": {
+    "description": "string",
+    "keyFeatures": ["string"],
+    "benefits": ["string"],
+    "competitiveAdvantages": ["string"],
+    "valueProposition": "string",
+    "implementationRoadmap": "string",
+    "technicalRequirements": ["string"],
+    "resourceRequirements": ["string"]
+  },
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "insights": ["string"]
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(solutionFitPrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate solution fit' });
+    }
+
+    let solutionFit;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      solutionFit = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse solution fit response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse solution fit response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating solution fit. Rate this solution on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this solution fit:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Solution: ${JSON.stringify(solutionFit.solution)}
+
+Rate on these criteria:
+- Solution Alignment (1-10)
+- Solution Effectiveness (1-10)
+- Solution Differentiation (1-10)
+- Solution Value (1-10)
+- Solution Feasibility (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "solutionAlignment": number,
+    "solutionEffectiveness": number,
+    "solutionDifferentiation": number,
+    "solutionValue": number,
+    "solutionFeasibility": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate solution fit validation score:', e);
+    }
+
+    res.json({
+      solution: solutionFit.solution || {},
+      analysis: solutionFit.analysis || {},
+      summary: solutionFit.analysis?.summary || 'Solution fit analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Solution fit generation error:', error);
+    res.status(500).json({ error: 'Failed to generate solution fit' });
+  }
+});
+
+// Market Validation generation endpoint
+router.post('/market-validation', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const marketValidationPrompt = [
+      {
+        role: 'system',
+        content: `You are an expert in market research and validation. Your goal is to analyze market opportunities and validate business ideas through comprehensive market research.
+
+Key Principles:
+1. Analyze market size and opportunity
+2. Assess market demand and readiness
+3. Evaluate competitive landscape
+4. Consider market timing and entry strategy
+5. Identify market access and distribution channels
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate comprehensive market validation analysis.`
+      },
+      {
+        role: 'user',
+        content: `Generate detailed market validation for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate comprehensive market analysis. Include:
+
+1. marketSize: analysis of market size (TAM, SAM, SOM)
+2. marketDemand: assessment of market demand
+3. marketTiming: evaluation of market timing
+4. competitors: competitive landscape analysis
+5. marketEntryStrategy: how to enter the market
+6. customerDemand: specific customer demand analysis
+7. marketTrends: relevant market trends
+8. growthPotential: market growth potential
+
+Return as JSON:
+{
+  "marketData": {
+    "marketSize": {
+      "tam": "string",
+      "sam": "string", 
+      "som": "string"
+    },
+    "marketDemand": "string",
+    "marketTiming": "string",
+    "competitors": [
+      {
+        "name": "string",
+        "strengths": ["string"],
+        "weaknesses": ["string"],
+        "marketShare": "string"
+      }
+    ],
+    "marketEntryStrategy": "string",
+    "customerDemand": "string",
+    "marketTrends": ["string"],
+    "growthPotential": "string"
+  },
+  "validationTests": [
+    {
+      "test": "string",
+      "method": "string",
+      "expectedOutcome": "string"
+    }
+  ],
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "insights": ["string"]
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(marketValidationPrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate market validation' });
+    }
+
+    let marketValidation;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      marketValidation = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse market validation response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse market validation response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating market validation. Rate this market analysis on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this market validation:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Market Data: ${JSON.stringify(marketValidation.marketData)}
+
+Rate on these criteria:
+- Market Size (1-10)
+- Market Demand (1-10)
+- Market Timing (1-10)
+- Competitive Landscape (1-10)
+- Market Access (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "marketSize": number,
+    "marketDemand": number,
+    "marketTiming": number,
+    "competitiveLandscape": number,
+    "marketAccess": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate market validation score:', e);
+    }
+
+    res.json({
+      marketData: marketValidation.marketData || {},
+      competitors: marketValidation.marketData?.competitors || [],
+      validationTests: marketValidation.validationTests || [],
+      analysis: marketValidation.analysis || {},
+      summary: marketValidation.analysis?.summary || 'Market validation analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Market validation generation error:', error);
+    res.status(500).json({ error: 'Failed to generate market validation' });
+  }
+});
+
+// Business Model generation endpoint
+router.post('/business-models', async (req, res) => {
+  try {
+    const { businessIdea, customerDescription, personas, stage } = req.body;
+    
+    if (!businessIdea || !customerDescription) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const industryContext = getIndustryContext(businessIdea, customerDescription);
+    
+    const businessModelPrompt = [
+      {
+        role: 'system',
+        content: `You are an expert business model strategist with deep experience in startup business models, revenue streams, and financial modeling. Your goal is to generate comprehensive business models for early-stage business ideas.
+
+Key Principles:
+1. Focus on viable, scalable business models
+2. Include realistic revenue streams and pricing
+3. Consider cost structure and profitability
+4. Address competitive positioning
+5. Plan for scalability and growth
+
+Industry Context: ${industryContext.marketDynamics}
+Common Challenges: ${industryContext.commonChallenges}
+Validation Metrics: ${industryContext.validationMetrics}
+
+Generate 3-4 different business model options that could work for this business idea.`
+      },
+      {
+        role: 'user',
+        content: `Generate comprehensive business models for this business idea:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+Generate 3-4 different business model options. For each model, include:
+
+1. name: descriptive name for the business model
+2. description: detailed description of how the model works
+3. revenueStreams: array of revenue streams with name, type, price, frequency
+4. costStructure: breakdown of fixed and variable costs
+5. advantages: key advantages of this model
+6. challenges: potential challenges or risks
+7. scalability: how this model can scale
+8. targetMarket: specific market segment this model targets
+
+Return as JSON:
+{
+  "models": [
+    {
+      "name": "string",
+      "description": "string", 
+      "revenueStreams": [
+        {
+          "name": "string",
+          "type": "subscription|one-time|freemium|licensing",
+          "price": number,
+          "frequency": "string"
+        }
+      ],
+      "costStructure": {
+        "fixedCosts": number,
+        "variableCosts": number,
+        "breakdown": {}
+      },
+      "advantages": ["string"],
+      "challenges": ["string"],
+      "scalability": "string",
+      "targetMarket": "string"
+    }
+  ],
+  "analysis": {
+    "summary": "string",
+    "recommendations": ["string"],
+    "financialProjections": {
+      "monthlyRevenue": [number],
+      "annualRevenue": [number],
+      "grossMargin": number,
+      "netMargin": number,
+      "breakEvenPoint": number
+    }
+  }
+}`
+      }
+    ];
+
+    const response = await chatCompletion(businessModelPrompt, 'gpt-4', 0.7);
+    
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate business models' });
+    }
+
+    let businessModels;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      businessModels = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse business models response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse business models response' });
+    }
+
+    // Generate validation score for this stage
+    let validationScore = null;
+    try {
+      const validationPrompt = [
+        {
+          role: 'system',
+          content: `You are Sarah Chen, a seasoned entrepreneur evaluating business models. Rate this business model on a scale of 1-10.`
+        },
+        {
+          role: 'user',
+          content: `Evaluate this business model:
+
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+Business Models: ${JSON.stringify(businessModels.models)}
+
+Rate on these criteria:
+- Model Viability (1-10)
+- Revenue Potential (1-10) 
+- Cost Efficiency (1-10)
+- Competitive Advantage (1-10)
+- Scalability (1-10)
+
+Return as JSON:
+{
+  "score": number,
+  "criteria": {
+    "modelViability": number,
+    "revenuePotential": number,
+    "costEfficiency": number,
+    "competitiveAdvantage": number,
+    "scalability": number
+  },
+  "recommendations": ["string"],
+  "confidence": "high|medium|low",
+  "shouldProceed": boolean
+}`
+        }
+      ];
+      
+      const validationResponse = await chatCompletion(validationPrompt, 'gpt-4', 0.7);
+      if (validationResponse) {
+        const cleanResponse = validationResponse.replace(/```json|```/gi, '').trim();
+        validationScore = JSON.parse(cleanResponse);
+      }
+    } catch (e) {
+      console.error('Failed to generate business model validation score:', e);
+    }
+
+    res.json({
+      models: businessModels.models || [],
+      analysis: businessModels.analysis || {},
+      financialProjections: businessModels.analysis?.financialProjections || {},
+      summary: businessModels.analysis?.summary || 'Business model analysis completed',
+      validationScore
+    });
+
+  } catch (error) {
+    console.error('Business models generation error:', error);
+    res.status(500).json({ error: 'Failed to generate business models' });
+  }
+});
+
 // Customer Profile improvement endpoint
 router.post('/customer-profile-improve', async (req, res) => {
   try {
-    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
+    const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData, businessPlanId } = AutoImproveSchema.extend({ businessPlanId: z.string() }).parse(req.body);
 
     // Create a comprehensive prompt for AI improvement of customer profile sections
     const improvementPrompt = `You are an expert business consultant helping to improve the customer profile section of a business plan.
@@ -1841,6 +2777,17 @@ Provide improved versions of the customer profile sections in this JSON format:
         customerValue: "Customer value will be clarified"
       };
     }
+
+    // After improvedSections is finalized, merge into business plan
+    if (!businessPlanId) {
+      return res.status(400).json({ error: 'Missing businessPlanId' });
+    }
+    const plan = await BusinessPlan.findById(businessPlanId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+    plan.sections = { ...plan.sections, ...improvedSections };
+    await plan.save();
 
     res.json({
       improvedSections,

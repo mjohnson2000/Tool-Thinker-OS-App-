@@ -6,6 +6,7 @@ export interface ProblemDiscoveryStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function ProblemDiscoveryStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: ProblemDiscoveryStageProps) {
@@ -84,7 +86,7 @@ export function ProblemDiscoveryStage({
       setError(null);
       
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/automated-discovery/feedback`, {
+      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/automated-discovery/problem-discovery`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -105,26 +107,18 @@ export function ProblemDiscoveryStage({
       if (response.ok) {
         const data = await response.json();
         
-        // Update personas with feedback
-        setPersonas(prev => prev.map(p => ({ 
-          ...p, 
-          feedback: (data.feedback.find((f: any) => f.personaId === p.id)?.feedback || []) 
-        })));
-        
         setCollectiveSummary(data.summary);
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
-        // Save business plan sections if generated
-        if (data.businessPlanSections) {
-          await saveBusinessPlanSections(data.businessPlanSections);
-        }
+        // Save problem discovery data to the business plan
+        await saveProblemDiscoveryData(data);
         
         onStageComplete({
-          personas: data.personas,
-          collectiveSummary: data.summary,
+          problem: data.problem,
+          analysis: data.analysis,
+          summary: data.summary,
           validationScore: data.validationScore,
-          businessPlanSections: data.businessPlanSections,
         });
       } else {
         throw new Error('Failed to generate feedback');
@@ -136,38 +130,48 @@ export function ProblemDiscoveryStage({
     }
   };
 
-  const saveBusinessPlanSections = async (businessPlanSections: any) => {
+  // Function to save problem discovery data to the business plan
+  const saveProblemDiscoveryData = async (data: any) => {
     try {
       const token = localStorage.getItem('token');
-      const updateData = {
-        sections: {
-          // Preserve original camelCase keys
-          customerPainPoints: businessPlanSections.customerPainPoints,
-          valueProposition: businessPlanSections.valueProposition,
-          marketAnalysis: businessPlanSections.marketAnalysis,
-          competitiveAnalysis: businessPlanSections.competitiveAnalysis,
-          // Also add capitalized keys for compatibility
-          'Customer Struggles': businessPlanSections.customerPainPoints,
-          'Value Proposition': businessPlanSections.valueProposition,
-          'Market Size': businessPlanSections.marketAnalysis,
-          'Competitors': businessPlanSections.competitiveAnalysis
-        }
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare problem discovery sections to save
+      const problemDiscoverySections = {
+        problemDiscovery: JSON.stringify(data.problem || {}),
+        problemDiscoveryAnalysis: data.analysis?.summary || '',
+        problemStatement: data.problem?.statement || '',
+        problemScope: data.problem?.scope || '',
+        problemUrgency: data.problem?.urgency || '',
+        problemImpact: data.problem?.impact || '',
+        problemEvidence: data.problem?.evidence || '',
+        rootCauses: data.problem?.rootCauses ? JSON.stringify(data.problem.rootCauses) : '',
+        customerInsights: data.problem?.customerInsights ? JSON.stringify(data.problem.customerInsights) : '',
+        problemValidation: data.problem?.validation || ''
       };
-      
-      const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${planData?.id}`, {
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
         method: 'PUT',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify({
+          sections: problemDiscoverySections
+        }),
       });
-      
-      if (response.ok) {
-        setLogs(prev => [...prev, 'Business plan sections saved successfully']);
+
+      if (saveResponse.ok) {
+        console.log('Problem discovery data saved successfully');
+        setLogs(prev => [...prev, 'Problem discovery data saved successfully']);
+      } else {
+        console.error('Failed to save problem discovery data');
       }
     } catch (error) {
-      console.error('Error saving business plan sections:', error);
+      console.error('Error saving problem discovery data:', error);
     }
   };
 

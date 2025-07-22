@@ -6,6 +6,7 @@ export interface CustomerProfileStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function CustomerProfileStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: CustomerProfileStageProps) {
@@ -112,6 +114,9 @@ export function CustomerProfileStage({
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
+        // Save customer profile data to the business plan
+        await saveCustomerProfileData(data);
+        
         onStageComplete({
           customerProfiles: data.profiles,
           summary: data.summary,
@@ -130,6 +135,48 @@ export function CustomerProfileStage({
   const handleProfileSelect = (profile: any) => {
     setSelectedProfile(profile);
     onStageUpdate({ selectedProfile: profile });
+  };
+
+  // Function to save customer profile data to the business plan
+  const saveCustomerProfileData = async (data: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare customer profile sections to save
+      const customerProfileSections = {
+        customerProfiles: JSON.stringify(data.profiles || []),
+        customerProfileAnalysis: data.analysis?.summary || '',
+        customerSegments: data.profiles?.[0]?.segments ? JSON.stringify(data.profiles[0].segments) : '',
+        customerPainPoints: data.profiles?.[0]?.painPoints ? JSON.stringify(data.profiles[0].painPoints) : '',
+        customerMotivations: data.profiles?.[0]?.motivations ? JSON.stringify(data.profiles[0].motivations) : '',
+        customerAccessibility: data.profiles?.[0]?.accessibility || '',
+        customerValue: data.profiles?.[0]?.value || '',
+        customerObjections: data.profiles?.[0]?.objections ? JSON.stringify(data.profiles[0].objections) : ''
+      };
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sections: customerProfileSections
+        }),
+      });
+
+      if (saveResponse.ok) {
+        console.log('Customer profile data saved successfully');
+      } else {
+        console.error('Failed to save customer profile data');
+      }
+    } catch (error) {
+      console.error('Error saving customer profile data:', error);
+    }
   };
 
   return (

@@ -6,6 +6,7 @@ export interface BusinessModelStageProps {
   businessIdea: string;
   customerDescription: string;
   planData: any;
+  businessPlanId: string;
   onStageComplete: (data: any) => void;
   onStageUpdate: (data: any) => void;
 }
@@ -14,6 +15,7 @@ export function BusinessModelStage({
   businessIdea,
   customerDescription,
   planData,
+  businessPlanId,
   onStageComplete,
   onStageUpdate,
 }: BusinessModelStageProps) {
@@ -118,6 +120,9 @@ export function BusinessModelStage({
         setValidationScore(data.validationScore);
         setHasFetchedValidation(true); // Mark as fetched since we got new validation data
         
+        // Save business model data to the business plan
+        await saveBusinessModelData(data);
+        
         onStageComplete({
           businessModels: data.models,
           analysis: data.analysis,
@@ -132,6 +137,48 @@ export function BusinessModelStage({
       setError(err.message || 'Failed to generate business models');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to save business model data to the business plan
+  const saveBusinessModelData = async (data: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!businessPlanId) {
+        console.warn('No business plan ID found, skipping save');
+        return;
+      }
+
+      // Prepare business model sections to save
+      const businessModelSections = {
+        businessModels: JSON.stringify(data.models || []),
+        businessModelAnalysis: data.analysis?.summary || '',
+        financialProjections: JSON.stringify(data.financialProjections || {}),
+        revenueStreams: data.models?.[0]?.revenueStreams ? JSON.stringify(data.models[0].revenueStreams) : '',
+        costStructure: data.models?.[0]?.costStructure ? JSON.stringify(data.models[0].costStructure) : '',
+        competitiveAdvantages: data.models?.[0]?.advantages ? JSON.stringify(data.models[0].advantages) : '',
+        scalability: data.models?.[0]?.scalability || '',
+        targetMarket: data.models?.[0]?.targetMarket || ''
+      };
+
+      const saveResponse = await fetch(`${process.env.VITE_API_URL || 'http://localhost:5001/api'}/business-plan/${businessPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sections: businessModelSections
+        }),
+      });
+
+      if (saveResponse.ok) {
+        console.log('Business model data saved successfully');
+      } else {
+        console.error('Failed to save business model data');
+      }
+    } catch (error) {
+      console.error('Error saving business model data:', error);
     }
   };
 

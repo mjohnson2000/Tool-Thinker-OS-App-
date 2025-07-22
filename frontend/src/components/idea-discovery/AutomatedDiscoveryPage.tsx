@@ -2342,9 +2342,9 @@ export function AutomatedDiscoveryPage() {
                 fontWeight: 700, 
                 color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
               }}>
-                Expert Assessment: {validationScore && hasCurrentStageCriteria(validationScore) ? `${validationScore.score}/10` : 'Updating...'}
+                Expert Assessment: {(validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving) ? `${validationScore.score}/10` : 'Updating...'}
               </h3>
-              {validationScore && hasCurrentStageCriteria(validationScore) && (
+              {validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving && (
                 <div style={{ 
                   padding: '6px 16px', 
                   borderRadius: 20, 
@@ -2384,7 +2384,7 @@ export function AutomatedDiscoveryPage() {
               )}
             </div>
             
-            {validationScore && hasCurrentStageCriteria(validationScore) && (
+            {validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {Object.entries(getValidationCriteria(validationScore)).map(([key, value]) => (
                   <div key={key} style={{ 
@@ -3079,9 +3079,9 @@ export function AutomatedDiscoveryPage() {
                     fontWeight: 600, 
                     color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
                   }}>
-                    Expert Assessment: {validationScore && hasCurrentStageCriteria(validationScore) ? `${validationScore.score}/10` : 'Updating...'}
+                    Expert Assessment: {(validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving) ? `${validationScore.score}/10` : 'Updating...'}
                   </h3>
-                  {validationScore && hasCurrentStageCriteria(validationScore) && (
+                  {validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving && (
                     <div style={{ 
                       padding: '4px 12px', 
                       borderRadius: 20, 
@@ -3118,7 +3118,7 @@ export function AutomatedDiscoveryPage() {
                   )}
                 </div>
                 
-                {validationScore && hasCurrentStageCriteria(validationScore) && (
+                {validationScore && hasCurrentStageCriteria(validationScore) && !isAutoImproving && (
                   <>
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Expert Evaluation Criteria:</div>

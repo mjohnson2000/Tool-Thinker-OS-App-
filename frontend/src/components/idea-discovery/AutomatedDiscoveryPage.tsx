@@ -105,11 +105,19 @@ export function AutomatedDiscoveryPage() {
   const [completedStages, setCompletedStages] = React.useState<string[]>([]);
   const [currentSavedStage, setCurrentSavedStage] = React.useState(0);
   const [isLoadingSavedData, setIsLoadingSavedData] = React.useState(false);
+  const [hasFetchedFeedback, setHasFetchedFeedback] = React.useState(false);
   const [showCompletedStagesModal, setShowCompletedStagesModal] = React.useState(false);
 
   // Custom setCurrentStage function that saves to localStorage
   const updateCurrentStage = React.useCallback((newStage: number) => {
     setCurrentStage(newStage);
+    setHasFetchedFeedback(false); // Reset feedback flag when stage changes
+    
+    // Clear validation score when navigating to Launch stage
+    if (newStage === 6) {
+      setValidationScore(null);
+    }
+    
     localStorage.setItem(`automated-discovery-stage-${id}`, newStage.toString());
   }, [id]);
 
@@ -117,6 +125,12 @@ export function AutomatedDiscoveryPage() {
   const handleStageNavigation = React.useCallback((targetStage: number) => {
     // If navigating forward or to current stage, proceed normally
     if (targetStage >= currentStage) {
+      updateCurrentStage(targetStage);
+      return;
+    }
+
+    // Special handling for Launch stage (stage 6) - always allow navigation
+    if (targetStage === 6) {
       updateCurrentStage(targetStage);
       return;
     }
@@ -184,6 +198,11 @@ export function AutomatedDiscoveryPage() {
           stageData[parseInt(stage)] = true;
         });
         setHasDataForStage(stageData);
+        
+        // Set feedback flag if we have data for current stage
+        if (stageData[currentStage]) {
+          setHasFetchedFeedback(true);
+        }
         
         console.log('Loaded saved evaluations:', data);
       }
@@ -514,6 +533,7 @@ export function AutomatedDiscoveryPage() {
   const [isGeneratingValidationScore, setIsGeneratingValidationScore] = React.useState(false);
   const [showBusinessPlanModal, setShowBusinessPlanModal] = React.useState(false);
   const [isAutoImproving, setIsAutoImproving] = React.useState(false);
+  const [shouldShowProgress, setShouldShowProgress] = React.useState(false);
   const [improvedProblemStatement, setImprovedProblemStatement] = React.useState<string>('');
   const [showImprovementModal, setShowImprovementModal] = React.useState(false);
   const [improvedSections, setImprovedSections] = React.useState<{
@@ -725,6 +745,48 @@ export function AutomatedDiscoveryPage() {
       }
     }
   }, [currentProcessStep]);
+
+  // Ensure validation score generation state is correct when validation score exists
+  React.useEffect(() => {
+    if (validationScore && isGeneratingValidationScore) {
+      console.log('Validation score exists but isGeneratingValidationScore is true - resetting');
+      setIsGeneratingValidationScore(false);
+    }
+  }, [validationScore, isGeneratingValidationScore]);
+
+  // Force reset isGeneratingValidationScore if validation score exists and we're not loading
+  React.useEffect(() => {
+    if (validationScore && !loading && isGeneratingValidationScore) {
+      console.log('Forcing reset of isGeneratingValidationScore - validation score exists and not loading');
+      setIsGeneratingValidationScore(false);
+    }
+  }, [validationScore, loading, isGeneratingValidationScore]);
+
+  // Aggressive fix: Always reset isGeneratingValidationScore when validation score exists
+  React.useEffect(() => {
+    if (validationScore) {
+      console.log('Validation score exists - ensuring isGeneratingValidationScore is false');
+      setIsGeneratingValidationScore(false);
+      setShouldShowProgress(false);
+      setLoading(false); // Also reset the main loading state
+      // Clear any remaining process steps
+      setProcessSteps([]);
+      setCompletedSteps([]);
+      setCurrentProcessStep('');
+    }
+  }, [validationScore]);
+
+  // Control progress indicator visibility
+  React.useEffect(() => {
+    const shouldShow = isGeneratingValidationScore && !validationScore && !loading;
+    setShouldShowProgress(shouldShow);
+    console.log('Progress indicator state:', { isGeneratingValidationScore, hasValidationScore: !!validationScore, loading, shouldShow });
+  }, [isGeneratingValidationScore, validationScore, loading]);
+
+  // Debug logging for loading state
+  React.useEffect(() => {
+    console.log('Loading state changed:', { loading, hasValidationScore: !!validationScore, isGeneratingValidationScore });
+  }, [loading, validationScore, isGeneratingValidationScore]);
 
   // Fetch business plan on mount
   React.useEffect(() => {
@@ -1156,6 +1218,25 @@ export function AutomatedDiscoveryPage() {
       return;
     }
     
+    // Prevent re-fetching if we already have validation data for this stage
+    if (validationScore && hasDataForStage[currentStage]) {
+      console.log('Already have validation data for current stage, skipping fetchFeedback');
+      return;
+    }
+    
+    // Prevent re-fetching if we've already fetched feedback for this stage
+    if (hasFetchedFeedback) {
+      console.log('Already fetched feedback for current stage, skipping fetchFeedback');
+      return;
+    }
+    
+    // Prevent re-fetching if we're currently loading
+    if (loading) {
+      console.log('Currently loading, skipping fetchFeedback');
+      return;
+    }
+    
+    setHasFetchedFeedback(true);
     fetchFeedback();
   }, [currentStage, personas.length, businessIdea, customerDescription, id, skipReevaluation, completedStages.length, savedEvaluations]);
 
@@ -1168,18 +1249,20 @@ export function AutomatedDiscoveryPage() {
     
     if (personas.length === 0 || !businessIdea || !customerDescription) {
       console.log('Early return from fetchFeedback - missing data');
-      // Reset validation score generation flag on early return
       setIsGeneratingValidationScore(false);
+      setLoading(false);
       return;
     }
     
     // Early return if viewing previous results or skipping re-evaluation
     if (skipReevaluation || isViewingPreviousResults) {
       console.log('Early return from fetchFeedback - viewing previous results or skipping re-evaluation');
-      // Reset validation score generation flag on early return
       setIsGeneratingValidationScore(false);
+      setLoading(false);
       return;
     }
+    
+
     
     setLoading(true);
     setError(null);
@@ -1458,6 +1541,8 @@ export function AutomatedDiscoveryPage() {
       if (data.validationScore) {
         console.log('Setting validation score for stage', currentStage, ':', data.validationScore);
         setValidationScore(data.validationScore);
+        // Immediately stop loading when validation score is available
+        setLoading(false);
         console.log('Updated validation score:', data.validationScore);
       } else {
         console.log('No validation score received for stage', currentStage);
@@ -1502,6 +1587,10 @@ export function AutomatedDiscoveryPage() {
         setProcessSteps([]);
         setCompletedSteps([]);
         setCurrentProcessStep('');
+        // Ensure loading is false when validation score is available
+        if (validationScore) {
+          setLoading(false);
+        }
       }, 800);
       
     } catch (err: any) {
@@ -1521,6 +1610,21 @@ export function AutomatedDiscoveryPage() {
       setIsGeneratingValidationScore(false);
       console.log('fetchFeedback finally block - loading and validation score generation set to false');
     }
+  }
+
+  // Helper function to check if current stage criteria have been evaluated
+  function hasCurrentStageCriteria(validationScore: ValidationScore) {
+    // Launch stage (stage 6) doesn't have validation criteria, so always return true
+    if (currentStage === 6) {
+      return true;
+    }
+    
+    const currentStageCriteria = getValidationCriteria(validationScore);
+    // If no criteria exist for this stage, return false
+    if (Object.keys(currentStageCriteria).length === 0) {
+      return false;
+    }
+    return Object.values(currentStageCriteria).some(value => value !== undefined && value !== 0);
   }
 
   // Helper function to get validation criteria based on current stage
@@ -1579,6 +1683,9 @@ export function AutomatedDiscoveryPage() {
         competitiveLandscape: validationScore.criteria.competitiveLandscape,
         marketAccess: validationScore.criteria.marketAccess,
       };
+    } else if (currentStage === 6) {
+      // Launch stage - return empty object since Launch doesn't have validation criteria
+      return {};
     }
     // Default to all criteria
     return validationScore.criteria;
@@ -1747,30 +1854,8 @@ export function AutomatedDiscoveryPage() {
       setCompletedSteps(prev => [...prev, 'Refining customer pain points and value proposition...']);
       setCurrentProcessStep('Preparing comprehensive business plan improvements...');
       
-      // Use stage-specific endpoints for different stages
-      let endpoint;
-      switch (currentStage) {
-        case 0: // Problem Discovery
-          endpoint = 'improve-problem';
-          break;
-        case 1: // Customer Profile
-          endpoint = 'customer-profile-improve';
-          break;
-        case 2: // Customer Struggle
-          endpoint = 'customer-struggle-improve';
-          break;
-        case 3: // Solution Fit
-          endpoint = 'solution-fit-improve';
-          break;
-        case 4: // Business Model
-          endpoint = 'business-model-improve';
-          break;
-        case 5: // Market Validation
-          endpoint = 'market-validation-improve';
-          break;
-        default:
-          endpoint = 'auto-improve';
-      }
+      // Use different endpoint for Customer Profile stage
+      const endpoint = currentStage === 1 ? 'customer-profile-improve' : 'auto-improve';
       const res = await fetch(`${API_URL}/automated-discovery/${endpoint}`, {
         method: 'POST',
         headers: {
@@ -2006,12 +2091,7 @@ export function AutomatedDiscoveryPage() {
       
       // Trigger re-validation
       setIsGeneratingValidationScore(true);
-      try {
-        await fetchFeedback();
-      } finally {
-        // Always reset the validation score generation flag
-        setIsGeneratingValidationScore(false);
-      }
+      await fetchFeedback();
       
       setCompletedSteps(prev => [...prev, 'Generating updated validation scores...']);
       setCurrentProcessStep('Finalizing improvement application...');
@@ -2034,6 +2114,9 @@ export function AutomatedDiscoveryPage() {
       setProcessSteps([]);
       setCompletedSteps([]);
       setCurrentProcessStep('');
+    } finally {
+      // Ensure validation score generation state is reset
+      setIsGeneratingValidationScore(false);
     }
   }
 
@@ -2069,7 +2152,17 @@ export function AutomatedDiscoveryPage() {
       {/* This button is now moved to the main section */}
 
       {/* Progress Sidebar */}
-      <aside style={{ width: 120, background: '#fff', borderRight: '1px solid #eee', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 32, height: '100vh', justifyContent: 'space-between' }}>
+      <aside style={{ 
+        width: 120, 
+        background: '#fff', 
+        borderRight: '1px solid #eee', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        paddingTop: 32, 
+        height: '100vh', 
+        justifyContent: 'space-between' 
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {STAGES.map((stage, idx) => (
             <div 
@@ -2130,49 +2223,48 @@ export function AutomatedDiscoveryPage() {
         </div>
         
         {/* Completed Stages Icon */}
-        {completedStages.length > 0 && (
-          <div 
-            style={{
-              marginBottom: 32,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onClick={() => setShowCompletedStagesModal(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="View completed stages"
-          >
-            <div style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: '#10b981',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 16,
-              marginBottom: 4,
-              boxShadow: '0 2px 8px #10b98144',
-              transition: 'all 0.2s ease'
-            }}>📊</div>
-            <span style={{ 
-              fontSize: 10, 
-              color: '#10b981', 
-              textAlign: 'center', 
-              maxWidth: 80,
-              fontWeight: 600
-            }}>Progress</span>
-          </div>
-        )}
+        <div 
+          style={{
+            marginBottom: 32,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            opacity: completedStages.length > 0 ? 1 : 0.5
+          }}
+          onClick={() => setShowCompletedStagesModal(true)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={completedStages.length > 0 ? "View completed stages" : "No completed stages yet"}
+        >
+          <div style={{
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: completedStages.length > 0 ? '#10b981' : '#6b7280',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 700,
+            fontSize: 16,
+            marginBottom: 4,
+            boxShadow: completedStages.length > 0 ? '0 2px 8px #10b98144' : '0 2px 8px #6b728044',
+            transition: 'all 0.2s ease'
+          }}>📊</div>
+          <span style={{ 
+            fontSize: 10, 
+            color: completedStages.length > 0 ? '#10b981' : '#6b7280', 
+            textAlign: 'center', 
+            maxWidth: 80,
+            fontWeight: 600
+          }}>Progress</span>
+        </div>
       </aside>
 
       {/* Center Visualization */}
@@ -2250,9 +2342,9 @@ export function AutomatedDiscoveryPage() {
                 fontWeight: 700, 
                 color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
               }}>
-                Expert Assessment: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+                Expert Assessment: {validationScore && hasCurrentStageCriteria(validationScore) ? `${validationScore.score}/10` : 'Updating...'}
               </h3>
-              {validationScore && (
+              {validationScore && hasCurrentStageCriteria(validationScore) && (
                 <div style={{ 
                   padding: '6px 16px', 
                   borderRadius: 20, 
@@ -2267,7 +2359,7 @@ export function AutomatedDiscoveryPage() {
                   {validationScore.shouldProceed ? '✅ PROCEED' : '▲ ITERATE'}
                 </div>
               )}
-              {isGeneratingValidationScore && (
+              {shouldShowProgress && (
                 <div style={{ 
                   padding: '6px 16px', 
                   borderRadius: 20, 
@@ -2292,7 +2384,7 @@ export function AutomatedDiscoveryPage() {
               )}
             </div>
             
-            {validationScore && (
+            {validationScore && hasCurrentStageCriteria(validationScore) && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {Object.entries(getValidationCriteria(validationScore)).map(([key, value]) => (
                   <div key={key} style={{ 
@@ -2307,18 +2399,18 @@ export function AutomatedDiscoveryPage() {
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                     <div style={{ 
-                      color: (value && value >= 7) ? '#059669' : (value && value >= 4) ? '#d97706' : '#374151',
+                      color: (value === 0 || value === undefined) ? '#000000' : value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
                       fontWeight: 700,
                       fontSize: 14
                     }}>
-                      {value}/10
+                      {(value === 0 || value === undefined) ? '/10' : `${value}/10`}
                     </div>
                   </div>
                 ))}
               </div>
             )}
             
-            {isGeneratingValidationScore && (
+            {shouldShowProgress && (
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -2379,15 +2471,34 @@ export function AutomatedDiscoveryPage() {
             pointerEvents: 'none',
           }} />
           {/* Robot animation */}
-          <Lottie
-            animationData={robotLottie}
-            loop={true}
-            autoplay={true}
-            style={{ width: 200, height: 200, marginBottom: 16, zIndex: 1 }}
-            aria-label="AI robot animation"
-          />
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            height: 200,
+            marginBottom: 16,
+            marginTop: 20,
+            zIndex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <Lottie
+              animationData={robotLottie}
+              loop={true}
+              autoplay={true}
+              style={{ 
+                width: 200, 
+                height: 200,
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}
+              aria-label="AI robot animation"
+            />
+          </div>
           {/* Minimalist AI is Thinking animation (three animated dots) */}
-          {loading && (
+          {loading && !validationScore && (
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 24, marginBottom: 8, zIndex: 2 }}>
               <span style={{
                 display: 'inline-block',
@@ -2472,7 +2583,7 @@ export function AutomatedDiscoveryPage() {
           </span>
           
           {/* Process Steps Progress Indicator */}
-          {processSteps.length > 0 && (
+          {(processSteps.length > 0 || isAutoImproving) && (
             <div style={{
               width: '100%',
               maxWidth: 320,
@@ -2499,7 +2610,7 @@ export function AutomatedDiscoveryPage() {
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }} />
-                Processing...
+                {isAutoImproving ? 'Improving...' : 'Processing...'}
               </div>
               
               <div ref={progressContainerRef} style={{ maxHeight: 120, overflow: 'auto' }}>
@@ -2553,7 +2664,7 @@ export function AutomatedDiscoveryPage() {
             </div>
           )}
           
-          {loading && !processSteps.length && (
+          {loading && !processSteps.length && !validationScore && !isAutoImproving && (
             <div style={{ width: 240, height: 6, background: '#e0e0e0', borderRadius: 3, overflow: 'hidden', marginTop: 18 }}>
               <div style={{
                 width: '40%',
@@ -2968,9 +3079,9 @@ export function AutomatedDiscoveryPage() {
                     fontWeight: 600, 
                     color: validationScore?.shouldProceed ? '#0c4a6e' : '#991b1b' 
                   }}>
-                    Expert Assessment: {validationScore ? `${validationScore.score}/10` : 'Updating...'}
+                    Expert Assessment: {validationScore && hasCurrentStageCriteria(validationScore) ? `${validationScore.score}/10` : 'Updating...'}
                   </h3>
-                  {validationScore && (
+                  {validationScore && hasCurrentStageCriteria(validationScore) && (
                     <div style={{ 
                       padding: '4px 12px', 
                       borderRadius: 20, 
@@ -2982,7 +3093,7 @@ export function AutomatedDiscoveryPage() {
                       {validationScore.shouldProceed ? '✅ PROCEED' : '⚠️ ITERATE'}
                     </div>
                   )}
-                  {isGeneratingValidationScore && (
+                  {isGeneratingValidationScore && !validationScore && (
                     <div style={{ 
                       padding: '4px 12px', 
                       borderRadius: 20, 
@@ -3007,7 +3118,7 @@ export function AutomatedDiscoveryPage() {
                   )}
                 </div>
                 
-                {validationScore && (
+                {validationScore && hasCurrentStageCriteria(validationScore) && (
                   <>
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Expert Evaluation Criteria:</div>
@@ -3024,10 +3135,10 @@ export function AutomatedDiscoveryPage() {
                               {key.replace(/([A-Z])/g, ' $1').trim()}
                             </div>
                             <div style={{ 
-                              color: (value && value >= 7) ? '#059669' : (value && value >= 4) ? '#d97706' : '#374151',
+                              color: (value === 0 || value === undefined) ? '#000000' : value >= 7 ? '#059669' : value >= 4 ? '#d97706' : '#dc2626',
                               fontWeight: 600
                             }}>
-                              {value}/10
+                              {(value === 0 || value === undefined) ? '/10' : `${value}/10`}
                             </div>
                           </div>
                         ))}
@@ -3061,7 +3172,7 @@ export function AutomatedDiscoveryPage() {
                   </>
                 )}
                 
-                {isGeneratingValidationScore && (
+                {isGeneratingValidationScore && !validationScore && (
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -4235,32 +4346,31 @@ export function AutomatedDiscoveryPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 10000,
+          zIndex: 10000
         }}>
           <div style={{
             background: '#fff',
-            borderRadius: 16,
+            borderRadius: 12,
             padding: '2rem',
-            maxWidth: 480,
-            width: '90%',
+            maxWidth: 400,
             maxHeight: '80vh',
             overflow: 'auto',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
-            border: '1px solid #e5e5e5',
+            border: '1px solid #e5e7eb'
           }}>
             <div style={{
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'space-between',
+              alignItems: 'center',
               marginBottom: '1.5rem'
             }}>
               <h3 style={{
                 margin: 0,
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#181a1b',
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                color: '#1f2937'
               }}>
-                📊 Completed Stages
+                Completed Stages
               </h3>
               <button
                 onClick={() => setShowCompletedStagesModal(false)}
@@ -4269,59 +4379,36 @@ export function AutomatedDiscoveryPage() {
                   border: 'none',
                   fontSize: '1.5rem',
                   cursor: 'pointer',
-                  color: '#666',
-                  padding: '0.25rem',
-                  borderRadius: '50%',
-                  width: '2rem',
-                  height: '2rem',
+                  color: '#6b7280',
+                  padding: 0,
+                  width: 24,
+                  height: 24,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f3f4f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
+                  justifyContent: 'center'
                 }}
               >
                 ×
               </button>
             </div>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {completedStages.map((stage, index) => (
                 <div key={index} style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '1rem',
+                  padding: '0.75rem',
                   background: '#f9fafb',
                   borderRadius: 8,
                   border: '1px solid #e5e7eb'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: '#10b981',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: 12
-                    }}>✓</div>
-                    <span style={{
-                      fontSize: '1rem',
-                      color: '#374151',
-                      fontWeight: 500
-                    }}>
-                      {STAGES[parseInt(stage)]}
-                    </span>
-                  </div>
+                  <span style={{
+                    fontSize: '0.875rem',
+                    color: '#374151',
+                    fontWeight: 500
+                  }}>
+                    {STAGES[parseInt(stage)]}
+                  </span>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       onClick={() => {
@@ -4331,7 +4418,7 @@ export function AutomatedDiscoveryPage() {
                       }}
                       style={{
                         fontSize: '0.75rem',
-                        padding: '0.5rem 0.75rem',
+                        padding: '0.375rem 0.75rem',
                         background: '#dbeafe',
                         color: '#1d4ed8',
                         borderRadius: 6,
@@ -4339,12 +4426,6 @@ export function AutomatedDiscoveryPage() {
                         cursor: 'pointer',
                         fontWeight: 500,
                         transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#bfdbfe';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#dbeafe';
                       }}
                     >
                       Re-evaluate
@@ -4364,7 +4445,7 @@ export function AutomatedDiscoveryPage() {
                       }}
                       style={{
                         fontSize: '0.75rem',
-                        padding: '0.5rem 0.75rem',
+                        padding: '0.375rem 0.75rem',
                         background: '#dcfce7',
                         color: '#16a34a',
                         borderRadius: 6,
@@ -4373,35 +4454,12 @@ export function AutomatedDiscoveryPage() {
                         fontWeight: 500,
                         transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#bbf7d0';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#dcfce7';
-                      }}
                     >
                       View
                     </button>
                   </div>
                 </div>
               ))}
-            </div>
-            
-            <div style={{
-              marginTop: '1.5rem',
-              padding: '1rem',
-              background: '#f0f9ff',
-              borderRadius: 8,
-              border: '1px solid #bae6fd'
-            }}>
-              <p style={{
-                margin: 0,
-                fontSize: '0.875rem',
-                color: '#0c4a6e',
-                lineHeight: 1.5
-              }}>
-                <strong>💡 Tip:</strong> Click "View" to see your previous evaluation results, or "Re-evaluate" to generate new feedback for that stage.
-              </p>
             </div>
           </div>
         </div>

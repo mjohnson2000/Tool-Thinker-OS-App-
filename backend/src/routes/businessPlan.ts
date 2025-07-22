@@ -70,7 +70,16 @@ No extra text, just valid JSON.
     try {
       console.log("Prompt:", prompt);
       console.log("OpenAI raw response:", content);
-      plan = JSON.parse(content);
+      
+      // Strip markdown code blocks if present
+      let jsonContent = content;
+      if (content.includes('```json')) {
+        jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (content.includes('```')) {
+        jsonContent = content.replace(/```\n?/g, '');
+      }
+      
+      plan = JSON.parse(jsonContent);
     } catch (err) {
       console.error("Failed to parse AI response as JSON:", content, err);
       return res

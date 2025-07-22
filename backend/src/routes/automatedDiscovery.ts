@@ -1292,7 +1292,67 @@ Return as JSON:
       }
     }
 
-    res.json({ feedback, summary, validationScore });
+    // For Problem Discovery stage, generate additional business plan sections
+    let businessPlanSections = null;
+    if (stage === 'Problem Discovery') {
+      try {
+        const sectionsPrompt = [
+          { 
+            role: 'system', 
+            content: `You are an expert business strategist and startup coach. Your job is to generate comprehensive business plan sections based on the problem discovery analysis.
+
+Generate these sections:
+1. Customer Pain Points: Detailed analysis of customer pain points discovered
+2. Value Proposition: Clear value proposition based on the problems identified
+3. Market Analysis: Initial market analysis and opportunity assessment
+4. Competitive Analysis: Competitive landscape and positioning
+
+Be specific, actionable, and based on the problem discovery insights.`
+          },
+          { 
+            role: 'user', 
+            content: `Based on this business idea and customer feedback, generate comprehensive business plan sections:
+
+Business Idea: "${businessIdea}"
+Customer Description: "${customerDescription}"
+Customer Feedback Summary: "${summary}"
+
+Generate these sections with IMPROVED versions that score higher on validation criteria:
+
+1. Customer Pain Points (detailed analysis with bullet points):
+2. Value Proposition (clear and compelling):
+3. Market Analysis (opportunity assessment):
+4. Competitive Analysis (landscape and positioning):
+
+Return as JSON:
+{
+  "customerPainPoints": "• [Improved pain point 1]\n• [Improved pain point 2]\n• [Improved pain point 3]",
+  "valueProposition": "clear value proposition",
+  "marketAnalysis": "market opportunity analysis", 
+  "competitiveAnalysis": "competitive landscape analysis"
+}`
+          }
+        ];
+        
+        const sectionsResponse = await chatCompletion(sectionsPrompt, 'gpt-4o-mini', 0.7);
+        if (sectionsResponse) {
+          const cleanResponse = sectionsResponse.replace(/```json|```/gi, '').trim();
+          businessPlanSections = JSON.parse(cleanResponse);
+        }
+      } catch (error) {
+        console.error('Failed to generate business plan sections:', error);
+        businessPlanSections = {
+          customerPainPoints: 'Analysis pending based on customer feedback',
+          valueProposition: 'Value proposition to be refined based on problem discovery',
+          marketAnalysis: 'Market analysis to be developed based on customer insights',
+          competitiveAnalysis: 'Competitive analysis to be completed based on market research'
+        };
+      }
+    }
+
+
+
+    res.json({ feedback, summary, validationScore, businessPlanSections });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'OpenAI error' });
   }
@@ -1411,7 +1471,14 @@ Return ONLY a single sentence problem statement in this format:
       variations = [improvedProblemStatement];
     }
 
-    res.json({ improvedProblemStatement: variations[0], variations });
+    // Clean the improved problem statement by removing "Variation X:" prefix
+    let cleanedProblemStatement = variations[0];
+    if (cleanedProblemStatement.includes(':')) {
+      // Remove "Variation X:" or "Variation X -" prefixes
+      cleanedProblemStatement = cleanedProblemStatement.replace(/^Variation\s+\d+[:\-]?\s*/i, '').trim();
+    }
+    
+    res.json({ improvedProblemStatement: cleanedProblemStatement, variations });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'OpenAI error' });
   }
@@ -1545,8 +1612,18 @@ Return as JSON:
   }
 });
 
+// Test endpoint to verify routing
+router.get('/test', (req, res) => {
+  console.log('=== TEST ENDPOINT CALLED ===');
+  res.json({ message: 'Test endpoint working' });
+});
+
 // Auto-improve problem statement using AI
 router.post('/auto-improve', async (req, res) => {
+  console.log('=== AUTO-IMPROVE ENDPOINT CALLED ===');
+  console.log('Request URL:', req.url);
+  console.log('Request method:', req.method);
+  console.log('Request body:', req.body);
   try {
     const { businessIdea, customerDescription, currentValidationScore, validationCriteria, recommendations, discoveredProblems, planData } = AutoImproveSchema.parse(req.body);
 
@@ -1622,8 +1699,13 @@ Provide improved versions of ALL sections in this JSON format:
     // Parse the JSON response
     let improvedSections;
     try {
+      console.log('Raw AI response:', response);
       improvedSections = JSON.parse(response);
+      console.log('Parsed improvedSections:', improvedSections);
+      console.log('Improved sections keys:', Object.keys(improvedSections));
     } catch (parseError) {
+      console.error('JSON parsing failed:', parseError);
+      console.log('Failed to parse response:', response);
       // If JSON parsing fails, create a fallback with just the problem statement
       improvedSections = {
         problemStatement: response,
@@ -1634,6 +1716,26 @@ Provide improved versions of ALL sections in this JSON format:
         competitiveAnalysis: "Competitive analysis will be refined"
       };
     }
+
+    // Ensure all required sections are present
+    const requiredSections = ['problemStatement', 'solution', 'customerPainPoints', 'valueProposition', 'marketAnalysis', 'competitiveAnalysis'];
+    const missingSections = requiredSections.filter(section => !improvedSections[section]);
+    
+    if (missingSections.length > 0) {
+      console.log('Missing sections:', missingSections);
+      // Fill in missing sections with fallback content
+      missingSections.forEach(section => {
+        if (section === 'problemStatement') {
+          improvedSections[section] = improvedSections[section] || businessIdea;
+        } else if (section === 'customerPainPoints') {
+          improvedSections[section] = improvedSections[section] || ["Customer pain points will be refined"];
+        } else {
+          improvedSections[section] = improvedSections[section] || `${section.charAt(0).toUpperCase() + section.slice(1)} will be enhanced`;
+        }
+      });
+    }
+    
+    console.log('Final improvedSections:', improvedSections);
 
     res.json({
       improvedSections,
@@ -1722,14 +1824,16 @@ Provide improved versions of the customer profile sections in this JSON format:
       return res.status(500).json({ error: 'Failed to generate improved customer profile sections' });
     }
 
-    // Parse the JSON response
+    // Parse the JSON response and clean it
     let improvedSections;
     try {
-      improvedSections = JSON.parse(response);
+      // Clean the response to remove "Variation 1:" prefixes
+      const cleanedResponse = response.replace(/^Variation\s+\d+:\s*/gi, '');
+      improvedSections = JSON.parse(cleanedResponse);
     } catch (parseError) {
       // If JSON parsing fails, create a fallback with just the customer description
       improvedSections = {
-        customerDescription: response,
+        customerDescription: response.replace(/^Variation\s+\d+:\s*/gi, ''),
         customerSegments: ["Customer segments will be refined"],
         customerPainPoints: ["Customer pain points will be refined"],
         customerMotivations: ["Customer motivations will be refined"],
@@ -1824,14 +1928,16 @@ Provide improved versions of the customer struggle sections in this JSON format:
       return res.status(500).json({ error: 'Failed to generate improved customer struggle sections' });
     }
 
-    // Parse the JSON response
+    // Parse the JSON response and clean it
     let improvedSections;
     try {
-      improvedSections = JSON.parse(response);
+      // Clean the response to remove "Variation 1:" prefixes
+      const cleanedResponse = response.replace(/^Variation\s+\d+:\s*/gi, '');
+      improvedSections = JSON.parse(cleanedResponse);
     } catch (parseError) {
       // If JSON parsing fails, create a fallback with just the customer struggles
       improvedSections = {
-        customerStruggles: [response],
+        customerStruggles: [response.replace(/^Variation\s+\d+:\s*/gi, '')],
         struggleEvidence: ["Evidence will be refined"],
         struggleFrequency: "Frequency will be clarified",
         struggleImpact: "Impact will be quantified",
@@ -1926,14 +2032,16 @@ Provide improved versions of the solution fit sections in this JSON format:
       return res.status(500).json({ error: 'Failed to generate improved solution fit sections' });
     }
 
-    // Parse the JSON response
+    // Parse the JSON response and clean it
     let improvedSections;
     try {
-      improvedSections = JSON.parse(response);
+      // Clean the response to remove "Variation 1:" prefixes
+      const cleanedResponse = response.replace(/^Variation\s+\d+:\s*/gi, '');
+      improvedSections = JSON.parse(cleanedResponse);
     } catch (parseError) {
       // If JSON parsing fails, create a fallback with just the solution description
       improvedSections = {
-        solutionDescription: response,
+        solutionDescription: response.replace(/^Variation\s+\d+:\s*/gi, ''),
         solutionFeatures: ["Features will be refined"],
         solutionBenefits: ["Benefits will be clarified"],
         competitiveAdvantages: ["Advantages will be highlighted"],
@@ -2028,14 +2136,16 @@ Provide improved versions of the business model sections in this JSON format:
       return res.status(500).json({ error: 'Failed to generate improved business model sections' });
     }
 
-    // Parse the JSON response
+    // Parse the JSON response and clean it
     let improvedSections;
     try {
-      improvedSections = JSON.parse(response);
+      // Clean the response to remove "Variation 1:" prefixes
+      const cleanedResponse = response.replace(/^Variation\s+\d+:\s*/gi, '');
+      improvedSections = JSON.parse(cleanedResponse);
     } catch (parseError) {
       // If JSON parsing fails, create a fallback with just the revenue model
       improvedSections = {
-        revenueModel: response,
+        revenueModel: response.replace(/^Variation\s+\d+:\s*/gi, ''),
         costStructure: "Cost structure will be detailed",
         pricingStrategy: "Pricing strategy will be refined",
         competitiveAdvantages: ["Advantages will be highlighted"],
@@ -2130,14 +2240,16 @@ Provide improved versions of the market validation sections in this JSON format:
       return res.status(500).json({ error: 'Failed to generate improved market validation sections' });
     }
 
-    // Parse the JSON response
+    // Parse the JSON response and clean it
     let improvedSections;
     try {
-      improvedSections = JSON.parse(response);
+      // Clean the response to remove "Variation 1:" prefixes
+      const cleanedResponse = response.replace(/^Variation\s+\d+:\s*/gi, '');
+      improvedSections = JSON.parse(cleanedResponse);
     } catch (parseError) {
       // If JSON parsing fails, create a fallback with just the market size
       improvedSections = {
-        marketSize: response,
+        marketSize: response.replace(/^Variation\s+\d+:\s*/gi, ''),
         marketDemand: "Market demand will be validated",
         marketTiming: "Market timing will be analyzed",
         competitiveAnalysis: "Competitive analysis will be detailed",
@@ -2266,46 +2378,53 @@ router.get('/load-evaluations/:businessPlanId', async (req, res) => {
     }
 
     // Mock database retrieval - in real implementation, fetch from database
+    // For new business plans, return empty evaluations and no completed stages
     const mockEvaluations: { [key: number]: any } = {};
-    const completedStages = [];
+    const completedStages: string[] = [];
     
-    // Mock data for all 7 stages (0-6, including Launch)
-    for (let stage = 0; stage <= 6; stage++) {
-      const score = Math.floor(Math.random() * 4) + 6; // Mock score between 6-9
-      mockEvaluations[stage] = {
-        businessPlanId,
-        stage: stage.toString(),
-        score,
-        feedback: `Mock feedback for stage ${stage}`,
-        personas: [
-          {
-            id: '1',
-            name: `Mock Persona ${stage + 1}`,
-            summary: `This is a mock persona for stage ${stage}`,
-            role: 'Decision Maker',
-            companySize: '10-50 employees',
-            industry: 'Technology',
-            feedback: ['Positive feedback'],
-            feedbackQuality: 'good' as const
-          }
-        ],
-        completedAt: new Date(),
-        validationScore: {
+    // Check if this business plan has any existing evaluations
+    // In a real implementation, this would query the database
+    const hasExistingEvaluations = false; // For new business plans, this should be false
+    
+    if (hasExistingEvaluations) {
+      // Only generate mock data if the business plan has actually been evaluated
+      for (let stage = 0; stage <= 6; stage++) {
+        const score = Math.floor(Math.random() * 4) + 6; // Mock score between 6-9
+        mockEvaluations[stage] = {
+          businessPlanId,
+          stage: stage.toString(),
           score,
-          criteria: getStageCriteria(stage),
-          recommendations: [`Mock recommendation for stage ${stage}`],
-          confidence: 'medium' as const,
-          shouldProceed: true
-        }
-      };
-      completedStages.push(stage.toString());
+          feedback: `Mock feedback for stage ${stage}`,
+          personas: [
+            {
+              id: '1',
+              name: `Mock Persona ${stage + 1}`,
+              summary: `This is a mock persona for stage ${stage}`,
+              role: 'Decision Maker',
+              companySize: '10-50 employees',
+              industry: 'Technology',
+              feedback: ['Positive feedback'],
+              feedbackQuality: 'good' as const
+            }
+          ],
+          completedAt: new Date(),
+          validationScore: {
+            score,
+            criteria: getStageCriteria(stage),
+            recommendations: [`Mock recommendation for stage ${stage}`],
+            confidence: 'medium' as const,
+            shouldProceed: true
+          }
+        };
+        completedStages.push(stage.toString());
+      }
     }
 
     res.json({
       success: true,
       evaluations: mockEvaluations,
       completedStages,
-      currentStage: 6 // Mock as completed (including Launch stage)
+      currentStage: 0 // Start at stage 0 for new business plans
     });
 
   } catch (error) {

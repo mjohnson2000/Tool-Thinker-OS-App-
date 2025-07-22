@@ -302,8 +302,8 @@ Return as JSON:
 }
 No extra text, just valid JSON.`;
 
-      console.log('About to POST to /api/startup-plan/discovery', { idea, customer, job, prompt: aiPrompt });
-      const res = await fetch(`${API_URL}/startup-plan/discovery`, {
+      console.log('About to POST to /api/business-plan/discovery', { idea, customer, job, prompt: aiPrompt });
+      const res = await fetch(`${API_URL}/business-plan/discovery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idea, customer, job, prompt: aiPrompt })
@@ -389,7 +389,7 @@ No extra text, just valid JSON.`;
               uniqueValue: mappedPlan.valueProposition || 'Unique value'
             }
           };
-          await fetch(`${API_URL}/startup-plan`, {
+          await fetch(`${API_URL}/business-plan`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -124,14 +124,19 @@ export function AutomatedDiscoveryPage() {
 
   // Function to handle stage navigation with re-evaluation confirmation
   const handleStageNavigation = React.useCallback((targetStage: number) => {
-    // If navigating forward or to current stage, proceed normally
-    if (targetStage >= currentStage) {
-      updateCurrentStage(targetStage);
-      return;
+    // Special handling for Launch stage (stage 6) - always allow if all previous stages are completed
+    if (targetStage === 6) {
+      const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+        completedStages.includes(stage.toString())
+      );
+      if (allPreviousStagesCompleted) {
+        updateCurrentStage(targetStage);
+        return;
+      }
     }
 
-    // Special handling for Launch stage (stage 6) - always allow navigation
-    if (targetStage === 6) {
+    // If navigating forward or to current stage, proceed normally
+    if (targetStage >= currentStage) {
       updateCurrentStage(targetStage);
       return;
     }
@@ -144,7 +149,7 @@ export function AutomatedDiscoveryPage() {
       // No data for this stage, proceed without confirmation
       updateCurrentStage(targetStage);
     }
-  }, [currentStage, hasDataForStage, updateCurrentStage]);
+  }, [currentStage, hasDataForStage, updateCurrentStage, completedStages]);
 
   // Function to confirm re-evaluation
   const confirmReevaluation = React.useCallback(() => {
@@ -2256,6 +2261,7 @@ export function AutomatedDiscoveryPage() {
       const data = await res.json();
       console.log('Full business plan data:', data);
       console.log('Business plan sections:', data.sections);
+      console.log('Sections keys:', Object.keys(data.sections || {}));
       setFullPlanSections(data.sections || {});
       setShowFullPlanModal(true);
     } catch (err: any) {
@@ -2266,6 +2272,22 @@ export function AutomatedDiscoveryPage() {
   }
 
   // Function to save stage-specific data to the business plan
+  // Helper function to convert arrays to readable text
+  function arrayToReadableText(arr: any[]): string {
+    if (!Array.isArray(arr)) return '';
+    return arr.map((item, index) => `${index + 1}. ${item}`).join('\n');
+  }
+
+  // Helper function to convert objects to readable text
+  function objectToReadableText(obj: any): string {
+    if (!obj || typeof obj !== 'object') return '';
+    if (Array.isArray(obj)) return arrayToReadableText(obj);
+    
+    return Object.entries(obj)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+  }
+
   async function saveStageDataToBusinessPlan(stage: number, data: any) {
     try {
       const token = localStorage.getItem('token');
@@ -2280,81 +2302,81 @@ export function AutomatedDiscoveryPage() {
       switch (stage) {
         case 0: // Problem Discovery
           sectionsToSave = {
-            problemDiscovery: JSON.stringify(data.problem || {}),
+            problemDiscovery: data.problem?.description || '',
             problemDiscoveryAnalysis: data.analysis?.summary || '',
             problemStatement: data.problem?.statement || '',
             problemScope: data.problem?.scope || '',
             problemUrgency: data.problem?.urgency || '',
             problemImpact: data.problem?.impact || '',
             problemEvidence: data.problem?.evidence || '',
-            rootCauses: data.problem?.rootCauses ? JSON.stringify(data.problem.rootCauses) : '',
-            customerInsights: data.problem?.customerInsights ? JSON.stringify(data.problem.customerInsights) : '',
+            rootCauses: arrayToReadableText(data.problem?.rootCauses || []),
+            customerInsights: arrayToReadableText(data.problem?.customerInsights || []),
             problemValidation: data.problem?.validation || ''
           };
           break;
         case 1: // Customer Profile
           sectionsToSave = {
-            customerProfiles: JSON.stringify(data.profiles || []),
+            customerProfiles: objectToReadableText(data.profiles || []),
             customerProfileAnalysis: data.analysis?.summary || '',
-            customerSegments: data.profiles?.[0]?.segments ? JSON.stringify(data.profiles[0].segments) : '',
-            customerPainPoints: data.profiles?.[0]?.painPoints ? JSON.stringify(data.profiles[0].painPoints) : '',
-            customerMotivations: data.profiles?.[0]?.motivations ? JSON.stringify(data.profiles[0].motivations) : '',
+            customerSegments: arrayToReadableText(data.profiles?.[0]?.segments || []),
+            customerPainPoints: arrayToReadableText(data.profiles?.[0]?.painPoints || []),
+            customerMotivations: arrayToReadableText(data.profiles?.[0]?.motivations || []),
             customerAccessibility: data.profiles?.[0]?.accessibility || '',
             customerValue: data.profiles?.[0]?.value || '',
-            customerObjections: data.profiles?.[0]?.objections ? JSON.stringify(data.profiles[0].objections) : ''
+            customerObjections: arrayToReadableText(data.profiles?.[0]?.objections || [])
           };
           break;
         case 2: // Customer Struggle
           sectionsToSave = {
-            customerStruggles: JSON.stringify(data.struggles || []),
+            customerStruggles: objectToReadableText(data.struggles || []),
             customerStruggleAnalysis: data.analysis?.summary || '',
-            struggleEvidence: data.struggles?.[0]?.evidence ? JSON.stringify(data.struggles[0].evidence) : '',
+            struggleEvidence: data.struggles?.[0]?.evidence || '',
             struggleFrequency: data.struggles?.[0]?.frequency || '',
             struggleImpact: data.struggles?.[0]?.impact || '',
             struggleUrgency: data.struggles?.[0]?.urgency || '',
-            customerQuotes: data.struggles?.[0]?.quotes ? JSON.stringify(data.struggles[0].quotes) : '',
+            customerQuotes: arrayToReadableText(data.struggles?.[0]?.customerQuotes || []),
             rootCause: data.analysis?.rootCause || ''
           };
           break;
         case 3: // Solution Fit
           sectionsToSave = {
-            solutionFit: JSON.stringify(data.solution || {}),
+            solutionFit: objectToReadableText(data.solution || {}),
             solutionFitAnalysis: data.analysis?.summary || '',
             solutionDescription: data.solution?.description || '',
-            keyFeatures: data.solution?.keyFeatures ? JSON.stringify(data.solution.keyFeatures) : '',
-            benefits: data.solution?.benefits ? JSON.stringify(data.solution.benefits) : '',
-            competitiveAdvantages: data.solution?.competitiveAdvantages ? JSON.stringify(data.solution.competitiveAdvantages) : '',
+            keyFeatures: arrayToReadableText(data.solution?.keyFeatures || []),
+            benefits: arrayToReadableText(data.solution?.benefits || []),
+            competitiveAdvantages: arrayToReadableText(data.solution?.competitiveAdvantages || []),
             valueProposition: data.solution?.valueProposition || '',
             implementationRoadmap: data.solution?.implementationRoadmap || '',
-            technicalRequirements: data.solution?.technicalRequirements ? JSON.stringify(data.solution.technicalRequirements) : '',
-            resourceRequirements: data.solution?.resourceRequirements ? JSON.stringify(data.solution.resourceRequirements) : ''
+            technicalRequirements: arrayToReadableText(data.solution?.technicalRequirements || []),
+            resourceRequirements: arrayToReadableText(data.solution?.resourceRequirements || [])
           };
           break;
         case 4: // Business Model
           sectionsToSave = {
-            businessModels: JSON.stringify(data.models || []),
+            businessModels: objectToReadableText(data.models || []),
             businessModelAnalysis: data.analysis?.summary || '',
-            revenueStreams: data.models?.[0]?.revenueStreams ? JSON.stringify(data.models[0].revenueStreams) : '',
-            costStructure: data.models?.[0]?.costStructure ? JSON.stringify(data.models[0].costStructure) : '',
-            competitiveAdvantages: data.models?.[0]?.advantages ? JSON.stringify(data.models[0].advantages) : '',
+            revenueStreams: objectToReadableText(data.models?.[0]?.revenueStreams || []),
+            costStructure: objectToReadableText(data.models?.[0]?.costStructure || {}),
+            competitiveAdvantages: arrayToReadableText(data.models?.[0]?.advantages || []),
             scalability: data.models?.[0]?.scalability || '',
-            financialProjections: data.financialProjections ? JSON.stringify(data.financialProjections) : '',
+            financialProjections: objectToReadableText(data.financialProjections || {}),
             targetMarket: data.models?.[0]?.targetMarket || ''
           };
           break;
         case 5: // Market Validation
           sectionsToSave = {
-            marketData: JSON.stringify(data.marketData || []),
+            marketData: objectToReadableText(data.marketData || {}),
             marketValidationAnalysis: data.analysis?.summary || '',
-            competitors: data.marketData?.[0]?.competitors ? JSON.stringify(data.marketData[0].competitors) : '',
-            validationTests: data.marketData?.[0]?.tests ? JSON.stringify(data.marketData[0].tests) : '',
-            marketSize: data.marketData?.[0]?.size || '',
-            marketDemand: data.marketData?.[0]?.demand || '',
-            marketTiming: data.marketData?.[0]?.timing || '',
-            marketEntryStrategy: data.marketData?.[0]?.entryStrategy || '',
-            customerDemand: data.marketData?.[0]?.customerDemand || '',
-            marketTrends: data.analysis?.marketTrends || '',
-            growthPotential: data.analysis?.growthPotential || ''
+            competitors: objectToReadableText(data.competitors || []),
+            validationTests: objectToReadableText(data.validationTests || []),
+            marketSize: data.marketData?.marketSize || '',
+            marketDemand: data.marketData?.marketDemand || '',
+            marketTiming: data.marketData?.marketTiming || '',
+            marketEntryStrategy: data.marketData?.marketEntryStrategy || '',
+            customerDemand: data.marketData?.customerDemand || '',
+            marketTrends: arrayToReadableText(data.marketData?.marketTrends || []),
+            growthPotential: data.marketData?.growthPotential || ''
           };
           break;
       }
@@ -2411,17 +2433,57 @@ export function AutomatedDiscoveryPage() {
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center',
-                cursor: (idx <= currentStage || completedStages.includes(idx.toString())) ? 'pointer' : 'default',
-                opacity: (idx <= currentStage || completedStages.includes(idx.toString())) ? 1 : 0.5,
+                cursor: (() => {
+                  // Special handling for Launch stage (stage 6)
+                  if (idx === 6) {
+                    const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                      completedStages.includes(stage.toString())
+                    );
+                    return allPreviousStagesCompleted ? 'pointer' : 'default';
+                  }
+                  return (idx <= currentStage || completedStages.includes(idx.toString())) ? 'pointer' : 'default';
+                })(),
+                opacity: (() => {
+                  // Special handling for Launch stage (stage 6)
+                  if (idx === 6) {
+                    const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                      completedStages.includes(stage.toString())
+                    );
+                    return allPreviousStagesCompleted ? 1 : 0.5;
+                  }
+                  return (idx <= currentStage || completedStages.includes(idx.toString())) ? 1 : 0.5;
+                })(),
                 transition: 'all 0.2s ease'
               }}
               onClick={() => {
+                // Special handling for Launch stage (stage 6) - allow if all previous stages are completed
+                if (idx === 6) {
+                  const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                    completedStages.includes(stage.toString())
+                  );
+                  if (allPreviousStagesCompleted) {
+                    handleStageNavigation(idx);
+                    return;
+                  }
+                }
+                
                 // Allow navigation to any stage that has been reached, is current, or is completed
                 if (idx <= currentStage || completedStages.includes(idx.toString())) {
                   handleStageNavigation(idx);
                 }
               }}
               onMouseEnter={(e) => {
+                // Special handling for Launch stage (stage 6)
+                if (idx === 6) {
+                  const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                    completedStages.includes(stage.toString())
+                  );
+                  if (allPreviousStagesCompleted) {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    return;
+                  }
+                }
+                
                 if (idx <= currentStage || completedStages.includes(idx.toString())) {
                   e.currentTarget.style.transform = 'scale(1.05)';
                 }
@@ -2429,17 +2491,44 @@ export function AutomatedDiscoveryPage() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
               }}
-              title={idx <= currentStage || completedStages.includes(idx.toString()) ? `Go to ${stage}` : `${stage} (not yet available)`}
+              title={(() => {
+                // Special handling for Launch stage (stage 6)
+                if (idx === 6) {
+                  const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                    completedStages.includes(stage.toString())
+                  );
+                  return allPreviousStagesCompleted ? `Go to ${stage}` : `${stage} (complete all previous stages first)`;
+                }
+                return idx <= currentStage || completedStages.includes(idx.toString()) ? `Go to ${stage}` : `${stage} (not yet available)`;
+              })()}
             >
               <div style={{
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: (idx < currentStage || completedStages.includes(idx.toString()))
-                  ? '#232323'
-                  : idx === currentStage
-                    ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
-                    : '#e5e5e5',
+                background: (() => {
+                  // Special handling for Launch stage (stage 6)
+                  if (idx === 6) {
+                    const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                      completedStages.includes(stage.toString())
+                    );
+                    const launchStageCompleted = completedStages.includes('6');
+                    if (launchStageCompleted) {
+                      return '#232323'; // Completed - dark background
+                    } else if (allPreviousStagesCompleted) {
+                      return idx === currentStage 
+                        ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)' 
+                        : '#e5e5e5'; // Available but not completed
+                    } else {
+                      return '#e5e5e5'; // Not available
+                    }
+                  }
+                  return (idx < currentStage || completedStages.includes(idx.toString()))
+                    ? '#232323'
+                    : idx === currentStage
+                      ? 'linear-gradient(135deg, #5ad6ff 0%, #5a6ee6 100%)'
+                      : '#e5e5e5';
+                })(),
                 color: '#fff',
                 display: 'flex',
                 alignItems: 'center',
@@ -2449,10 +2538,36 @@ export function AutomatedDiscoveryPage() {
                 marginBottom: 4,
                 boxShadow: idx === currentStage ? '0 2px 8px #5ad6ff44' : undefined,
                 transition: 'all 0.2s ease'
-              }}>{(idx < currentStage || completedStages.includes(idx.toString())) ? '✓' : idx + 1}</div>
+              }}>{(() => {
+                // Special handling for Launch stage (stage 6)
+                if (idx === 6) {
+                  const launchStageCompleted = completedStages.includes('6');
+                  if (launchStageCompleted) {
+                    return '✓'; // Show checkmark if completed
+                  }
+                  return '7'; // Show number if not completed
+                }
+                return (idx < currentStage || completedStages.includes(idx.toString())) ? '✓' : idx + 1;
+              })()}</div>
               <span style={{ 
                 fontSize: 12, 
-                color: idx === currentStage ? '#181a1b' : (idx < currentStage || completedStages.includes(idx.toString())) ? '#666' : '#888', 
+                color: (() => {
+                  // Special handling for Launch stage (stage 6)
+                  if (idx === 6) {
+                    const launchStageCompleted = completedStages.includes('6');
+                    if (launchStageCompleted) {
+                      return '#666'; // Completed - darker text
+                    } else if (idx === currentStage) {
+                      return '#181a1b'; // Current stage - bold text
+                    } else {
+                      const allPreviousStagesCompleted = [0, 1, 2, 3, 4, 5].every(stage => 
+                        completedStages.includes(stage.toString())
+                      );
+                      return allPreviousStagesCompleted ? '#666' : '#888'; // Available or not available
+                    }
+                  }
+                  return idx === currentStage ? '#181a1b' : (idx < currentStage || completedStages.includes(idx.toString())) ? '#666' : '#888';
+                })(), 
                 textAlign: 'center', 
                 maxWidth: 80,
                 fontWeight: idx === currentStage ? 600 : 400

@@ -15,11 +15,15 @@ export function BusinessPlanModal({
 }: BusinessPlanModalProps) {
   if (!isOpen) return null;
 
-  const formatContent = (content: string) => {
+  const formatContent = (content: any) => {
+    // Handle different content types
     if (!content) return 'No content available';
     
+    // Convert to string if it's not already
+    let contentStr = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+    
     // Remove "Variation 1:" prefix
-    let formatted = content.replace(/^Variation 1:\s*/i, '');
+    let formatted = contentStr.replace(/^Variation 1:\s*/i, '');
     
     // Remove unwanted dots at the beginning
     formatted = formatted.replace(/^\.\s*/, '');
@@ -74,10 +78,25 @@ export function BusinessPlanModal({
         </div>
 
         <div style={{ marginBottom: '2rem' }}>
-          {Object.entries(improvedSections).map(([sectionKey, savedContent]) => {
+          {(() => {
+            console.log('Modal improvedSections:', improvedSections);
+            console.log('Modal improvedSections keys:', Object.keys(improvedSections || {}));
+            return null;
+          })()}
+          {Object.entries(improvedSections || {}).length === 0 ? (
+            <div style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '16px'
+            }}>
+              No business plan data available yet. Complete some stages to see your data here.
+            </div>
+          ) : (
+            Object.entries(improvedSections || {}).map(([sectionKey, savedContent]) => {
             const currentContent = getCurrentSectionContent(sectionKey);
             const formattedCurrentContent = formatContent(currentContent);
-            const formattedSavedContent = formatContent(savedContent as string);
+            const formattedSavedContent = formatContent(savedContent);
             
             console.log(`Modal section ${sectionKey}:`, { 
               currentContent: formattedCurrentContent, 
@@ -87,6 +106,11 @@ export function BusinessPlanModal({
             // Check if we have saved content (from database) vs improved content (from auto-improve)
             const hasSavedContent = formattedSavedContent && formattedSavedContent !== 'No content available';
             const hasCurrentContent = formattedCurrentContent && formattedCurrentContent !== 'No content available';
+            
+            // Skip rendering if no content at all
+            if (!hasSavedContent && !hasCurrentContent) {
+              return null;
+            }
             
             return (
               <div key={sectionKey} style={{
@@ -182,7 +206,8 @@ export function BusinessPlanModal({
                 )}
               </div>
             );
-          })}
+          })
+        )}
         </div>
 
         <div style={{

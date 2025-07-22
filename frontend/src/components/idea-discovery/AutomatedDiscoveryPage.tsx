@@ -135,18 +135,12 @@ export function AutomatedDiscoveryPage() {
       }
     }
 
-    // If navigating forward or to current stage, proceed normally
-    if (targetStage >= currentStage) {
-      updateCurrentStage(targetStage);
-      return;
-    }
-
-    // If navigating backward and we have data for this stage, show confirmation
-    if (hasDataForStage[targetStage]) {
+    // If navigating to a stage that has data or is completed, show confirmation
+    if (hasDataForStage[targetStage] || completedStages.includes(targetStage.toString())) {
       setPendingStageNavigation(targetStage);
       setShowReevaluationModal(true);
     } else {
-      // No data for this stage, proceed without confirmation
+      // No data for this stage and not completed, proceed without confirmation
       updateCurrentStage(targetStage);
     }
   }, [currentStage, hasDataForStage, updateCurrentStage, completedStages]);
@@ -161,22 +155,7 @@ export function AutomatedDiscoveryPage() {
     }
   }, [pendingStageNavigation, updateCurrentStage]);
 
-  // Function to view previous results without re-evaluation
-  const viewPreviousResults = React.useCallback(() => {
-    if (pendingStageNavigation !== null) {
-      setSkipReevaluation(true);
-      setIsViewingPreviousResults(true);
-      updateCurrentStage(pendingStageNavigation);
-      setShowReevaluationModal(false);
-      setPendingStageNavigation(null);
-      // Don't trigger re-evaluation - just show existing data
-      // Reset the flag after a longer delay to ensure all animations are blocked
-      setTimeout(() => {
-        setIsViewingPreviousResults(false);
-        setSkipReevaluation(false);
-      }, 3000);
-    }
-  }, [pendingStageNavigation, updateCurrentStage]);
+
 
   // Load saved evaluations for this business plan
   const loadSavedEvaluations = React.useCallback(async () => {
@@ -267,6 +246,114 @@ export function AutomatedDiscoveryPage() {
   const loadStageEvaluation = React.useCallback(async (stage: number) => {
     if (!id) return;
     
+    // First, try to load from saved evaluations
+    const savedEvaluation = savedEvaluations[stage.toString()];
+    if (savedEvaluation) {
+      console.log('Loading saved evaluation for stage:', stage, savedEvaluation);
+      
+      // Load the evaluation data into the UI
+      setPersonas(savedEvaluation.personas || []);
+      
+      // Create a proper validation score object with criteria
+      const validationScoreObj = {
+        score: savedEvaluation.score,
+        criteria: {
+          // Initialize all criteria to 0
+          problemIdentification: 0,
+          problemValidation: 0,
+          problemScope: 0,
+          problemUrgency: 0,
+          problemImpact: 0,
+          customerClarity: 0,
+          customerSpecificity: 0,
+          customerRelevance: 0,
+          customerAccessibility: 0,
+          customerValue: 0,
+          struggleIdentification: 0,
+          struggleValidation: 0,
+          struggleUrgency: 0,
+          struggleFrequency: 0,
+          struggleImpact: 0,
+          solutionAlignment: 0,
+          solutionEffectiveness: 0,
+          solutionDifferentiation: 0,
+          solutionValue: 0,
+          solutionFeasibility: 0,
+          modelViability: 0,
+          revenuePotential: 0,
+          costEfficiency: 0,
+          competitiveAdvantage: 0,
+          scalability: 0,
+          marketSize: 0,
+          marketDemand: 0,
+          marketTiming: 0,
+          competitiveLandscape: 0,
+          marketAccess: 0,
+          // Set only the relevant criteria for the current stage
+          ...(stage === 0 ? {
+            problemIdentification: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            problemValidation: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            problemScope: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            problemUrgency: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            problemImpact: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+          } : {}),
+          ...(stage === 1 ? {
+            customerClarity: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            customerSpecificity: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            customerRelevance: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            customerAccessibility: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            customerValue: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+          } : {}),
+          ...(stage === 2 ? {
+            struggleIdentification: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            struggleValidation: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            struggleUrgency: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            struggleFrequency: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            struggleImpact: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+          } : {}),
+          ...(stage === 3 ? {
+            solutionAlignment: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            solutionEffectiveness: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            solutionDifferentiation: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            solutionValue: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            solutionFeasibility: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+          } : {}),
+          ...(stage === 4 ? {
+            modelViability: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            revenuePotential: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            costEfficiency: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            competitiveAdvantage: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            scalability: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+          } : {}),
+          ...(stage === 5 ? {
+            marketSize: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            marketDemand: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+            marketTiming: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            competitiveLandscape: savedEvaluation.score >= 7 ? 7 : savedEvaluation.score >= 4 ? 5 : 3,
+            marketAccess: savedEvaluation.score >= 7 ? 8 : savedEvaluation.score >= 4 ? 6 : 4,
+          } : {}),
+        },
+        recommendations: [],
+        confidence: 'medium' as const,
+        shouldProceed: savedEvaluation.score >= 7
+      };
+      
+      setValidationScore(validationScoreObj);
+      setCollectiveSummary(savedEvaluation.feedback || '');
+      
+      // Mark this stage as completed when loading saved data
+      setCompletedStages(prev => {
+        if (!prev.includes(stage.toString())) {
+          return [...prev, stage.toString()];
+        }
+        return prev;
+      });
+      
+      console.log('Loaded saved evaluation for stage:', stage, savedEvaluation);
+      return savedEvaluation;
+    }
+    
+    // If no saved evaluation, try to fetch from API
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/automated-discovery/evaluation/${id}/${stage}`, {
@@ -370,6 +457,14 @@ export function AutomatedDiscoveryPage() {
         setValidationScore(validationScoreObj);
         setCollectiveSummary(evaluation.feedback || '');
         
+        // Mark this stage as completed when loading saved data
+        setCompletedStages(prev => {
+          if (!prev.includes(stage.toString())) {
+            return [...prev, stage.toString()];
+          }
+          return prev;
+        });
+        
         console.log('Loaded stage evaluation:', evaluation);
         return evaluation;
       }
@@ -379,7 +474,26 @@ export function AutomatedDiscoveryPage() {
     return null;
   }, [id]);
 
-
+  // Function to view previous results without re-evaluation
+  const viewPreviousResults = React.useCallback(() => {
+    if (pendingStageNavigation !== null) {
+      setSkipReevaluation(true);
+      setIsViewingPreviousResults(true);
+      updateCurrentStage(pendingStageNavigation);
+      setShowReevaluationModal(false);
+      setPendingStageNavigation(null);
+      
+      // Load the saved evaluation data for this stage
+      loadStageEvaluation(pendingStageNavigation);
+      
+      // Don't trigger re-evaluation - just show existing data
+      // Reset the flag after a longer delay to ensure all animations are blocked
+      setTimeout(() => {
+        setIsViewingPreviousResults(false);
+        setSkipReevaluation(false);
+      }, 3000);
+    }
+  }, [pendingStageNavigation, updateCurrentStage, loadStageEvaluation]);
 
   const [personas, setPersonas] = React.useState<Persona[]>([]);
   const [collectiveSummary, setCollectiveSummary] = React.useState('');
@@ -503,6 +617,14 @@ export function AutomatedDiscoveryPage() {
         
         setValidationScore(validationScoreObj);
         setCollectiveSummary(evaluation.feedback || '');
+        
+        // Mark this stage as completed when re-evaluating
+        setCompletedStages(prev => {
+          if (!prev.includes(stage.toString())) {
+            return [...prev, stage.toString()];
+          }
+          return prev;
+        });
         
         // Update saved evaluations
         setSavedEvaluations(prev => ({
@@ -1233,6 +1355,13 @@ export function AutomatedDiscoveryPage() {
         
         if (data.validationScore) {
           setValidationScore(data.validationScore);
+          // Mark this stage as completed
+          setCompletedStages(prev => {
+            if (!prev.includes(currentStage.toString())) {
+              return [...prev, currentStage.toString()];
+            }
+            return prev;
+          });
         }
         // Mark this stage as having data
         setHasDataForStage(prev => ({ ...prev, [currentStage]: true }));
@@ -1278,7 +1407,7 @@ export function AutomatedDiscoveryPage() {
     
     setHasFetchedFeedback(true);
     fetchFeedback();
-  }, [currentStage, personas.length, businessIdea, customerDescription, id, skipReevaluation, completedStages.length, savedEvaluations]);
+  }, [currentStage, personas.length, businessIdea, customerDescription, id, skipReevaluation, completedStages.length, savedEvaluations, isViewingPreviousResults]);
 
   // Extract fetchFeedback as a standalone function
   async function fetchFeedback() {

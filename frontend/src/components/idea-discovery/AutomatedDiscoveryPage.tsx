@@ -1924,6 +1924,16 @@ export function AutomatedDiscoveryPage() {
         setLoading(true);
         const token = localStorage.getItem('token');
         
+        // First, check if a financial plan already exists in the business plan
+        if (planData && planData.sections && planData.sections['Financial Plan']) {
+          console.log('Loading existing financial plan from database');
+          setFinancialPlanData(planData.sections['Financial Plan']);
+          setShowFinancialPlanModal(true);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('No existing financial plan found, generating new one...');
         console.log('Generating financial plan for business plan ID:', id);
         console.log('API URL:', `${API_URL}/automated-discovery/generate-financial-plan`);
         console.log('Token:', token ? 'Present' : 'Missing');
@@ -1955,6 +1965,17 @@ export function AutomatedDiscoveryPage() {
           console.log('Setting financial plan data:', data.financialPlan);
           setFinancialPlanData(data.financialPlan);
           setShowFinancialPlanModal(true);
+          
+          // Update the planData state to include the new financial plan
+          if (planData) {
+            setPlanData({
+              ...planData,
+              sections: {
+                ...planData.sections,
+                'Financial Plan': data.financialPlan
+              }
+            });
+          }
         } else {
           console.error('API Error:', data);
           // Fallback to test data if API fails
@@ -3556,8 +3577,27 @@ export function AutomatedDiscoveryPage() {
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('plan')}>
               Business Plan
             </button>
-            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('financial')}>
-              Financial Plan
+            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative' }} onClick={() => handleGenerate('financial')}>
+              {planData && planData.sections && planData.sections['Financial Plan'] ? 'View Financial Plan' : 'Generate Financial Plan'}
+              {planData && planData.sections && planData.sections['Financial Plan'] && (
+                <span style={{ 
+                  position: 'absolute', 
+                  top: -5, 
+                  right: -5, 
+                  background: '#10b981', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: 16, 
+                  height: 16, 
+                  fontSize: 10, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontWeight: 'bold'
+                }}>
+                  ✓
+                </span>
+              )}
             </button>
 
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('businessModel')}>

@@ -3736,4 +3736,288 @@ router.post('/force-update-status', async (req, res) => {
   }
 });
 
+// Generate comprehensive financial plan endpoint
+router.post('/generate-financial-plan', async (req, res) => {
+  try {
+    const { businessPlanId } = req.body;
+    
+    if (!businessPlanId) {
+      return res.status(400).json({ error: 'Missing businessPlanId' });
+    }
+
+    const plan = await BusinessPlan.findById(businessPlanId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+
+    // Extract all relevant data from the business plan
+    const businessIdea = plan.title || '';
+    const customerDescription = plan.customer?.description || '';
+    const sections = plan.sections || {};
+    
+    // Get data from each stage
+    const problemDiscovery = sections['Problem Discovery'] || {};
+    const customerProfile = sections['Customer Profile'] || {};
+    const customerStruggle = sections['Customer Struggle'] || {};
+    const solutionFit = sections['Solution Fit'] || {};
+    const businessModel = sections['Business Model'] || {};
+    const marketValidation = sections['Market Validation'] || {};
+
+    // If we don't have much data from the automated discovery stages, 
+    // we'll generate a financial plan based on the business idea and customer description
+    const hasDiscoveryData = Object.keys(problemDiscovery).length > 0 || 
+                            Object.keys(customerProfile).length > 0 || 
+                            Object.keys(customerStruggle).length > 0 || 
+                            Object.keys(solutionFit).length > 0 || 
+                            Object.keys(businessModel).length > 0 || 
+                            Object.keys(marketValidation).length > 0;
+
+    console.log('Business plan data check:', {
+      businessIdea,
+      customerDescription,
+      hasDiscoveryData,
+      sectionsKeys: Object.keys(sections)
+    });
+
+    // Create comprehensive financial plan prompt
+    const financialPlanPrompt = `You are a senior financial analyst and business consultant creating a comprehensive, professional-grade financial plan for a startup. This plan will be used for official financial institutions, investors, and professional business purposes.
+
+BUSINESS OVERVIEW:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+${hasDiscoveryData ? `COLLECTED DATA FROM AUTOMATED DISCOVERY:
+
+PROBLEM DISCOVERY:
+${JSON.stringify(problemDiscovery, null, 2)}
+
+CUSTOMER PROFILE:
+${JSON.stringify(customerProfile, null, 2)}
+
+CUSTOMER STRUGGLES:
+${JSON.stringify(customerStruggle, null, 2)}
+
+SOLUTION FIT:
+${JSON.stringify(solutionFit, null, 2)}
+
+BUSINESS MODEL:
+${JSON.stringify(businessModel, null, 2)}
+
+MARKET VALIDATION:
+${JSON.stringify(marketValidation, null, 2)}` : `NOTE: Limited discovery data available. Generate financial plan based on business idea and customer description using industry benchmarks and conservative assumptions.`}
+
+TASK: Create a comprehensive, professional financial plan that includes:
+
+1. EXECUTIVE SUMMARY
+   - Business overview and financial highlights
+   - Key financial metrics and projections
+   - Investment requirements and expected returns
+
+2. FINANCIAL PROJECTIONS (5 years)
+   - Revenue projections with detailed breakdown
+   - Cost structure analysis
+   - Profit and loss statements
+   - Cash flow projections
+   - Break-even analysis
+
+3. FUNDING REQUIREMENTS
+   - Initial capital requirements
+   - Funding stages and milestones
+   - Use of funds breakdown
+   - Expected ROI for investors
+
+4. FINANCIAL METRICS
+   - Customer acquisition cost (CAC)
+   - Customer lifetime value (CLV)
+   - Gross and net margins
+   - Payback period
+   - Unit economics
+
+5. RISK ANALYSIS
+   - Financial risk assessment
+   - Sensitivity analysis
+   - Mitigation strategies
+
+6. VALUATION
+   - Comparable company analysis
+   - Discounted cash flow (DCF) model
+   - Multiple-based valuation
+
+7. INVESTMENT MEMORANDUM
+   - Executive summary for investors
+   - Financial highlights
+   - Investment opportunity
+   - Exit strategy
+
+REQUIREMENTS:
+- Use realistic, conservative projections based on the collected data
+- Include detailed assumptions and methodology
+- Provide professional formatting suitable for official documents
+- Include charts, tables, and visual elements where appropriate
+- Ensure all calculations are accurate and well-documented
+- Make it suitable for presentation to banks, investors, and financial institutions
+
+Provide the financial plan in this JSON format:
+{
+  "executiveSummary": {
+    "businessOverview": "detailed business description",
+    "financialHighlights": "key financial metrics",
+    "investmentRequirements": "funding needs and expected returns"
+  },
+  "financialProjections": {
+    "revenueProjections": {
+      "year1": { "monthly": [12000, 15000, ...], "annual": 180000, "growthRate": 25 },
+      "year2": { "monthly": [15000, 18000, ...], "annual": 225000, "growthRate": 25 },
+      "year3": { "monthly": [18000, 22000, ...], "annual": 270000, "growthRate": 20 },
+      "year4": { "monthly": [22000, 26000, ...], "annual": 324000, "growthRate": 20 },
+      "year5": { "monthly": [26000, 30000, ...], "annual": 388800, "growthRate": 20 }
+    },
+    "costStructure": {
+      "fixedCosts": { "year1": 120000, "year2": 150000, "year3": 180000, "year4": 210000, "year5": 240000 },
+      "variableCosts": { "year1": 90000, "year2": 112500, "year3": 135000, "year4": 162000, "year5": 194400 },
+      "costBreakdown": { "personnel": 40, "marketing": 25, "operations": 20, "technology": 10, "other": 5 }
+    },
+    "profitLoss": {
+      "year1": { "revenue": 180000, "costs": 210000, "grossProfit": -30000, "netProfit": -45000 },
+      "year2": { "revenue": 225000, "costs": 262500, "grossProfit": -37500, "netProfit": -52500 },
+      "year3": { "revenue": 270000, "costs": 315000, "grossProfit": -45000, "netProfit": -60000 },
+      "year4": { "revenue": 324000, "costs": 372000, "grossProfit": -48000, "netProfit": -63000 },
+      "year5": { "revenue": 388800, "costs": 434400, "grossProfit": -45600, "netProfit": -60000 }
+    },
+    "cashFlow": {
+      "year1": { "operatingCashFlow": -45000, "investingCashFlow": -50000, "financingCashFlow": 100000, "netCashFlow": 5000 },
+      "year2": { "operatingCashFlow": -52500, "investingCashFlow": -25000, "financingCashFlow": 0, "netCashFlow": -77500 },
+      "year3": { "operatingCashFlow": -60000, "investingCashFlow": -25000, "financingCashFlow": 0, "netCashFlow": -85000 },
+      "year4": { "operatingCashFlow": -63000, "investingCashFlow": -25000, "financingCashFlow": 0, "netCashFlow": -88000 },
+      "year5": { "operatingCashFlow": -60000, "investingCashFlow": -25000, "financingCashFlow": 0, "netCashFlow": -85000 }
+    },
+    "breakEvenAnalysis": {
+      "breakEvenPoint": "Year 3, Month 8",
+      "breakEvenRevenue": 315000,
+      "breakEvenUnits": 3150
+    }
+  },
+  "fundingRequirements": {
+    "initialCapital": 150000,
+    "fundingStages": [
+      { "stage": "Seed", "amount": 50000, "purpose": "Product development and initial marketing" },
+      { "stage": "Series A", "amount": 200000, "purpose": "Market expansion and team growth" },
+      { "stage": "Series B", "amount": 500000, "purpose": "Scaling operations and market penetration" }
+    ],
+    "useOfFunds": {
+      "productDevelopment": 30,
+      "marketing": 25,
+      "operations": 20,
+      "personnel": 15,
+      "other": 10
+    },
+    "expectedROI": {
+      "investorReturn": "3-5x over 5 years",
+      "exitStrategy": "Acquisition or IPO",
+      "timeline": "5-7 years"
+    }
+  },
+  "financialMetrics": {
+    "customerAcquisitionCost": 150,
+    "customerLifetimeValue": 1200,
+    "lifetimeValueRatio": 8.0,
+    "grossMargin": 65,
+    "netMargin": -25,
+    "paybackPeriod": "18 months",
+    "unitEconomics": {
+      "revenuePerCustomer": 1200,
+      "costPerCustomer": 900,
+      "profitPerCustomer": 300
+    }
+  },
+  "riskAnalysis": {
+    "financialRisks": [
+      "Cash flow constraints in early years",
+      "Dependency on external funding",
+      "Market competition affecting pricing"
+    ],
+    "mitigationStrategies": [
+      "Conservative cash flow management",
+      "Diversified funding sources",
+      "Strong competitive positioning"
+    ],
+    "sensitivityAnalysis": {
+      "bestCase": "Break-even in Year 2",
+      "baseCase": "Break-even in Year 3",
+      "worstCase": "Break-even in Year 4"
+    }
+  },
+  "valuation": {
+    "comparableCompanies": [
+      { "name": "Competitor A", "valuation": 5000000, "revenue": 1000000, "multiple": 5.0 },
+      { "name": "Competitor B", "valuation": 8000000, "revenue": 1500000, "multiple": 5.3 }
+    ],
+    "dcfValuation": {
+      "presentValue": 2500000,
+      "discountRate": 15,
+      "terminalValue": 3500000
+    },
+    "multipleBasedValuation": {
+      "revenueMultiple": 5.0,
+      "estimatedValue": 3000000
+    }
+  },
+  "investmentMemorandum": {
+    "executiveSummary": "Professional summary for investors",
+    "financialHighlights": "Key metrics and projections",
+    "investmentOpportunity": "Clear value proposition",
+    "exitStrategy": "Planned exit timeline and method"
+  },
+  "assumptions": {
+    "revenueGrowth": "Conservative 20-25% annual growth",
+    "costStructure": "Based on industry benchmarks",
+    "marketConditions": "Stable market environment",
+    "competition": "Moderate competitive pressure"
+  }
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are a senior financial analyst and business consultant with expertise in startup financial planning, investment analysis, and business valuation. You create professional-grade financial plans suitable for official financial institutions and investors.'
+      },
+      {
+        role: 'user',
+        content: financialPlanPrompt
+      }
+    ], 'gpt-4o-mini', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate financial plan' });
+    }
+
+    // Parse the JSON response
+    let financialPlan;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      financialPlan = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse financial plan response:', parseError);
+      return res.status(500).json({ error: 'Failed to parse financial plan response' });
+    }
+
+    // Save the financial plan to the business plan
+    plan.sections = {
+      ...plan.sections,
+      'Financial Plan': financialPlan
+    };
+    await plan.save();
+
+    res.json({
+      success: true,
+      financialPlan,
+      message: 'Financial plan generated successfully'
+    });
+
+  } catch (error) {
+    console.error('Generate financial plan error:', error);
+    res.status(500).json({ error: 'Failed to generate financial plan' });
+  }
+});
+
 export default router; 

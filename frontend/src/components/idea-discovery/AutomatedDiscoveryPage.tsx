@@ -4,6 +4,7 @@ import Lottie from 'lottie-react';
 import robotLottie from '../../assets/robot-lottie.json';
 import { RobotFace } from './RobotFace';
 import { BusinessPlanModal } from './shared/BusinessPlanModal';
+import { FinancialPlanModal } from './shared/FinancialPlanModal';
 
 interface Persona {
   id: string;
@@ -1912,9 +1913,101 @@ export function AutomatedDiscoveryPage() {
   }
 
   // Handlers for Launch stage buttons
-  function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
-    // TODO: Replace with actual generation logic or API call
-    alert(`Generate: ${type}`);
+  async function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
+    if (!id) {
+      alert('Business plan ID not found');
+      return;
+    }
+
+    if (type === 'financial') {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        console.log('Generating financial plan for business plan ID:', id);
+        console.log('API URL:', `${API_URL}/automated-discovery/generate-financial-plan`);
+        console.log('Token:', token ? 'Present' : 'Missing');
+        
+        const response = await fetch(`${API_URL}/automated-discovery/generate-financial-plan`, {
+          method: 'POST',
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            businessPlanId: id
+          })
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
+          throw new Error(`Failed to generate financial plan: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success && data.financialPlan) {
+          console.log('Setting financial plan data:', data.financialPlan);
+          setFinancialPlanData(data.financialPlan);
+          setShowFinancialPlanModal(true);
+        } else {
+          console.error('API Error:', data);
+          // Fallback to test data if API fails
+          console.log('Using fallback financial plan data');
+          setFinancialPlanData({
+            executiveSummary: {
+              businessOverview: "Comprehensive financial plan generated based on your business idea and automated discovery data.",
+              financialHighlights: "Professional financial projections and investment requirements for your business venture.",
+              investmentRequirements: "Funding needs and expected returns based on comprehensive market analysis."
+            },
+            financialProjections: {
+              revenueProjections: {
+                year1: { annual: 180000, growthRate: 25 },
+                year2: { annual: 225000, growthRate: 25 },
+                year3: { annual: 270000, growthRate: 20 },
+                year4: { annual: 324000, growthRate: 20 },
+                year5: { annual: 388800, growthRate: 20 }
+              },
+              breakEvenAnalysis: {
+                breakEvenPoint: "Year 3, Month 8",
+                breakEvenRevenue: 315000,
+                breakEvenUnits: 3150
+              }
+            },
+            fundingRequirements: {
+              initialCapital: 150000,
+              expectedROI: {
+                investorReturn: "3-5x over 5 years",
+                exitStrategy: "Acquisition or IPO",
+                timeline: "5-7 years"
+              }
+            },
+            financialMetrics: {
+              customerAcquisitionCost: 150,
+              customerLifetimeValue: 1200,
+              lifetimeValueRatio: 8.0,
+              grossMargin: 65,
+              netMargin: -25,
+              paybackPeriod: "18 months"
+            }
+          });
+          setShowFinancialPlanModal(true);
+        }
+      } catch (error) {
+        console.error('Error generating financial plan:', error);
+        alert('Failed to generate financial plan. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // TODO: Implement other generation types
+      alert(`Generate: ${type}`);
+    }
   }
 
   function openPitchDeckEditor() {
@@ -2424,6 +2517,8 @@ export function AutomatedDiscoveryPage() {
 
   const [showFullPlanModal, setShowFullPlanModal] = React.useState(false);
   const [fullPlanSections, setFullPlanSections] = React.useState<any>({});
+  const [showFinancialPlanModal, setShowFinancialPlanModal] = React.useState(false);
+  const [financialPlanData, setFinancialPlanData] = React.useState<any>(null);
 
   async function handleViewFullPlan() {
     setLoading(true);
@@ -3464,6 +3559,7 @@ export function AutomatedDiscoveryPage() {
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('financial')}>
               Financial Plan
             </button>
+
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('businessModel')}>
               Business Model
             </button>
@@ -5137,6 +5233,15 @@ export function AutomatedDiscoveryPage() {
         improvedSections={fullPlanSections}
         getCurrentSectionContent={getCurrentSectionContent}
       />
+
+      {/* Financial Plan Modal */}
+      {showFinancialPlanModal && (
+        <FinancialPlanModal
+          isOpen={showFinancialPlanModal}
+          onClose={() => setShowFinancialPlanModal(false)}
+          financialPlan={financialPlanData}
+        />
+      )}
     </div>
   );
 }

@@ -250,6 +250,42 @@ export function AutomatedDiscoveryPage() {
     const savedEvaluation = savedEvaluations[stage.toString()];
     if (savedEvaluation) {
       console.log('Loading saved evaluation for stage:', stage, savedEvaluation);
+    } else {
+      // Try to load from localStorage as fallback
+      const cachedValidationScore = localStorage.getItem(`validation-score-${id}-${stage}`);
+      const cachedSummary = localStorage.getItem(`summary-${id}-${stage}`);
+      const cachedPersonas = localStorage.getItem(`personas-${id}-${stage}`);
+      
+      if (cachedValidationScore && cachedSummary) {
+        console.log('Loading cached evaluation from localStorage for stage:', stage);
+        try {
+          const validationScore = JSON.parse(cachedValidationScore);
+          const personas = cachedPersonas ? JSON.parse(cachedPersonas) : [];
+          
+          setValidationScore(validationScore);
+          setCollectiveSummary(cachedSummary);
+          setPersonas(personas);
+          
+          // Mark this stage as completed when loading cached data
+          setCompletedStages(prev => {
+            if (!prev.includes(stage.toString())) {
+              return [...prev, stage.toString()];
+            }
+            return prev;
+          });
+          
+          // Mark this stage as having data
+          setHasDataForStage(prev => ({ ...prev, [stage]: true }));
+          
+          console.log('Loaded cached evaluation for stage:', stage);
+          return;
+        } catch (err) {
+          console.log('Could not parse cached evaluation:', err);
+        }
+      }
+    }
+    
+    if (savedEvaluation) {
       
       // Load the evaluation data into the UI
       setPersonas(savedEvaluation.personas || []);
@@ -1250,8 +1286,11 @@ export function AutomatedDiscoveryPage() {
   React.useEffect(() => {
     if (personas.length === 0 || !businessIdea || !customerDescription) return;
     
-    // If skipReevaluation is true, we still want to load existing data but not trigger new evaluation
-    if (skipReevaluation || isViewingPreviousResults) {
+    // Check if this stage has already been completed or if we should skip re-evaluation
+    const stageCompleted = completedStages.includes(currentStage.toString());
+    const shouldSkipEvaluation = skipReevaluation || isViewingPreviousResults || stageCompleted;
+    
+    if (shouldSkipEvaluation) {
       // Load existing validation score from localStorage or cached data
       const cachedValidationScore = localStorage.getItem(`validation-score-${id}-${currentStage}`);
       if (cachedValidationScore) {
@@ -1276,6 +1315,12 @@ export function AutomatedDiscoveryPage() {
       if (cachedSummary) {
         setCollectiveSummary(cachedSummary);
       }
+      
+      // If stage is completed but we don't have cached data, try to load from saved evaluations
+      if (stageCompleted && !cachedValidationScore) {
+        loadStageEvaluation(currentStage);
+      }
+      
       return;
     }
     async function fetchFeedback() {
@@ -1355,6 +1400,12 @@ export function AutomatedDiscoveryPage() {
         
         if (data.validationScore) {
           setValidationScore(data.validationScore);
+          
+          // Save to localStorage for persistence across page refreshes
+          localStorage.setItem(`validation-score-${id}-${currentStage}`, JSON.stringify(data.validationScore));
+          localStorage.setItem(`summary-${id}-${currentStage}`, data.summary || data.analysis?.summary || '');
+          localStorage.setItem(`personas-${id}-${currentStage}`, JSON.stringify(personas));
+          
           // Mark this stage as completed
           setCompletedStages(prev => {
             if (!prev.includes(currentStage.toString())) {
@@ -2525,6 +2576,29 @@ export function AutomatedDiscoveryPage() {
         if (saveResponse.ok) {
           console.log(`Stage ${stage} data saved successfully`);
           console.log('Saved sections:', sectionsToSave);
+          
+          // Update plan status based on stage completion
+          try {
+            const statusUpdateResponse = await fetch(`${API_URL}/automated-discovery/update-status`, {
+              method: 'POST',
+              headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                businessPlanId: id,
+                stage: stage
+              }),
+            });
+            
+            if (statusUpdateResponse.ok) {
+              console.log(`Plan status updated for stage ${stage}`);
+            } else {
+              console.error(`Failed to update plan status for stage ${stage}`);
+            }
+          } catch (statusError) {
+            console.error('Error updating plan status:', statusError);
+          }
         } else {
           console.error(`Failed to save stage ${stage} data`);
           const errorText = await saveResponse.text();

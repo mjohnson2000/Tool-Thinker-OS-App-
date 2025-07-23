@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar, FaInfoCircle } from 'react-icons/fa';
 import logo from '../../assets/logo.png';
 import { initialAppState } from '../../App';
 
@@ -676,7 +676,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
               <FaStar /> Validated Ideas
             </StatTitle>
             <StatValue>{stats.validated}</StatValue>
-            <StatSubtitle>Market validated</StatSubtitle>
+            <StatSubtitle>Market validated via automated discovery</StatSubtitle>
           </StatCard>
         </StatsGrid>
 
@@ -727,6 +727,49 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                   </PlanHeader>
                   
                   <PlanSummary>{plan.summary}</PlanSummary>
+                  
+                  {/* Validation Method Indicator */}
+                  {plan.status === 'validated' && (
+                    <div 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginBottom: '0.5rem',
+                        fontSize: '0.9rem',
+                        color: '#007aff',
+                        fontWeight: 600,
+                        cursor: 'help',
+                      }}
+                      title="This idea was validated using our AI-powered automated discovery process, which analyzes problem identification, customer profiles, market validation, and business model viability."
+                    >
+                      <FaCheckCircle style={{ fontSize: '0.8rem' }} />
+                      Automated Discovery Completed
+                      <FaInfoCircle style={{ fontSize: '0.7rem', opacity: 0.7 }} />
+                    </div>
+                  )}
+                  
+                  {/* In Progress Indicator */}
+                  {plan.status === 'active' && plan.progress && (
+                    <div 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginBottom: '0.5rem',
+                        fontSize: '0.9rem',
+                        color: '#ff9500',
+                        fontWeight: 600,
+                        cursor: 'help',
+                      }}
+                      title="This idea is currently being validated through our automated discovery process."
+                    >
+                      <FaClock style={{ fontSize: '0.8rem' }} />
+                      Automated Discovery in Progress
+                      <FaInfoCircle style={{ fontSize: '0.7rem', opacity: 0.7 }} />
+                    </div>
+                  )}
+                  
                   <div style={{
                     fontWeight: 600,
                     color: plan.marketEvaluation && typeof plan.marketEvaluation.score === 'number'

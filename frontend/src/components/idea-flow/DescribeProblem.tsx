@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
 import type { CustomerOption } from './CustomerSelection';
+import { trackDiscoveryStage } from '../../utils/analytics';
 
 const Container = styled.div`
   display: flex;
@@ -212,6 +213,8 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
     setIsLoading(false);
 
     if (assessment.is_good) {
+      // Track problem description completion
+      trackDiscoveryStage('problem_description');
       onSubmit(description);
     } else {
       setImprovedDescription(assessment.improved_idea);
@@ -220,6 +223,8 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
 
   const handleAccept = () => {
     if (improvedDescription) {
+      // Track problem description completion with improvement
+      trackDiscoveryStage('problem_description_improved');
       onSubmit(improvedDescription);
     }
   };

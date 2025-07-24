@@ -4020,4 +4020,281 @@ Provide the financial plan in this JSON format:
   }
 });
 
+// Generate professional business plan endpoint
+router.post('/generate-professional-business-plan', async (req, res) => {
+  try {
+    const { businessPlanId } = req.body;
+    
+    if (!businessPlanId) {
+      return res.status(400).json({ error: 'Missing businessPlanId' });
+    }
+
+    const plan = await BusinessPlan.findById(businessPlanId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Business plan not found' });
+    }
+
+    // Extract all relevant data from the business plan
+    const businessIdea = plan.title || '';
+    const customerDescription = plan.customer?.description || '';
+    const sections = plan.sections || {};
+    
+    // Get data from each stage
+    const problemDiscovery = sections['Problem Discovery'] || {};
+    const customerProfile = sections['Customer Profile'] || {};
+    const customerStruggle = sections['Customer Struggle'] || {};
+    const solutionFit = sections['Solution Fit'] || {};
+    const businessModel = sections['Business Model'] || {};
+    const marketValidation = sections['Market Validation'] || {};
+    const financialPlan = sections['Financial Plan'] || {};
+
+    // Check if we have discovery data
+    const hasDiscoveryData = Object.keys(problemDiscovery).length > 0 || 
+                            Object.keys(customerProfile).length > 0 || 
+                            Object.keys(customerStruggle).length > 0 || 
+                            Object.keys(solutionFit).length > 0 || 
+                            Object.keys(businessModel).length > 0 || 
+                            Object.keys(marketValidation).length > 0;
+
+    console.log('Business plan data for professional plan:', {
+      businessIdea,
+      customerDescription,
+      hasDiscoveryData,
+      sectionsKeys: Object.keys(sections)
+    });
+
+    // Create comprehensive professional business plan prompt
+    const businessPlanPrompt = `You are a senior business consultant and strategic advisor creating a comprehensive, professional-grade business plan suitable for banks, investors, and other financial institutions. This plan will be used for official business purposes and must meet professional standards.
+
+BUSINESS OVERVIEW:
+Business Idea: ${businessIdea}
+Customer Description: ${customerDescription}
+
+${hasDiscoveryData ? `COLLECTED DATA FROM AUTOMATED DISCOVERY:
+
+PROBLEM DISCOVERY:
+${JSON.stringify(problemDiscovery, null, 2)}
+
+CUSTOMER PROFILE:
+${JSON.stringify(customerProfile, null, 2)}
+
+CUSTOMER STRUGGLES:
+${JSON.stringify(customerStruggle, null, 2)}
+
+SOLUTION FIT:
+${JSON.stringify(solutionFit, null, 2)}
+
+BUSINESS MODEL:
+${JSON.stringify(businessModel, null, 2)}
+
+MARKET VALIDATION:
+${JSON.stringify(marketValidation, null, 2)}
+
+FINANCIAL PLAN:
+${JSON.stringify(financialPlan, null, 2)}` : `NOTE: Limited discovery data available. Generate professional business plan based on business idea and customer description using industry best practices and conservative assumptions.`}
+
+TASK: Create a comprehensive, professional business plan following the exact structure and format required by banks and financial institutions. This plan must include all standard sections with detailed subsections:
+
+1.0 EXECUTIVE SUMMARY
+   1.1 Company Profile Summary
+   1.2 Market Research Summary  
+   1.3 Marketing Summary
+   1.4 Finance Summary
+
+2.0 COMPANY PROFILE
+   2.1.1 Business Description
+   2.1.2 Compelling Value
+   2.1.3 Product/Service Description
+   2.2 Company History
+   2.3 Management
+   2.4 Location
+   2.5 Legal Structure
+   2.6 Vision & Mission (optional)
+   2.7 Professional Advisors (optional)
+   2.8 Goals & Objectives (optional)
+
+3.0 MARKET RESEARCH
+   3.1 Industry Profile & Outlook
+   3.2 Local Market
+   3.3 Key Competitors/SWOT Analysis
+   3.4 Target Market
+   3.5 Keys to Success
+   3.6 Customer Survey Summary (optional)
+
+4.0 SALES & MARKETING
+   4.1 Pricing Strategy
+   4.2.1 Marketing Strategy
+   4.2.2 Marketing Activities
+   4.2.3 Marketing Objectives (optional)
+   4.3 Positioning Statement (optional)
+   4.4 The Sales Process (optional)
+   4.5 Strategic Alliances (optional)
+
+5.0 OPERATIONS
+   5.1.1 Physical Location
+   5.1.2 Virtual Location (optional)
+   5.2 Legal Issues
+   5.3 Insurance Issues
+   5.4 Human Resources
+   5.5 Process/Production
+   5.6 Risk Assessment
+
+6.0 FINANCIALS
+   6.1.1 Past Purchases
+   6.1.2 Start-up Costs Sheet
+   6.1.3 Break Even Analysis (optional)
+   6.2.1 Sales Forecast Assumptions
+   6.2.2 Year One Sales Forecast
+   6.2.3 Year Two Sales Forecast
+   6.3 Cash Flow
+   6.4 Income Statement
+
+7.0 APPENDIX
+   Supporting Documents
+   Market Research Data
+   Financial Spreadsheets
+
+REQUIREMENTS:
+- Use professional, formal business language suitable for financial institutions
+- Include detailed assumptions and methodology for all projections
+- Provide conservative, realistic financial projections
+- Ensure all sections are comprehensive and well-structured
+- Make it suitable for presentation to banks, investors, and financial institutions
+- Include specific data, metrics, and financial figures where appropriate
+- Follow standard business plan format and structure exactly as outlined
+- Write in FIRST PERSON from the business owner's perspective ("Our business", "We are", "Our company")
+- Include measurable goals and objectives
+- Provide detailed operational processes and procedures
+- CRITICAL: Generate actual business content, NOT placeholder text or generic descriptions
+- CRITICAL: Fill each section with specific, detailed information relevant to the business idea
+- CRITICAL: Use the provided business idea and customer data to create realistic, specific content
+- CRITICAL: Avoid generic phrases like "detailed description" or "comprehensive analysis" - provide actual content
+- CRITICAL: Make every section specific to the actual business idea provided
+
+Provide the business plan in this comprehensive JSON format with ACTUAL CONTENT (not placeholder text):
+
+IMPORTANT: For each field, provide specific, detailed content about THIS SPECIFIC BUSINESS IDEA. Write in first person as if you are the business owner describing your own business. For example:
+- Instead of "Brief overview of the company", write "Our company is a [specific business type] focused on [specific problem/solution]. We are developing [specific product/service] that will [specific benefit/value]."
+- Instead of "Key market insights", write "Our target market consists of [specific customer type] who [specific problem/need]. The market for our solution is [specific size/trend] and we plan to capture [specific percentage] of this market."
+- Use "Our business", "Our company", "We are", "Our product", "Our service", etc. throughout the plan
+- Make every section specific to the actual business idea provided
+
+{
+  "executiveSummary": {
+    "companyProfile": "Brief overview of the company and its core offering",
+    "marketResearch": "Key market insights and competitive landscape overview", 
+    "marketing": "Core marketing strategy and customer acquisition approach",
+    "finance": "Key financial highlights and funding requirements"
+  },
+  "companyDescription": {
+    "businessDescription": "Detailed description of what the company does and its core value proposition",
+    "compellingValue": "Unique selling proposition and competitive advantages",
+    "productService": "Detailed description of products and services offered",
+    "history": "Background and development of the business idea",
+    "management": "Key management team and their qualifications",
+    "location": "Business location and rationale for the chosen site",
+    "legalStructure": "Business structure and legal considerations",
+    "visionMission": "Company vision and mission statements",
+    "professionalAdvisors": "Key advisors and consultants supporting the business",
+    "goalsObjectives": "Specific, measurable business goals and objectives"
+  },
+  "marketResearch": {
+    "industryProfile": "Industry analysis and future outlook",
+    "localMarket": "Local market analysis and geographic considerations",
+    "competitors": "Competitive analysis and SWOT assessment",
+    "targetMarket": "Detailed target market profile and demographics",
+    "keysToSuccess": "Critical success factors for the business",
+    "customerSurvey": "Customer research findings and insights"
+  },
+  "salesMarketing": {
+    "pricingStrategy": "Pricing approach and competitive positioning",
+    "marketingStrategy": "Overall marketing strategy and approach",
+    "marketingActivities": "Specific marketing activities and implementation plan",
+    "marketingObjectives": "Measurable marketing goals and objectives",
+    "positioningStatement": "Brand positioning and key messaging",
+    "salesProcess": "Sales cycle and customer acquisition process",
+    "strategicAlliances": "Partnerships and strategic relationships"
+  },
+  "operations": {
+    "physicalLocation": "Physical location details and rationale",
+    "virtualLocation": "Online presence and digital operations",
+    "legalIssues": "Legal considerations and compliance requirements",
+    "insuranceIssues": "Insurance requirements and risk management",
+    "humanResources": "Staffing plan and human resource considerations",
+    "processProduction": "Operational processes and production methods",
+    "riskAssessment": "Risk identification and mitigation strategies"
+  },
+  "financials": {
+    "pastPurchases": "Previous investments and purchases for the business",
+    "startupCosts": "Detailed breakdown of start-up costs and funding sources",
+    "breakEvenAnalysis": "Break-even analysis and profitability timeline",
+    "salesForecastAssumptions": "Key assumptions underlying sales projections",
+    "yearOneSalesForecast": "Detailed first-year sales projections",
+    "yearTwoSalesForecast": "Second-year sales projections and growth expectations",
+    "cashFlow": "Cash flow projections and working capital requirements",
+    "incomeStatement": "Projected income statements and profitability analysis"
+  },
+  "financialProjections": {
+    "year1": 180000,
+    "year2": 225000,
+    "year3": 270000,
+    "breakEvenPoint": "Year 2",
+    "profitMargin": 15,
+    "startupCosts": 50000
+  },
+  "appendix": {
+    "supportingDocuments": "Additional supporting documents and references",
+    "marketResearchData": "Detailed market research data and analysis",
+    "financialSpreadsheets": "Detailed financial models and projections"
+  }
+}`;
+
+    const response = await chatCompletion([
+      {
+        role: 'system',
+        content: 'You are a senior business consultant helping a business owner create a professional business plan for their specific business idea. Write the business plan in first person from the business owner\'s perspective, using "Our business", "We are", "Our company", etc. throughout. Make every section specific to the actual business idea provided, not generic descriptions.'
+      },
+      {
+        role: 'user',
+        content: businessPlanPrompt
+      }
+    ], 'gpt-4o-mini', 0.7);
+
+    if (!response) {
+      return res.status(500).json({ error: 'Failed to generate business plan' });
+    }
+
+    // Parse the JSON response
+    let professionalBusinessPlan;
+    try {
+      const cleanedResponse = response.replace(/```json|```/gi, '').trim();
+      console.log('Raw AI response:', response);
+      console.log('Cleaned response:', cleanedResponse);
+      professionalBusinessPlan = JSON.parse(cleanedResponse);
+      console.log('Parsed business plan:', professionalBusinessPlan);
+    } catch (parseError) {
+      console.error('Failed to parse business plan response:', parseError);
+      console.error('Response that failed to parse:', response);
+      return res.status(500).json({ error: 'Failed to parse business plan response' });
+    }
+
+    // Save the professional business plan to the business plan
+    plan.sections = {
+      ...plan.sections,
+      'Professional Business Plan': professionalBusinessPlan
+    };
+    await plan.save();
+
+    res.json({
+      success: true,
+      businessPlan: professionalBusinessPlan,
+      message: 'Professional business plan generated successfully'
+    });
+
+  } catch (error) {
+    console.error('Generate professional business plan error:', error);
+    res.status(500).json({ error: 'Failed to generate professional business plan' });
+  }
+});
+
 export default router; 

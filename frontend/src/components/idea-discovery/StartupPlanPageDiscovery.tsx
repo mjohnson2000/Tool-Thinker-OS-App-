@@ -170,13 +170,19 @@ const CenteredText = styled.p`
   margin-top: 1rem;
 `;
 
-interface StartupPlanPageDiscoveryProps {
-  idea: any;
-  customer: any;
-  job: any;
-  onSignup: () => void;
-  onLogin: () => void;
-  isAuthenticated: boolean;
+export interface StartupPlanPageDiscoveryProps {
+  context: {
+    idea: any;
+    customer: any;
+    job: any;
+    problemDescription?: string | null;
+    solutionDescription?: string | null;
+    competitionDescription?: string | null;
+    [key: string]: any;
+  };
+  onSignup?: () => void;
+  onLogin?: () => void;
+  isAuthenticated?: boolean;
   isSubscribed?: boolean;
   onContinueToValidation?: () => void;
 }
@@ -202,10 +208,10 @@ interface NewStartupPlan {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
+export function StartupPlanPageDiscovery({ context, onSignup, onLogin, isAuthenticated, isSubscribed }: StartupPlanPageDiscoveryProps) {
   console.log('StartupPlanPageDiscovery mounted');
-  console.log('Props:', props);
-  const { idea, customer, job, ...rest } = props;
+  console.log('Props:', context);
+  const { idea, customer, job, ...rest } = context;
   if (!idea || !customer || !job) {
     return (
       <Container>
@@ -231,6 +237,19 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasSaved = useRef(false);
 
+  // Helper to gather all context for plan generation
+  function getFullContext() {
+    return {
+      idea: context.idea,
+      customer: context.customer,
+      job: context.job,
+      problemDescription: context.problemDescription,
+      solutionDescription: context.solutionDescription,
+      competitionDescription: context.competitionDescription,
+      // Add more fields as needed
+    };
+  }
+
   useEffect(() => {
     let cancelled = false;
     // Reset the save flag when props change
@@ -246,7 +265,7 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
       cancelled = true;
       if (progressInterval.current) clearInterval(progressInterval.current);
     };
-  }, [idea, customer, job]);
+  }, [context.idea, context.customer, context.job]);
 
   async function fetchPlan() {
     console.log('fetchPlan called');
@@ -271,9 +290,9 @@ export function StartupPlanPageDiscovery(props: StartupPlanPageDiscoveryProps) {
       // Build a detailed prompt for the AI using all user input
       const aiPrompt = `
 You are a startup strategist AI. Given the following user input:
-- Interests: ${idea?.interests || ''}
-- Customer Persona: ${customer?.title || ''} (${customer?.description || ''})
-- Customer Job: ${job?.title || ''} (${job?.description || ''})
+- Interests: ${context.idea?.interests || ''}
+- Customer Persona: ${context.customer?.title || ''} (${context.customer?.description || ''})
+- Customer Job: ${context.job?.title || ''} (${context.job?.description || ''})
 
       Generate a concise Business Plan with the following sections:
 - Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
@@ -316,19 +335,19 @@ No extra text, just valid JSON.`;
 
       // Map to new format for display and saving
       const mappedPlan: NewStartupPlan = {
-        businessIdeaSummary: data.summary || `${idea?.interests ? `Business idea based on your interests: ${idea.interests}. ` : ''}${customer?.description ? `Targeting customer: ${customer.description}. ` : ''}${job?.description ? `Solving job: ${job.description}.` : ''}`,
-        customerProfile: { description: data.sections?.Customer || customer?.description || '' },
+        businessIdeaSummary: data.summary || `${context.idea?.interests ? `Business idea based on your interests: ${context.idea.interests}. ` : ''}${context.customer?.description ? `Targeting customer: ${context.customer.description}. ` : ''}${context.job?.description ? `Solving job: ${context.job.description}.` : ''}`,
+        customerProfile: { description: data.sections?.Customer || context.customer?.description || '' },
         customerStruggle: (data.sections?.Struggles && data.sections.Struggles.split('\n').filter(Boolean))
-          || (job && job.description ? [job.description] : [])
-          || (customer?.painPoints ? customer.painPoints : []),
-        valueProposition: data.sections?.Value || idea?.valueProposition || '',
+          || (context.job && context.job.description ? [context.job.description] : [])
+          || (context.customer?.painPoints ? context.customer.painPoints : []),
+        valueProposition: data.sections?.Value || context.idea?.valueProposition || '',
         marketInformation: {
-          marketSize: data.sections?.MarketSize || idea?.marketSize || '',
+          marketSize: data.sections?.MarketSize || context.idea?.marketSize || '',
           competitors: (data.sections?.Competitors && data.sections.Competitors.split('\n').filter(Boolean))
-            || (idea && idea.competitors ? idea.competitors.split('\n').filter(Boolean) : [])
-            || (customer?.competitors ? customer.competitors : ['No competitors specified.']),
-          trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (idea?.trends ? idea.trends.split('\n').filter(Boolean) : []),
-          validation: data.sections?.Validation || idea?.validation || '',
+            || (context.idea && context.idea.competitors ? context.idea.competitors.split('\n').filter(Boolean) : [])
+            || (context.customer?.competitors ? context.customer.competitors : ['No competitors specified.']),
+          trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (context.idea?.trends ? context.idea.trends.split('\n').filter(Boolean) : []),
+          validation: data.sections?.Validation || context.idea?.validation || '',
         },
         financialSummary: data.sections?.Financial || '',
       };
@@ -367,16 +386,16 @@ No extra text, just valid JSON.`;
             marketInformation: mappedPlan.marketInformation,
             financialSummary: mappedPlan.financialSummary,
             idea: {
-              title: idea?.title || 'Untitled Idea',
-              description: idea?.interests || 'No idea description provided.'
+              title: context.idea?.title || 'Untitled Idea',
+              description: context.idea?.interests || 'No idea description provided.'
             },
             customer: {
-              title: customer?.title || 'Customer',
-              description: customer?.description || 'No customer description provided.'
+              title: context.customer?.title || 'Customer',
+              description: context.customer?.description || 'No customer description provided.'
             },
             job: {
-              title: job?.title || 'Customer Job',
-              description: job?.description || 'No job description provided.'
+              title: context.job?.title || 'Customer Job',
+              description: context.job?.description || 'No job description provided.'
             },
             problem: {
               description: mappedPlan.customerStruggle && Array.isArray(mappedPlan.customerStruggle) ? mappedPlan.customerStruggle[0] : (mappedPlan.customerStruggle || 'No problem description provided.'),
@@ -461,7 +480,7 @@ No extra text, just valid JSON.`;
     ];
 
     // Only show first 2 sections for unauthenticated users
-    const visibleSections = props.isAuthenticated ? sections : sections.slice(0, 2);
+    const visibleSections = isAuthenticated ? sections : sections.slice(0, 2);
 
     return (
       <>
@@ -506,13 +525,13 @@ No extra text, just valid JSON.`;
             )}
           </SectionCard>
         ))}
-        {!props.isAuthenticated && (
+        {!isAuthenticated && (
           <SignupPrompt>
             <SignupTitle>Unlock Your Full Business Idea</SignupTitle>
             <SignupText>Sign up or log in to see the full idea and save your progress!</SignupText>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-              <ActionButton onClick={props.onSignup}>Sign Up</ActionButton>
-              <ActionButton onClick={props.onLogin}>Log In</ActionButton>
+              <ActionButton onClick={onSignup}>Sign Up</ActionButton>
+              <ActionButton onClick={onLogin}>Log In</ActionButton>
             </div>
           </SignupPrompt>
         )}
@@ -539,7 +558,7 @@ No extra text, just valid JSON.`;
             <Congrats>Congratulations!</Congrats>
           </CongratsWrapper>
           {renderNewPlanSections()}
-          {props.isAuthenticated && (
+          {isAuthenticated && (
             <Actions>
               <ActionButton className="centered" onClick={() => navigate('/plans')}>
                 Manage Business Ideas

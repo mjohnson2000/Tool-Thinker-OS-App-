@@ -44,6 +44,8 @@ import { CustomerValidationPage } from './components/idea-flow/CustomerValidatio
 import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage';
 import AdminLogsPage from './components/business-plan/AdminLogsPage';
 import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
+import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
+import { trackPageView, trackEvent } from './utils/analytics';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -391,6 +393,40 @@ function AppContent() {
     solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
   } = appState;
 
+  // Track page views when currentStep changes
+  useEffect(() => {
+    const pageTitles: Record<Step, string> = {
+      landing: 'Landing Page',
+      idea: 'Idea Selection',
+      customer: 'Customer Selection',
+      job: 'Job Selection',
+      summary: 'Summary',
+      app: 'App Dashboard',
+      login: 'Login',
+      signup: 'Sign Up',
+      profile: 'Profile',
+      existingIdea: 'Existing Idea',
+      describeCustomer: 'Describe Customer',
+      describeProblem: 'Describe Problem',
+      describeSolution: 'Describe Solution',
+      describeCompetition: 'Describe Competition',
+      customerGuidance: 'Customer Guidance',
+      problemGuidance: 'Problem Guidance',
+      competitionGuidance: 'Competition Guidance',
+      businessPlan: 'Business Plan',
+      prematureJobDiscovery: 'Premature Job Discovery',
+      marketEvaluation: 'Market Evaluation',
+      evaluationScore: 'Evaluation Score',
+      nextStepsHub: 'Next Steps Hub',
+      startupPlan: 'Startup Plan',
+      launch: 'Launch Preparation',
+      solution: 'Solution Selection'
+    };
+
+    const pageTitle = pageTitles[currentStep] || 'Unknown Page';
+    trackPageView(pageTitle, `/${currentStep}`);
+  }, [currentStep]);
+
   console.log('AppContent state:', {
     currentStep,
     entryPoint,
@@ -730,9 +766,14 @@ function AppContent() {
                       )}
                       {currentStep === 'businessPlan' && job && (
                         <StartupPlanPageDiscovery
-                          idea={idea}
-                          customer={customer}
-                          job={job}
+                          context={{
+                            idea,
+                            customer,
+                            job,
+                            problemDescription,
+                            solutionDescription,
+                            competitionDescription,
+                          }}
                           onSignup={() => {
                             setAppState(prev => ({
                               ...prev,
@@ -789,6 +830,19 @@ function AppContent() {
                       buttonText="Let's find the problem" 
                       onContinue={handleProblemGuidanceContinue} 
                     />
+                  )}
+                  {currentStep === 'prematureJobDiscovery' && customer && (
+                    <PrematureJobDiscovery 
+                      customer={customer}
+                      onSelect={(job) => {
+                        setAppState(prev => ({ ...prev, job, currentStep: 'solution' }));
+                      }}
+                    />
+                  )}
+                  {currentStep === 'prematureJobDiscovery' && !customer && (
+                    <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+                      Please select a customer before proceeding to this step.
+                    </div>
                   )}
                 </>
               )
@@ -1040,9 +1094,14 @@ function AppContent() {
                       )}
                       {currentStep === 'businessPlan' && job && (
                         <StartupPlanPageDiscovery
-                          idea={idea}
-                          customer={customer}
-                          job={job}
+                          context={{
+                            idea,
+                            customer,
+                            job,
+                            problemDescription,
+                            solutionDescription,
+                            competitionDescription,
+                          }}
                           onSignup={() => {
                             setAppState(prev => ({
                               ...prev,

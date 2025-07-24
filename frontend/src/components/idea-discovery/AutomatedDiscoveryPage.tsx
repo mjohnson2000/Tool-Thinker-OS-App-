@@ -5,6 +5,8 @@ import robotLottie from '../../assets/robot-lottie.json';
 import { RobotFace } from './RobotFace';
 import { BusinessPlanModal } from './shared/BusinessPlanModal';
 import { FinancialPlanModal } from './shared/FinancialPlanModal';
+import { ProfessionalBusinessPlanModal } from './shared/ProfessionalBusinessPlanModal';
+import { trackBusinessPlanGenerated, trackFinancialPlanGenerated } from '../../utils/analytics';
 
 interface Persona {
   id: string;
@@ -1913,7 +1915,7 @@ export function AutomatedDiscoveryPage() {
   }
 
   // Handlers for Launch stage buttons
-  async function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel') {
+  async function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel', forceRegenerate: boolean = false) {
     if (!id) {
       alert('Business plan ID not found');
       return;
@@ -1965,6 +1967,9 @@ export function AutomatedDiscoveryPage() {
           console.log('Setting financial plan data:', data.financialPlan);
           setFinancialPlanData(data.financialPlan);
           setShowFinancialPlanModal(true);
+          
+          // Track financial plan generation
+          trackFinancialPlanGenerated();
           
           // Update the planData state to include the new financial plan
           if (planData) {
@@ -2022,6 +2027,79 @@ export function AutomatedDiscoveryPage() {
       } catch (error) {
         console.error('Error generating financial plan:', error);
         alert('Failed to generate financial plan. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else if (type === 'plan') {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        // Check if we should force regeneration (when regenerate button is clicked)
+        const shouldForceRegenerate = planData && planData.sections && planData.sections['Professional Business Plan'];
+        
+        // Only load existing plan if we're not forcing regeneration
+        if (shouldForceRegenerate && !forceRegenerate) {
+          console.log('Loading existing professional business plan from database');
+          setProfessionalBusinessPlanData(planData.sections['Professional Business Plan']);
+          setShowProfessionalBusinessPlanModal(true);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('No existing professional business plan found, generating new one...');
+        console.log('Generating professional business plan for business plan ID:', id);
+        console.log('API URL:', `${API_URL}/automated-discovery/generate-professional-business-plan`);
+        console.log('Token:', token ? 'Present' : 'Missing');
+        
+        const response = await fetch(`${API_URL}/automated-discovery/generate-professional-business-plan`, {
+          method: 'POST',
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            businessPlanId: id
+          })
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
+          throw new Error(`Failed to generate professional business plan: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success && data.businessPlan) {
+          console.log('Setting professional business plan data:', data.businessPlan);
+          setProfessionalBusinessPlanData(data.businessPlan);
+          setShowProfessionalBusinessPlanModal(true);
+          
+          // Track business plan generation
+          trackBusinessPlanGenerated('professional');
+          
+          // Update the planData state to include the new professional business plan
+          if (planData) {
+            setPlanData({
+              ...planData,
+              sections: {
+                ...planData.sections,
+                'Professional Business Plan': data.businessPlan
+              }
+            });
+          }
+        } else {
+          console.error('API Error:', data);
+          alert('Failed to generate professional business plan. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error generating professional business plan:', error);
+        alert('Failed to generate professional business plan. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -2540,6 +2618,27 @@ export function AutomatedDiscoveryPage() {
   const [fullPlanSections, setFullPlanSections] = React.useState<any>({});
   const [showFinancialPlanModal, setShowFinancialPlanModal] = React.useState(false);
   const [financialPlanData, setFinancialPlanData] = React.useState<any>(null);
+  const [showProfessionalBusinessPlanModal, setShowProfessionalBusinessPlanModal] = React.useState(false);
+  const [showBusinessPlanDropdown, setShowBusinessPlanDropdown] = React.useState(false);
+  const [professionalBusinessPlanData, setProfessionalBusinessPlanData] = React.useState<any>(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.business-plan-dropdown')) {
+        setShowBusinessPlanDropdown(false);
+      }
+    };
+
+    if (showBusinessPlanDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBusinessPlanDropdown]);
 
   async function handleViewFullPlan() {
     setLoading(true);
@@ -3574,9 +3673,116 @@ export function AutomatedDiscoveryPage() {
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={openPitchDeckEditor}>
               Pitch Deck
             </button>
-            <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer' }} onClick={() => handleGenerate('plan')}>
-              Business Plan
-            </button>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <button 
+                style={{ 
+                  width: 200, 
+                  padding: '0.9rem 0', 
+                  borderRadius: 8, 
+                  border: '1.5px solid #181a1b', 
+                  background: '#fff', 
+                  color: '#181a1b', 
+                  fontWeight: 600, 
+                  fontSize: 17, 
+                  cursor: 'pointer', 
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }} 
+                onClick={() => {
+                  if (planData && planData.sections && planData.sections['Professional Business Plan']) {
+                    // Show dropdown for existing plan
+                    setShowBusinessPlanDropdown(!showBusinessPlanDropdown);
+                  } else {
+                    // Generate new plan
+                    handleGenerate('plan');
+                  }
+                }}
+              >
+                {planData && planData.sections && planData.sections['Professional Business Plan'] ? 'Business Plan' : 'Generate Business Plan'}
+                {planData && planData.sections && planData.sections['Professional Business Plan'] && (
+                  <>
+                    <span style={{ 
+                      position: 'absolute', 
+                      top: -5, 
+                      right: -5, 
+                      background: '#10b981', 
+                      color: 'white', 
+                      borderRadius: '50%', 
+                      width: 16, 
+                      height: 16, 
+                      fontSize: 10, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontWeight: 'bold'
+                    }}>
+                      ✓
+                    </span>
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </>
+                )}
+              </button>
+              
+              {/* Dropdown for existing business plan */}
+              {showBusinessPlanDropdown && planData && planData.sections && planData.sections['Professional Business Plan'] && (
+                <div className="business-plan-dropdown" style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  zIndex: 1000,
+                  marginTop: 4
+                }}>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      color: '#374151',
+                      borderBottom: '1px solid #f3f4f6'
+                    }}
+                    onClick={() => {
+                      setShowBusinessPlanDropdown(false);
+                      setProfessionalBusinessPlanData(planData.sections['Professional Business Plan']);
+                      setShowProfessionalBusinessPlanModal(true);
+                    }}
+                  >
+                    View Business Plan
+                  </button>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      color: '#dc2626'
+                    }}
+                    onClick={() => {
+                      setShowBusinessPlanDropdown(false);
+                      handleGenerate('plan', true);
+                    }}
+                  >
+                    Regenerate Business Plan
+                  </button>
+                </div>
+              )}
+            </div>
             <button style={{ width: 200, padding: '0.9rem 0', borderRadius: 8, border: '1.5px solid #181a1b', background: '#fff', color: '#181a1b', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative' }} onClick={() => handleGenerate('financial')}>
               {planData && planData.sections && planData.sections['Financial Plan'] ? 'View Financial Plan' : 'Generate Financial Plan'}
               {planData && planData.sections && planData.sections['Financial Plan'] && (
@@ -5280,6 +5486,15 @@ export function AutomatedDiscoveryPage() {
           isOpen={showFinancialPlanModal}
           onClose={() => setShowFinancialPlanModal(false)}
           financialPlan={financialPlanData}
+        />
+      )}
+
+      {/* Professional Business Plan Modal */}
+      {showProfessionalBusinessPlanModal && (
+        <ProfessionalBusinessPlanModal
+          isOpen={showProfessionalBusinessPlanModal}
+          onClose={() => setShowProfessionalBusinessPlanModal(false)}
+          businessPlanData={professionalBusinessPlanData}
         />
       )}
     </div>

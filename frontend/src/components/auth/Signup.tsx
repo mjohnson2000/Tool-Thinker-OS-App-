@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { trackUserRegistration } from '../../utils/analytics';
 
 const GlassCard = styled.div`
   max-width: 420px;
@@ -116,6 +117,8 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
     setIsLoading(true);
     try {
       await onSignup(email, password);
+      // Track successful registration
+      trackUserRegistration('email');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
     } finally {

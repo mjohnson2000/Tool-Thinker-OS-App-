@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar, FaInfoCircle } from 'react-icons/fa';
 import logo from '../../assets/logo.png';
-import { initialAppState } from '../../App';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 

@@ -11,11 +11,11 @@ const rootDiv = document.getElementById('root');
 
 createRoot(rootDiv!).render(
   <StrictMode>
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <App />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   </StrictMode>
 )
 

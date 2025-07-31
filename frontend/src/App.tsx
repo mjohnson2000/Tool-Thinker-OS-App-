@@ -14,7 +14,7 @@ import { Login } from './components/auth/Login';
 import { Profile } from './components/auth/Profile';
 import { FaUserCircle } from 'react-icons/fa';
 import { ResetPassword } from './components/auth/ResetPassword';
-import { BrowserRouter as Router, Routes, Route, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { DescribeCustomer } from './components/idea-flow/DescribeCustomer';
 import { DescribeProblem } from './components/idea-flow/DescribeProblem';
 import { DescribeSolution } from './components/idea-flow/DescribeSolution';
@@ -317,7 +317,7 @@ interface AppState {
   stepBeforeAuth: Step | null;
 }
 
-export const initialAppState: AppState = {
+const initialAppState: AppState = {
   currentStep: 'landing',
   entryPoint: 'idea',
   idea: {
@@ -383,16 +383,6 @@ function AppContent() {
     }
   }, [isAuthenticated, appState.currentStep]);
 
-  // Now safe to do conditional returns
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  const { 
-    currentStep, entryPoint, idea, customer, job, problemDescription, 
-    solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
-  } = appState;
-
   // Track page views when currentStep changes
   useEffect(() => {
     const pageTitles: Record<Step, string> = {
@@ -423,9 +413,19 @@ function AppContent() {
       solution: 'Solution Selection'
     };
 
-    const pageTitle = pageTitles[currentStep] || 'Unknown Page';
-    trackPageView(pageTitle, `/${currentStep}`);
-  }, [currentStep]);
+    const pageTitle = pageTitles[appState.currentStep] || 'Unknown Page';
+    trackPageView(pageTitle, `/${appState.currentStep}`);
+  }, [appState.currentStep]);
+
+  // Now safe to do conditional returns
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const { 
+    currentStep, entryPoint, idea, customer, job, problemDescription, 
+    solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
+  } = appState;
 
   console.log('AppContent state:', {
     currentStep,

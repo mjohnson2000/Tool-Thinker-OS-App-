@@ -187,52 +187,138 @@ interface DescribeCustomerProps {
   onSubmit: (description: string | null) => void;
   initialValue?: string;
   onClear: () => void;
+  businessContext?: {
+    idea?: string;
+    businessArea?: string;
+    interests?: string;
+  };
 }
 
-const customerPersonas = [
-  {
-    emoji: '🥐',
-    title: 'Gluten-Free Enthusiast',
-    description: 'Loves the taste of French pastries without the gluten',
-  },
-  {
-    emoji: '🍰',
-    title: 'Health Conscious Foodie',
-    description: 'Appreciates locally sourced and organic ingredients',
-  },
-  {
-    emoji: '🍪',
-    title: 'Sweet Tooth Connoisseur',
-    description: 'Enjoys a variety of sweet treats like macarons',
-  },
-  {
-    emoji: '🎂',
-    title: 'Special Occasion Celebrator',
-    description: 'Prefers custom cakes for memorable events',
-  },
-  {
-    emoji: '📦',
-    title: 'Pastry Subscription Member',
-    description: 'Loves the convenience of weekly pastry deliveries',
-  },
-];
+interface CustomerPersona {
+  emoji: string;
+  title: string;
+  description: string;
+}
 
-export function DescribeCustomer({ onSubmit, initialValue = '', onClear }: DescribeCustomerProps) {
+export function DescribeCustomer({ onSubmit, initialValue = '', onClear, businessContext }: DescribeCustomerProps) {
   const [knowsCustomer, setKnowsCustomer] = useState<boolean | null>(null);
   const [description, setDescription] = useState(initialValue);
   const [isLoading, setIsLoading] = useState(false);
   const [improvedDescription, setImprovedDescription] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [promptForMoreInfo, setPromptForMoreInfo] = useState(false);
+  const [customerPersonas, setCustomerPersonas] = useState<CustomerPersona[]>([]);
+  const [isGeneratingPersonas, setIsGeneratingPersonas] = useState(false);
 
   useEffect(() => {
     if (initialValue) {
-      // If there's an initial value, the user already knows their customer.
-      // This handles the case when a user goes back to this step.
       setKnowsCustomer(true);
       setDescription(initialValue);
     }
   }, [initialValue]);
+
+  // Generate customer personas based on business context
+  useEffect(() => {
+    if (knowsCustomer === false) {
+      generateCustomerPersonas();
+    }
+  }, [knowsCustomer, businessContext]);
+
+  async function generateCustomerPersonas() {
+    setIsGeneratingPersonas(true);
+    
+    const context = businessContext?.idea || businessContext?.businessArea || businessContext?.interests || 'a new business';
+    
+    const prompt = `Based on this business idea: "${context}", generate 5 different customer personas that would be most likely to use this product or service.
+
+    For each persona, provide:
+    - A relevant emoji
+    - A descriptive title
+    - A brief description of their characteristics and needs
+
+    Consider different segments like:
+    - Early adopters
+    - Mainstream users
+    - Different demographics
+    - Different use cases
+    - Different pain points
+
+    Return the response as a JSON array with this exact structure:
+    [
+      {
+        "emoji": "relevant emoji",
+        "title": "Persona Title",
+        "description": "Brief description of this customer type"
+      }
+    ]
+
+    Make the personas specific to this business idea and diverse in their characteristics.`;
+
+    try {
+      const response = await fetchChatGPT(prompt);
+      let personas: CustomerPersona[] = [];
+
+      if (typeof response === 'string') {
+        try {
+          personas = JSON.parse(response);
+        } catch (e) {
+          console.error("Failed to parse personas JSON:", e);
+          // Fallback to generic personas
+          personas = generateFallbackPersonas(context);
+        }
+      } else if (Array.isArray(response)) {
+        personas = response;
+      } else {
+        personas = generateFallbackPersonas(context);
+      }
+
+      // Ensure we have exactly 5 personas
+      if (personas.length > 5) {
+        personas = personas.slice(0, 5);
+      } else if (personas.length < 5) {
+        const fallbackPersonas = generateFallbackPersonas(context);
+        personas = [...personas, ...fallbackPersonas.slice(0, 5 - personas.length)];
+      }
+
+      setCustomerPersonas(personas);
+    } catch (error) {
+      console.error("Failed to generate customer personas:", error);
+      setCustomerPersonas(generateFallbackPersonas(context));
+    } finally {
+      setIsGeneratingPersonas(false);
+    }
+  }
+
+  function generateFallbackPersonas(context: string): CustomerPersona[] {
+    // Generic personas as fallback
+    return [
+      {
+        emoji: '👥',
+        title: 'Early Adopter',
+        description: 'Tech-savvy individuals who love trying new products and services',
+      },
+      {
+        emoji: '💼',
+        title: 'Professional User',
+        description: 'Working professionals who need efficient solutions for their daily tasks',
+      },
+      {
+        emoji: '🏠',
+        title: 'Home User',
+        description: 'Individuals who prefer convenient solutions for personal use',
+      },
+      {
+        emoji: '🎯',
+        title: 'Specific Need User',
+        description: 'People with a particular problem that your solution addresses',
+      },
+      {
+        emoji: '🌟',
+        title: 'Premium User',
+        description: 'Quality-conscious customers willing to pay for better solutions',
+      },
+    ];
+  }
 
   async function assessCustomerDescription(customerDescription: string, isRetry = false) {
     const retryText = isRetry ? "Provide a different and unique improved version of this customer description." : "";
@@ -374,15 +460,22 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear }: Descr
       {knowsCustomer === false && (
         <>
           <Subtitle>Select the type of customer you want to help</Subtitle>
-          <PersonaGrid>
-            {customerPersonas.map((persona) => (
-              <PersonaCard key={persona.title} onClick={() => handlePersonaSelect(persona)}>
-                <Emoji>{persona.emoji}</Emoji>
-                <CardTitle>{persona.title}</CardTitle>
-                <CardDescription>{persona.description}</CardDescription>
-              </PersonaCard>
-            ))}
-          </PersonaGrid>
+          {isGeneratingPersonas ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤔</div>
+              <p>Generating customer personas based on your business idea...</p>
+            </div>
+          ) : (
+            <PersonaGrid>
+              {customerPersonas.map((persona) => (
+                <PersonaCard key={persona.title} onClick={() => handlePersonaSelect(persona)}>
+                  <Emoji>{persona.emoji}</Emoji>
+                  <CardTitle>{persona.title}</CardTitle>
+                  <CardDescription>{persona.description}</CardDescription>
+                </PersonaCard>
+              ))}
+            </PersonaGrid>
+          )}
         </>
       )}
 

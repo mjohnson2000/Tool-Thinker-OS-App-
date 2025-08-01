@@ -599,8 +599,8 @@ const WebLandingPage: React.FC = () => {
     setTimeout(() => {
       setDemoOutput(
         demoInput.trim()
-          ? `Clarity: ${demoInput.trim()}\n\nThis idea helps remote teams build stronger relationships through fun, AI-guided activities and regular check-ins. It's designed for busy teams who want to improve morale and collaboration without extra meetings.`
-          : `Clarity: An app that helps remote teams bond\n\nThis idea helps remote teams build stronger relationships through fun, AI-guided activities and regular check-ins. It's designed for busy teams who want to improve morale and collaboration without extra meetings.`
+          ? `Side Hustle Ideas for: ${demoInput.trim()}\n\n• Content Writing: $300-800/month\n• Virtual Assistant: $400-1200/month\n• Social Media Management: $500-1500/month\n\nAll fit your 2-hour daily schedule and writing skills!`
+          : `Side Hustle Ideas for: Writing skills + 2 hours/day\n\n• Content Writing: $300-800/month\n• Virtual Assistant: $400-1200/month\n• Social Media Management: $500-1500/month\n\nAll fit your 2-hour daily schedule and writing skills!`
       );
       setDemoOutputVisible(true);
     }, 350);
@@ -615,10 +615,10 @@ const WebLandingPage: React.FC = () => {
           <HeroGlassyBg />
           <HeroContent>
             <LogoImg src={logoImg} alt="Tool Thinker Logo" />
-            <Tagline>No Time? No MBA? No Problem.</Tagline>
-            <SubTagline>Your Startup Journey Copilot</SubTagline>
+            <Tagline>Turn Your Skills Into Extra Income</Tagline>
+            <SubTagline>Your Side Hustle Idea Generator</SubTagline>
             <HeroText>
-              Turn your ideas into a Business Plan—fast, simple, and guided by AI. Tool Thinker helps aspiring entrepreneurs with little time, no formal training, and many ideas get clarity and take action.
+              Discover profitable side hustle ideas that fit your schedule and skills. Tool Thinker helps busy professionals find, validate, and launch part-time businesses for extra income—no quitting your day job required.
             </HeroText>
             <CTAButton onClick={handleStartForFree}>Start for Free</CTAButton>
             <SecondaryButton onClick={handleSeeHowItWorks}>See How It Works</SecondaryButton>
@@ -627,26 +627,26 @@ const WebLandingPage: React.FC = () => {
 
         {/* Social Proof */}
         <SocialProofSection>
-          <SocialProofText>Trusted by aspiring founders from</SocialProofText>
+          <SocialProofText>Trusted by side hustlers from</SocialProofText>
           <SocialLogos>
-            <SocialLogo>StartupHub</SocialLogo>
-            <SocialLogo>9to5 Founders</SocialLogo>
-            <SocialLogo>IdeaMakers</SocialLogo>
             <SocialLogo>SideHustle Pro</SocialLogo>
+            <SocialLogo>Freelance Hub</SocialLogo>
+            <SocialLogo>Part-Time Pros</SocialLogo>
+            <SocialLogo>Income Multipliers</SocialLogo>
           </SocialLogos>
         </SocialProofSection>
 
         {/* Interactive Demo & Walkthrough */}
         <DemoSection>
           <DemoWidget>
-            <DemoTitle>Try Tool Thinker Instantly</DemoTitle>
+            <DemoTitle>Try Side Hustle Finder Instantly</DemoTitle>
             <DemoInput
-              placeholder="Describe your idea… (e.g. 'An app that helps remote teams bond')"
+              placeholder="Describe your skills or interests… (e.g. 'I'm good at writing and have 2 hours a day')"
               value={demoInput}
               onChange={e => setDemoInput(e.target.value)}
               rows={3}
             />
-            <DemoButton onClick={handleDemoClarify}>Clarify</DemoButton>
+            <DemoButton onClick={handleDemoClarify}>Find Ideas</DemoButton>
             <DemoOutput visible={demoOutputVisible}>
               {demoOutputVisible && demoOutput}
             </DemoOutput>
@@ -666,61 +666,61 @@ const WebLandingPage: React.FC = () => {
 
         {/* How It Works */}
         <HowItWorks ref={howItWorksRef}>
-          <h2>How Tool Thinker Works</h2>
+          <h2>How Side Hustle Finder Works</h2>
           <Steps>
             <Step>
               <StepNumber>1</StepNumber>
-              <StepTitle>Describe Your Idea</StepTitle>
-              <StepText>Share your business idea in plain English—no business jargon required.</StepText>
+              <StepTitle>Share Your Skills & Time</StepTitle>
+              <StepText>Tell us what you're good at and how much time you have available for extra income.</StepText>
             </Step>
             <Step>
               <StepNumber>2</StepNumber>
-              <StepTitle>AI-Powered Guidance</StepTitle>
-              <StepText>Our AI guides you through validation, planning, and next steps—tailored to your goals.</StepText>
+              <StepTitle>AI-Powered Idea Generation</StepTitle>
+              <StepText>Our AI finds profitable side hustle opportunities that match your skills, schedule, and income goals.</StepText>
             </Step>
             <Step>
               <StepNumber>3</StepNumber>
-              <StepTitle>Your Business Plan</StepTitle>
-              <StepText>Get a shareable, actionable Business Plan you can use to move forward or share with others.</StepText>
+              <StepTitle>Your Action Plan</StepTitle>
+              <StepText>Get a step-by-step plan to launch your side hustle—from validation to first customer.</StepText>
             </Step>
           </Steps>
         </HowItWorks>
 
         {/* Benefits */}
         <Benefits>
-          <h2>Why Tool Thinker?</h2>
+          <h2>Why Side Hustle Finder?</h2>
           <BenefitsList>
-            <Benefit><Check>✓</Check>No business background required</Benefit>
-            <Benefit><Check>✓</Check>Save hours—get clarity in minutes</Benefit>
-            <Benefit><Check>✓</Check>AI-powered guidance at every step</Benefit>
-            <Benefit><Check>✓</Check>From idea to action—skip the overwhelm</Benefit>
-            <Benefit><Check>✓</Check>Modern, distraction-free interface</Benefit>
-            <Benefit><Check>✓</Check>Step-by-step startup roadmap</Benefit>
-            <Benefit><Check>✓</Check>Instant feedback and improvement tips</Benefit>
-            <Benefit><Check>✓</Check>Export and share your plan anytime</Benefit>
+            <Benefit><Check>✓</Check>Keep your day job—no quitting required</Benefit>
+            <Benefit><Check>✓</Check>Find ideas that fit your schedule</Benefit>
+            <Benefit><Check>✓</Check>AI-powered opportunity matching</Benefit>
+            <Benefit><Check>✓</Check>Low-risk, high-reward side hustles</Benefit>
+            <Benefit><Check>✓</Check>Start with skills you already have</Benefit>
+            <Benefit><Check>✓</Check>Step-by-step launch roadmap</Benefit>
+            <Benefit><Check>✓</Check>Validate ideas before investing time</Benefit>
+            <Benefit><Check>✓</Check>Track progress and income goals</Benefit>
           </BenefitsList>
         </Benefits>
 
         {/* Comparison */}
         <Comparison>
-          <h2>Tool Thinker vs. Traditional Planning</h2>
+          <h2>Side Hustle Finder vs. Traditional Methods</h2>
           <ComparisonTable>
             <ComparisonCol>
-              <ComparisonTitle>Tool Thinker</ComparisonTitle>
+              <ComparisonTitle>Side Hustle Finder</ComparisonTitle>
               <ComparisonList>
-                <ComparisonItem>Fast, guided, and simple</ComparisonItem>
-                <ComparisonItem>Modern, AI-powered</ComparisonItem>
-                <ComparisonItem>Designed for busy, first-time founders</ComparisonItem>
-                <ComparisonItem>No jargon, no spreadsheets</ComparisonItem>
+                <ComparisonItem>AI-powered idea generation</ComparisonItem>
+                <ComparisonItem>Fits your existing schedule</ComparisonItem>
+                <ComparisonItem>Low-risk, validated opportunities</ComparisonItem>
+                <ComparisonItem>Start with skills you have</ComparisonItem>
               </ComparisonList>
             </ComparisonCol>
             <ComparisonCol>
-              <ComparisonTitle>Traditional Tools</ComparisonTitle>
+              <ComparisonTitle>Traditional Methods</ComparisonTitle>
               <ComparisonList>
-                <ComparisonItem>Time-consuming and complex</ComparisonItem>
-                <ComparisonItem>Manual, outdated templates</ComparisonItem>
-                <ComparisonItem>Assumes business expertise</ComparisonItem>
-                <ComparisonItem>Lots of paperwork and jargon</ComparisonItem>
+                <ComparisonItem>Random internet searches</ComparisonItem>
+                <ComparisonItem>Requires quitting your job</ComparisonItem>
+                <ComparisonItem>High-risk, unvalidated ideas</ComparisonItem>
+                <ComparisonItem>Assumes you need new skills</ComparisonItem>
               </ComparisonList>
             </ComparisonCol>
           </ComparisonTable>
@@ -728,26 +728,26 @@ const WebLandingPage: React.FC = () => {
 
         {/* Video Section */}
         <VideoSection>
-          <h2>See Tool Thinker in Action</h2>
+          <h2>See Side Hustle Finder in Action</h2>
           <VideoPlaceholder>Video Demo Coming Soon</VideoPlaceholder>
-                          <p>Watch how easy it is to turn your idea into a Business Plan in minutes.</p>
+                          <p>Watch how easy it is to find and launch your perfect side hustle in minutes.</p>
         </VideoSection>
 
         {/* Testimonials */}
         <Testimonials>
-          <h2>What Our Users Say</h2>
+          <h2>What Our Side Hustlers Say</h2>
           <TestimonialList>
             <Testimonial>
-              "Tool Thinker made it so easy to get my ideas out of my head and into a real plan. I finally feel like I'm making progress!"
-              <TestimonialName>— Alex, Aspiring Founder</TestimonialName>
+              "Side Hustle Finder helped me discover I could make $500/month writing content—while keeping my day job!"
+              <TestimonialName>— Alex, Marketing Manager</TestimonialName>
             </Testimonial>
             <Testimonial>
-              "I work full-time and have no business background. Tool Thinker gave me the confidence and clarity to start my side hustle."
-              <TestimonialName>— Jamie, 9–5er</TestimonialName>
+              "I found 3 side hustle ideas that fit my 2-hour evening schedule. Now I'm making extra income without stress."
+              <TestimonialName>— Jamie, Software Developer</TestimonialName>
             </Testimonial>
             <Testimonial>
-              "The AI guidance is a game changer. I never thought planning a startup could be this simple."
-              <TestimonialName>— Priya, First-Time Entrepreneur</TestimonialName>
+              "The AI matched my photography skills with local business opportunities. I'm booked solid on weekends!"
+              <TestimonialName>— Priya, Teacher</TestimonialName>
             </Testimonial>
           </TestimonialList>
         </Testimonials>

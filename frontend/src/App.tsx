@@ -4,6 +4,8 @@ import { Landing } from './components/idea-flow/Landing';
 import { IdeaSelection } from './components/idea-flow/IdeaSelection';
 import { CustomerSelection } from './components/idea-flow/CustomerSelection';
 import { JobSelection } from './components/idea-flow/JobSelection';
+import { LocationSelection } from './components/idea-flow/LocationSelection';
+import { ScheduleGoalsSelection } from './components/idea-flow/ScheduleGoalsSelection';
 import { Summary } from './components/idea-flow/Summary';
 import { ExistingIdea } from './components/idea-flow/ExistingIdea';
 import './index.css';
@@ -251,7 +253,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution';
+type Step = 'landing' | 'idea' | 'location' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -278,6 +280,8 @@ const Sidebar = styled.aside`
 
 const steps = [
   { key: 'idea', label: 'Interest' },
+  { key: 'location', label: 'Location' },
+  { key: 'scheduleGoals', label: 'Schedule & Goals' },
   { key: 'customer', label: 'Customer' },
   { key: 'job', label: 'Problem' },
   { key: 'solution', label: 'Solution' },
@@ -308,6 +312,8 @@ interface AppState {
     area: BusinessArea | null;
     existingIdeaText?: string;
   };
+  location: { city: string; region: string } | null;
+  scheduleGoals: { hoursPerWeek: number; incomeTarget: number } | null;
   customer: CustomerOption | null;
   job: JobOption | null;
   problemDescription: string | null;
@@ -325,6 +331,8 @@ const initialAppState: AppState = {
     area: null,
     existingIdeaText: '',
   },
+  location: null,
+  scheduleGoals: null,
   customer: null,
   job: null,
   problemDescription: null,
@@ -388,6 +396,8 @@ function AppContent() {
     const pageTitles: Record<Step, string> = {
       landing: 'Landing Page',
       idea: 'Idea Selection',
+      location: 'Location Selection',
+      scheduleGoals: 'Schedule & Goals',
       customer: 'Customer Selection',
       job: 'Job Selection',
       summary: 'Summary',
@@ -423,7 +433,7 @@ function AppContent() {
   }
 
   const { 
-    currentStep, entryPoint, idea, customer, job, problemDescription, 
+    currentStep, entryPoint, idea, location: userLocation, scheduleGoals, customer, job, problemDescription, 
     solutionDescription, competitionDescription, isTrackerVisible, stepBeforeAuth 
   } = appState;
 
@@ -452,7 +462,15 @@ function AppContent() {
   }
 
   function handleIdeaSelect(selectedIdea: { interests: string; area: BusinessArea }) {
-    setAppState(prev => ({ ...prev, idea: selectedIdea, currentStep: 'customer' }));
+    setAppState(prev => ({ ...prev, idea: selectedIdea, currentStep: 'location' }));
+  }
+
+  function handleLocationSelect(location: { city: string; region: string }) {
+    setAppState(prev => ({ ...prev, location, currentStep: 'scheduleGoals' }));
+  }
+
+  function handleScheduleGoalsSelect(scheduleGoals: { hoursPerWeek: number; incomeTarget: number }) {
+    setAppState(prev => ({ ...prev, scheduleGoals, currentStep: 'customer' }));
   }
 
   function handleCustomerSelect(selectedCustomer: CustomerOption) {
@@ -735,8 +753,10 @@ function AppContent() {
                         </ToggleTrackerButton>
                       )}
                       {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
-                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} interests={entryPoint === 'idea' ? idea.interests : undefined} />}
-                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} interests={entryPoint === 'idea' ? idea.interests : undefined} businessArea={idea.area} />}
+                      {currentStep === 'location' && <LocationSelection onSelect={handleLocationSelect} interests={idea.interests} businessArea={idea.area} />}
+                      {currentStep === 'scheduleGoals' && <ScheduleGoalsSelection onSelect={handleScheduleGoalsSelect} interests={idea.interests} businessArea={idea.area} location={userLocation} />}
+                      {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} interests={entryPoint === 'idea' ? idea.interests : undefined} location={userLocation} scheduleGoals={scheduleGoals} />}
+                      {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} interests={entryPoint === 'idea' ? idea.interests : undefined} businessArea={idea.area} location={userLocation} scheduleGoals={scheduleGoals} />}
                       {currentStep === 'summary' && idea.area && customer && job && ( <Summary 
                           idea={{
                             ...idea,

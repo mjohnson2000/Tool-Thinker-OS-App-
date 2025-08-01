@@ -90,9 +90,11 @@ export interface JobSelectionProps {
   customer: { title: string; description: string; icon: string } | null;
   interests?: string; // Add interests prop
   businessArea?: { title: string; description: string; icon: string } | null; // Add business area prop
+  location?: { city: string; region: string } | null;
+  scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
-export function JobSelection({ onSelect, customer, interests, businessArea }: JobSelectionProps) {
+export function JobSelection({ onSelect, customer, interests, businessArea, location, scheduleGoals }: JobSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<JobOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -121,13 +123,25 @@ export function JobSelection({ onSelect, customer, interests, businessArea }: Jo
         if (interests) {
           contextString += `\nUser Interests: ${interests}`;
         }
+        if (location) {
+          contextString += `\nLocation: ${location.city}, ${location.region}`;
+        }
+        if (scheduleGoals) {
+          contextString += `\nAvailability: ${scheduleGoals.hoursPerWeek} hours/week, Income Target: $${scheduleGoals.incomeTarget}/month`;
+        }
         
-        const prompt = `Using the Job-to-be-Done framework, generate 5 specific jobs or problems that this customer wants to accomplish. 
+        const prompt = `Using the Job-to-be-Done framework, generate 5 specific jobs or problems that this customer wants to accomplish for a side hustle business.
 
 Context:
 ${contextString}
 
 Job-to-be-Done Framework: Focus on what the customer is trying to accomplish, not what they want to buy. Use the format: "When [situation], I want to [motivation], so I can [expected outcome]."
+
+Focus on problems that:
+- Can be solved part-time
+- Are location-specific when relevant
+- Match the user's schedule constraints
+- Have customers willing to pay for solutions
 
 Return ONLY a JSON array of 5 jobs/problems. Each object must have:
 - id: string

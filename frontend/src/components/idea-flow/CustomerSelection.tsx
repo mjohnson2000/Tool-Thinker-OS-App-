@@ -97,9 +97,11 @@ export interface CustomerSelectionProps {
   onSelect: (customer: CustomerOption) => void;
   businessArea: { title: string; description: string; icon: string } | null;
   interests?: string; // Make interests optional
+  location?: { city: string; region: string } | null;
+  scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
-export function CustomerSelection({ onSelect, businessArea, interests }: CustomerSelectionProps) {
+export function CustomerSelection({ onSelect, businessArea, interests, location, scheduleGoals }: CustomerSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<CustomerOption[]>(customers);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -119,9 +121,29 @@ export function CustomerSelection({ onSelect, businessArea, interests }: Custome
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        const prompt = interests 
-          ? `Return ONLY a JSON array of 5 customer types for someone interested in: "${interests}" who wants to start a business in the area of: ${businessArea.title} - ${businessArea.description}. Focus on customers that align with the user's specific interests and observations. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`
-          : `Return ONLY a JSON array of 5 customer types for a business in the area of: ${businessArea.title} - ${businessArea.description}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+        // Build context string based on available data
+        let contextString = `Business Area: ${businessArea.title} - ${businessArea.description}`;
+        if (interests) {
+          contextString += `\nUser Interests: ${interests}`;
+        }
+        if (location) {
+          contextString += `\nLocation: ${location.city}, ${location.region}`;
+        }
+        if (scheduleGoals) {
+          contextString += `\nAvailability: ${scheduleGoals.hoursPerWeek} hours/week, Income Target: $${scheduleGoals.incomeTarget}/month`;
+        }
+        
+        const prompt = `Return ONLY a JSON array of 5 customer types for a side hustle business with these criteria:
+
+${contextString}
+
+Focus on customers who:
+- Would pay for services in their local area
+- Match the user's schedule constraints
+- Align with their income goals
+- Have problems that can be solved part-time
+
+Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
         if (response && response.error) {
           console.error('ChatGPT API error:', response.error);

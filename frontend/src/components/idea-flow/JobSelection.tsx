@@ -85,12 +85,72 @@ const ProgressBarFill = styled.div<{ percent: number }>`
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
+// Function to generate better fallback jobs based on customer type and business area
+function generateFallbackJobs(customer: any, businessArea: any, startIndex: number) {
+  const fallbackJobs = [];
+  
+  // Common job types for different customer types
+  const jobTemplates = {
+    'Busy Professionals': [
+      { title: 'Time Management', description: 'Help busy professionals optimize their schedule and productivity', icon: '⏰' },
+      { title: 'Stress Relief', description: 'Provide services that help reduce work-related stress', icon: '🧘' },
+      { title: 'Skill Development', description: 'Help professionals learn new skills efficiently', icon: '📚' },
+      { title: 'Networking', description: 'Connect professionals with valuable contacts and opportunities', icon: '🤝' },
+      { title: 'Work-Life Balance', description: 'Help professionals maintain healthy work-life boundaries', icon: '⚖️' }
+    ],
+    'Parents': [
+      { title: 'Childcare Support', description: 'Help parents with childcare and family management', icon: '👶' },
+      { title: 'Meal Planning', description: 'Help parents plan and prepare healthy family meals', icon: '🍽️' },
+      { title: 'Family Organization', description: 'Help parents organize family schedules and activities', icon: '📅' },
+      { title: 'Parenting Guidance', description: 'Provide advice and support for parenting challenges', icon: '👨‍👩‍👧‍👦' },
+      { title: 'Family Wellness', description: 'Help families maintain health and wellness routines', icon: '💪' }
+    ],
+    'Students': [
+      { title: 'Study Skills', description: 'Help students improve their learning and study techniques', icon: '📖' },
+      { title: 'Career Guidance', description: 'Help students plan their career path and goals', icon: '🎯' },
+      { title: 'Time Management', description: 'Help students balance academics and personal life', icon: '⏰' },
+      { title: 'Skill Building', description: 'Help students develop practical skills for their future', icon: '🔧' },
+      { title: 'Academic Support', description: 'Provide tutoring and academic assistance', icon: '🎓' }
+    ],
+    'Small Business Owners': [
+      { title: 'Business Growth', description: 'Help small businesses expand and increase revenue', icon: '📈' },
+      { title: 'Marketing Support', description: 'Help businesses improve their marketing strategies', icon: '📢' },
+      { title: 'Financial Management', description: 'Help businesses manage finances and cash flow', icon: '💰' },
+      { title: 'Customer Service', description: 'Help businesses improve customer satisfaction', icon: '😊' },
+      { title: 'Operational Efficiency', description: 'Help businesses streamline their operations', icon: '⚙️' }
+    ],
+    'Health-Conscious': [
+      { title: 'Fitness Coaching', description: 'Help people achieve their fitness and health goals', icon: '💪' },
+      { title: 'Nutrition Guidance', description: 'Help people improve their diet and nutrition', icon: '🥗' },
+      { title: 'Mental Wellness', description: 'Help people maintain mental health and mindfulness', icon: '🧘' },
+      { title: 'Lifestyle Coaching', description: 'Help people adopt healthier lifestyle habits', icon: '🌱' },
+      { title: 'Wellness Planning', description: 'Help people create personalized wellness routines', icon: '🏃' }
+    ]
+  };
+
+  // Get the appropriate job templates for this customer type
+  const templates = jobTemplates[customer.title as keyof typeof jobTemplates] || jobTemplates['Busy Professionals'];
+  
+  // Create fallback jobs starting from the given index
+  for (let i = 0; i < 5 - startIndex; i++) {
+    const template = templates[i] || templates[0];
+    fallbackJobs.push({
+      id: `fallback-${startIndex + i + 1}`,
+      title: template.title,
+      description: template.description,
+      icon: template.icon
+    });
+  }
+  
+  return fallbackJobs;
+}
+
 export interface JobSelectionProps {
   onSelect: (job: JobOption) => void;
   customer: { title: string; description: string; icon: string } | null;
   interests?: string; // Add interests prop
   businessArea?: { title: string; description: string; icon: string } | null; // Add business area prop
-  location?: { city: string; region: string } | null;
+  location?: { city: string; region: string; country: string } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
@@ -109,6 +169,16 @@ export function JobSelection({ onSelect, customer, interests, businessArea, loca
       setError(null);
       setOptions([]);
       let progressInterval: ReturnType<typeof setInterval> | null = null;
+      
+      // Set a timeout to show defaults if AI request takes too long
+      const timeoutFallback = setTimeout(() => {
+        console.log('JobSelection: Timeout fallback triggered');
+        setError('AI request timed out. Showing defaults.');
+        setOptions([]);
+        setProgress(100);
+        setIsLoading(false);
+      }, 15000); // 15 second timeout
+      
       try {
         // Animate progress bar to 90% while loading
         progressInterval = setInterval(() => {
@@ -130,26 +200,19 @@ export function JobSelection({ onSelect, customer, interests, businessArea, loca
           contextString += `\nAvailability: ${scheduleGoals.hoursPerWeek} hours/week, Income Target: $${scheduleGoals.incomeTarget}/month`;
         }
         
-        const prompt = `Using the Job-to-be-Done framework, generate 5 specific jobs or problems that this customer wants to accomplish for a side hustle business.
+        const prompt = `Generate 5 specific problems for ${customer.title} in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
 
-Context:
-${contextString}
+Business area: ${businessArea?.title || 'general'}
+${interests ? `Interests: ${interests}` : ''}
+${scheduleGoals ? `Availability: ${scheduleGoals.hoursPerWeek} hours/week, Target: $${scheduleGoals.incomeTarget}/month` : ''}
 
-Job-to-be-Done Framework: Focus on what the customer is trying to accomplish, not what they want to buy. Use the format: "When [situation], I want to [motivation], so I can [expected outcome]."
+Focus on problems that can be solved part-time and locally.
 
-Focus on problems that:
-- Can be solved part-time
-- Are location-specific when relevant
-- Match the user's schedule constraints
-- Have customers willing to pay for solutions
+Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
 
-Return ONLY a JSON array of 5 jobs/problems. Each object must have:
-- id: string
-- title: string (the job/problem title)
-- description: string (the full JTBD statement)
-- icon: string (emoji)
+Example: [{"id": "time-management", "title": "Time Management", "description": "When I'm busy with work and family, I want to optimize my schedule, so I can have more free time", "icon": "⏰"}]
 
-No explanation, no markdown, just the JSON array.`;
+No explanation, just the JSON array.`;
         
         const response = await fetchChatGPT(prompt);
         let parsed: JobOption[] = Array.isArray(response) ? response : [];
@@ -180,24 +243,28 @@ No explanation, no markdown, just the JSON array.`;
             option.description !== 'No description provided'
           );
         
-        // If we have fewer than 5 valid options, add fallback options
+        // If we have fewer than 5 valid options, add better fallback options
+        const fallbackJobs = generateFallbackJobs(customer, businessArea, validOptions.length);
         while (validOptions.length < 5) {
-          const fallbackIndex = validOptions.length + 1;
-          validOptions.push({
-            id: `fallback-${fallbackIndex}`,
-            title: `Additional Job ${fallbackIndex}`,
-            description: `A job that helps ${customer.title} achieve their goals`,
+          const fallbackJob = fallbackJobs[validOptions.length] || {
+            id: `fallback-${validOptions.length + 1}`,
+            title: `Help ${customer.title}`,
+            description: `Provide a service that helps ${customer.title} solve their problems`,
             icon: '💼'
-          });
+          };
+          validOptions.push(fallbackJob);
         }
         
         if (validOptions.length === 0) throw new Error('No valid jobs found');
         setOptions(validOptions.slice(0, 5)); // Ensure exactly 5 options
         setProgress(100);
+        clearTimeout(timeoutFallback); // Clear timeout if successful
       } catch (err: any) {
+        console.error('JobSelection error:', err);
         setError('Could not generate jobs. Try again or pick a different customer.');
         setOptions([]);
         setProgress(100);
+        clearTimeout(timeoutFallback); // Clear timeout on error
       } finally {
         setIsLoading(false);
         if (progressInterval) clearInterval(progressInterval);
@@ -205,7 +272,7 @@ No explanation, no markdown, just the JSON array.`;
       }
     }
     fetchJobOptions();
-  }, [customer, interests, businessArea]);
+  }, [customer, interests, businessArea, location, scheduleGoals]);
 
   function handleSelect(job: JobOption) {
     console.log('Job clicked in JobSelection:', job);

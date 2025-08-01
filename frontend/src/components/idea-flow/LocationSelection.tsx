@@ -4,6 +4,7 @@ import styled from 'styled-components';
 export interface LocationData {
   city: string;
   region: string;
+  country: string;
 }
 
 const Container = styled.div`
@@ -101,11 +102,12 @@ export interface LocationSelectionProps {
 export function LocationSelection({ onSelect, interests, businessArea }: LocationSelectionProps) {
   const [city, setCity] = useState('');
   const [region, setRegion] = useState('');
+  const [country, setCountry] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (city.trim() && region.trim()) {
-      onSelect({ city: city.trim(), region: region.trim() });
+    if (city.trim() && region.trim() && country.trim()) {
+      onSelect({ city: city.trim(), region: region.trim(), country: country.trim() });
     }
   }
 
@@ -141,9 +143,21 @@ export function LocationSelection({ onSelect, interests, businessArea }: Locatio
           />
         </InputGroup>
         
+        <InputGroup>
+          <Label htmlFor="country">Country</Label>
+          <Input
+            id="country"
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="e.g., United States, Canada, United Kingdom"
+            required
+          />
+        </InputGroup>
+        
         <Button 
           type="submit"
-          disabled={!city.trim() || !region.trim()}
+          disabled={!city.trim() || !region.trim() || !country.trim()}
         >
           Continue
         </Button>

@@ -312,7 +312,7 @@ interface AppState {
     area: BusinessArea | null;
     existingIdeaText?: string;
   };
-  location: { city: string; region: string } | null;
+  location: { city: string; region: string; country: string } | null;
   scheduleGoals: { hoursPerWeek: number; incomeTarget: number } | null;
   customer: CustomerOption | null;
   job: JobOption | null;
@@ -465,7 +465,7 @@ function AppContent() {
     setAppState(prev => ({ ...prev, idea: selectedIdea, currentStep: 'location' }));
   }
 
-  function handleLocationSelect(location: { city: string; region: string }) {
+  function handleLocationSelect(location: { city: string; region: string; country: string }) {
     setAppState(prev => ({ ...prev, location, currentStep: 'scheduleGoals' }));
   }
 
@@ -767,6 +767,8 @@ function AppContent() {
                           }}
                           customer={customer} 
                           job={job} 
+                          location={userLocation}
+                          scheduleGoals={scheduleGoals}
                           onRestart={handleRestart} 
                           onSignup={() => {
                             setAppState(prev => ({
@@ -793,6 +795,8 @@ function AppContent() {
                             problemDescription,
                             solutionDescription,
                             competitionDescription,
+                            location: userLocation,
+                            scheduleGoals,
                           }}
                           onSignup={() => {
                             setAppState(prev => ({
@@ -835,6 +839,8 @@ function AppContent() {
                           interests={idea.interests}
                           businessArea={idea.area}
                           customer={customer}
+                          location={userLocation}
+                          scheduleGoals={scheduleGoals}
                         />
                       )}
                     </>
@@ -1095,6 +1101,8 @@ function AppContent() {
                           }}
                           customer={customer} 
                           job={job} 
+                          location={userLocation}
+                          scheduleGoals={scheduleGoals}
                           onRestart={handleRestart} 
                           onSignup={() => {
                             setAppState(prev => ({
@@ -1121,6 +1129,8 @@ function AppContent() {
                             problemDescription,
                             solutionDescription,
                             competitionDescription,
+                            location: userLocation,
+                            scheduleGoals,
                           }}
                           onSignup={() => {
                             setAppState(prev => ({
@@ -1163,6 +1173,8 @@ function AppContent() {
                           interests={idea.interests}
                           businessArea={idea.area}
                           customer={customer}
+                          location={userLocation}
+                          scheduleGoals={scheduleGoals}
                         />
                       )}
                     </>

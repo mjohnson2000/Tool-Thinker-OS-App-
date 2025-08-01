@@ -293,9 +293,11 @@ You are a startup strategist AI. Given the following user input:
 - Interests: ${context.idea?.interests || ''}
 - Customer Persona: ${context.customer?.title || ''} (${context.customer?.description || ''})
 - Customer Job: ${context.job?.title || ''} (${context.job?.description || ''})
+${context.location ? `- Location: ${context.location.city}, ${context.location.region}, ${context.location.country}` : ''}
+${context.scheduleGoals ? `- Availability: ${context.scheduleGoals.hoursPerWeek} hours/week, Income Target: $${context.scheduleGoals.incomeTarget}/month` : ''}
 
       Generate a concise Business Plan with the following sections:
-- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
+- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job. ${context.location ? `Make it specific to ${context.location.city}, ${context.location.region}.` : ''}
 - Customer Profile: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
 - Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.

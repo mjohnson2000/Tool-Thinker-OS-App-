@@ -3,7 +3,7 @@ export async function fetchChatGPT(prompt: string): Promise<any> {
   console.log('Prompt being sent:', prompt);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
 
   try {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/chatgpt`, {

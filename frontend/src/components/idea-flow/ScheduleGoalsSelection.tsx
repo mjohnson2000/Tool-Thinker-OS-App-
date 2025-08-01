@@ -110,7 +110,7 @@ export interface ScheduleGoalsSelectionProps {
   onSelect: (scheduleGoals: ScheduleGoalsData) => void;
   interests?: string;
   businessArea?: { title: string; description: string; icon: string } | null;
-  location?: { city: string; region: string } | null;
+  location?: { city: string; region: string; country: string } | null;
 }
 
 export function ScheduleGoalsSelection({ onSelect, interests, businessArea, location }: ScheduleGoalsSelectionProps) {

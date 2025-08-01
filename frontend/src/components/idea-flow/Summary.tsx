@@ -115,14 +115,16 @@ interface SummaryProps {
   };
   customer: CustomerOption;
   job: JobOption;
+  location?: { city: string; region: string; country: string } | null;
+  scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
   onRestart: () => void;
   onSignup: () => void;
   onLogin: () => void;
 }
 
-export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: SummaryProps) {
+export function Summary({ idea, customer, job, location, scheduleGoals, onRestart, onSignup, onLogin }: SummaryProps) {
   // Debug logging
-  console.log('Summary props:', { idea, customer, job });
+  console.log('Summary props:', { idea, customer, job, location, scheduleGoals });
 
   // Fallback UI for missing data
   if (!idea || !customer || !job) {
@@ -136,11 +138,16 @@ export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: S
 
   return (
     <Container>
-      <Title>Your Business Idea Summary</Title>
+      <Title>Your Personalized Business Idea Summary</Title>
 
       <Section>
         <SectionTitle>Business Idea</SectionTitle>
-        <Content>Based on your interest in <strong>{idea.interests}</strong>, we've identified a promising area: <strong>{idea.area.title}</strong>. {idea.area.description}</Content>
+        <Content>
+          Based on your interest in <strong>{idea.interests}</strong>, we've identified a promising area: <strong>{idea.area.title}</strong>. {idea.area.description}
+          {location && (
+            <span> This opportunity is specifically tailored for <strong>{location.city}, {location.region}, {location.country}</strong>.</span>
+          )}
+        </Content>
       </Section>
 
       <Section>
@@ -152,6 +159,28 @@ export function Summary({ idea, customer, job, onRestart, onSignup, onLogin }: S
         <SectionTitle>Job-to-be-Done</SectionTitle>
         <Content>The primary job your customer is trying to get done is: <strong>{job.title}</strong>. {job.description}</Content>
       </Section>
+
+      {location && (
+        <Section>
+          <SectionTitle>Local Market Opportunity</SectionTitle>
+          <Content>
+            This business idea is specifically designed for the <strong>{location.city}</strong> market, taking into account local needs, 
+            competition, and opportunities in your area. The solution addresses problems that are particularly relevant to 
+            <strong> {location.city}, {location.region}</strong> residents.
+          </Content>
+        </Section>
+      )}
+
+      {scheduleGoals && (
+        <Section>
+          <SectionTitle>Your Schedule & Goals</SectionTitle>
+          <Content>
+            This business idea is designed to work with your availability of <strong>{scheduleGoals.hoursPerWeek} hours per week</strong> 
+            and your income target of <strong>${scheduleGoals.incomeTarget.toLocaleString()} per month</strong>. The opportunity 
+            is structured to fit your part-time schedule while helping you reach your financial goals.
+          </Content>
+        </Section>
+      )}
 
       <ButtonContainer>
         <SecondaryButton onClick={onLogin}>Log in to Continue</SecondaryButton>

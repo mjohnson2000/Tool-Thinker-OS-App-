@@ -97,7 +97,7 @@ export interface CustomerSelectionProps {
   onSelect: (customer: CustomerOption) => void;
   businessArea: { title: string; description: string; icon: string } | null;
   interests?: string; // Make interests optional
-  location?: { city: string; region: string } | null;
+  location?: { city: string; region: string; country: string } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
@@ -116,6 +116,16 @@ export function CustomerSelection({ onSelect, businessArea, interests, location,
       setError(null);
       setOptions([]);
       let progressInterval: ReturnType<typeof setInterval> | null = null;
+      
+      // Set a timeout to show defaults if AI request takes too long
+      const timeoutFallback = setTimeout(() => {
+        console.log('CustomerSelection: Timeout fallback triggered');
+        setError('AI request timed out. Showing defaults.');
+        setOptions(customers);
+        setProgress(100);
+        setIsLoading(false);
+      }, 15000); // 15 second timeout
+      
       try {
         // Animate progress bar to 90% while loading
         progressInterval = setInterval(() => {
@@ -127,23 +137,26 @@ export function CustomerSelection({ onSelect, businessArea, interests, location,
           contextString += `\nUser Interests: ${interests}`;
         }
         if (location) {
-          contextString += `\nLocation: ${location.city}, ${location.region}`;
+          contextString += `\nLocation: ${location.city}, ${location.region}, ${location.country}`;
         }
         if (scheduleGoals) {
           contextString += `\nAvailability: ${scheduleGoals.hoursPerWeek} hours/week, Income Target: $${scheduleGoals.incomeTarget}/month`;
         }
         
-        const prompt = `Return ONLY a JSON array of 5 customer types for a side hustle business with these criteria:
+        console.log('CustomerSelection context:', { businessArea, interests, location, scheduleGoals });
+        console.log('CustomerSelection contextString:', contextString);
+        
+        const prompt = `Generate 5 customer types for a side hustle business in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
 
-${contextString}
+Business area: ${businessArea.title}
+${interests ? `Interests: ${interests}` : ''}
+${scheduleGoals ? `Availability: ${scheduleGoals.hoursPerWeek} hours/week, Target: $${scheduleGoals.incomeTarget}/month` : ''}
 
-Focus on customers who:
-- Would pay for services in their local area
-- Match the user's schedule constraints
-- Align with their income goals
-- Have problems that can be solved part-time
+Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
 
-Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+Example: [{"id": "busy-professionals", "title": "Busy Professionals", "description": "Time-strapped, tech-savvy", "icon": "⏰"}]
+
+No explanation, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
         if (response && response.error) {
           console.error('ChatGPT API error:', response.error);
@@ -164,14 +177,19 @@ Each object must have id, title, description, and icon (as an emoji, not a name 
         }
         if (!Array.isArray(parsed) || parsed.length === 0) {
           console.error('Failed to parse customer types from response:', response);
+          console.error('Response type:', typeof response);
+          console.error('Response length:', response?.length);
           throw new Error('No customer types found');
         }
         setOptions(parsed.map(option => ({ ...option, id: String(option.id) })));
         setProgress(100);
+        clearTimeout(timeoutFallback); // Clear timeout if successful
       } catch (err: any) {
+        console.error('CustomerSelection error:', err);
         setError('Could not generate customer types. Showing defaults.');
         setOptions(customers);
         setProgress(100);
+        clearTimeout(timeoutFallback); // Clear timeout on error
       } finally {
         setIsLoading(false);
         if (progressInterval) clearInterval(progressInterval);
@@ -179,7 +197,7 @@ Each object must have id, title, description, and icon (as an emoji, not a name 
       }
     }
     fetchCustomerOptions();
-  }, [businessArea, interests]);
+  }, [businessArea, interests, location, scheduleGoals]);
 
   function handleSelect(customer: CustomerOption) {
     console.log('CustomerSelection handleSelect:', customer);

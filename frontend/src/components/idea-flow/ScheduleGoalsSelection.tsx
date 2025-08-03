@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 
 export interface ScheduleGoalsData {
   hoursPerWeek: number;
@@ -33,7 +33,7 @@ const Form = styled.form`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 `;
 
 const InputGroup = styled.div`
@@ -60,6 +60,10 @@ const Select = styled.select`
   cursor: pointer;
   
   &:focus {
+    border-color: #181a1b;
+  }
+  
+  &:hover {
     border-color: #181a1b;
   }
 `;
@@ -94,16 +98,16 @@ const InfoText = styled.p`
 `;
 
 const hoursOptions = [
-  { value: 5, label: '5 hours per week' },
-  { value: 10, label: '10 hours per week' },
-  { value: 15, label: '15 hours per week' },
-  { value: 20, label: '20+ hours per week' },
+  { value: 5, label: '5 hours per week', icon: '⏰' },
+  { value: 10, label: '10 hours per week', icon: '📅' },
+  { value: 15, label: '15 hours per week', icon: '🕒' },
+  { value: 20, label: '20+ hours per week', icon: '🚀' },
 ];
 
 const incomeOptions = [
-  { value: 300, label: '$100-500 per month' },
-  { value: 750, label: '$500-1000 per month' },
-  { value: 1500, label: '$1000+ per month' },
+  { value: 300, label: '$100-500 per month', icon: '💰' },
+  { value: 750, label: '$500-1000 per month', icon: '💵' },
+  { value: 1500, label: '$1000+ per month', icon: '🏆' },
 ];
 
 export interface ScheduleGoalsSelectionProps {

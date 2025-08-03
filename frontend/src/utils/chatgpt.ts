@@ -22,13 +22,24 @@ export async function fetchChatGPT(prompt: string): Promise<any> {
     }
 
     const data = await response.json();
-    let parsed = null;
-    try {
-      parsed = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
-    } catch (err) {
-      console.error('Failed to parse response:', err, data.message);
+    
+    // The backend returns { status: 'success', message: parsed }
+    if (data.status === 'success' && data.message) {
+      // If message is already parsed (array/object), return it directly
+      if (Array.isArray(data.message) || typeof data.message === 'object') {
+        return data.message;
+      }
+      // If message is a string, try to parse it
+      try {
+        return JSON.parse(data.message);
+      } catch (err) {
+        console.error('Failed to parse message:', err, data.message);
+        return data.message;
+      }
     }
-    return parsed || data.message;
+    
+    // Fallback for unexpected response format
+    return data.message || data;
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {

@@ -86,65 +86,159 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 `;
 
 // Function to generate better fallback solutions based on job type and business area
-function generateFallbackSolutions(job: any, businessArea: any, customer: any, startIndex: number) {
+function generateFallbackSolutions(job: any, businessArea: any, customer: any, interests: string, startIndex: number) {
   const fallbackSolutions = [];
   
-  // Common solution types for different job categories
-  const solutionTemplates = {
-    'Time Management': [
-      { title: 'Digital Calendar System', description: 'Help customers organize their schedule with smart digital tools', icon: '📅' },
-      { title: 'Priority Planning', description: 'Help customers focus on what matters most', icon: '🎯' },
-      { title: 'Automation Services', description: 'Help customers automate repetitive tasks', icon: '⚙️' },
-      { title: 'Productivity Coaching', description: 'Help customers develop better work habits', icon: '📈' },
-      { title: 'Time Tracking App', description: 'Help customers understand how they spend their time', icon: '⏱️' }
-    ],
-    'Stress Relief': [
-      { title: 'Mindfulness App', description: 'Help customers practice meditation and mindfulness', icon: '🧘' },
-      { title: 'Wellness Coaching', description: 'Help customers develop stress management techniques', icon: '💆' },
-      { title: 'Work-Life Balance', description: 'Help customers set healthy boundaries', icon: '⚖️' },
-      { title: 'Relaxation Techniques', description: 'Help customers learn quick stress relief methods', icon: '😌' },
-      { title: 'Support Community', description: 'Connect customers with others facing similar challenges', icon: '🤝' }
-    ],
-    'Business Growth': [
-      { title: 'Marketing Strategy', description: 'Help businesses reach more customers', icon: '📢' },
-      { title: 'Sales Training', description: 'Help businesses improve their sales process', icon: '💰' },
-      { title: 'Customer Service', description: 'Help businesses provide better customer support', icon: '😊' },
-      { title: 'Process Optimization', description: 'Help businesses work more efficiently', icon: '⚙️' },
-      { title: 'Growth Planning', description: 'Help businesses plan their expansion', icon: '📈' }
-    ],
-    'Fitness Coaching': [
-      { title: 'Personal Training', description: 'Help customers achieve their fitness goals', icon: '💪' },
-      { title: 'Workout Plans', description: 'Help customers follow effective exercise routines', icon: '🏃' },
-      { title: 'Nutrition Guidance', description: 'Help customers eat better for their goals', icon: '🥗' },
-      { title: 'Motivation Support', description: 'Help customers stay committed to their fitness', icon: '🔥' },
-      { title: 'Progress Tracking', description: 'Help customers monitor their fitness journey', icon: '📊' }
-    ],
-    'Study Skills': [
-      { title: 'Learning Methods', description: 'Help students study more effectively', icon: '📚' },
-      { title: 'Note-Taking System', description: 'Help students organize their learning', icon: '📝' },
-      { title: 'Test Preparation', description: 'Help students prepare for exams', icon: '📖' },
-      { title: 'Study Planning', description: 'Help students manage their academic workload', icon: '📅' },
-      { title: 'Academic Coaching', description: 'Help students develop better study habits', icon: '🎓' }
-    ]
+  // If we have specific interests, try to create relevant solutions
+  if (interests && interests.toLowerCase().includes('ice cream')) {
+    return [
+      { id: 'ice-cream-app', title: 'Ice Cream Finder App', description: 'Help customers discover and order the best ice cream in their area', icon: '🍦' },
+      { id: 'ice-cream-delivery', title: 'Ice Cream Delivery Service', description: 'Deliver premium ice cream to customers at their location', icon: '🚚' },
+      { id: 'ice-cream-events', title: 'Ice Cream Event Planning', description: 'Plan and cater ice cream themed events and parties', icon: '🎉' },
+      { id: 'ice-cream-reviews', title: 'Ice Cream Review Platform', description: 'Create a platform for customers to review and rate ice cream shops', icon: '⭐' },
+      { id: 'ice-cream-subscription', title: 'Ice Cream Subscription Box', description: 'Curate and deliver monthly ice cream experiences', icon: '📦' }
+    ];
+  }
+
+  // Generate dynamic solutions based on job description and context
+  const generateDynamicSolutions = () => {
+    const solutions = [];
+    const jobTitle = job.title.toLowerCase();
+    const jobDescription = job.description.toLowerCase();
+    const customerTitle = customer?.title?.toLowerCase() || '';
+    const businessAreaTitle = businessArea?.title?.toLowerCase() || '';
+    
+    // Extract key themes from the job
+    const themes = [];
+    if (jobTitle.includes('time') || jobDescription.includes('time')) themes.push('time management');
+    if (jobTitle.includes('child') || jobDescription.includes('child') || customerTitle.includes('parent')) themes.push('childcare');
+    if (jobTitle.includes('study') || jobDescription.includes('study') || jobTitle.includes('learn')) themes.push('education');
+    if (jobTitle.includes('business') || jobDescription.includes('business') || businessAreaTitle.includes('business')) themes.push('business');
+    if (jobTitle.includes('fitness') || jobDescription.includes('fitness') || jobTitle.includes('health')) themes.push('fitness');
+    if (jobTitle.includes('food') || jobDescription.includes('food') || interests.toLowerCase().includes('food')) themes.push('food');
+    if (jobTitle.includes('tech') || jobDescription.includes('tech') || businessAreaTitle.includes('technology')) themes.push('technology');
+    if (jobTitle.includes('money') || jobDescription.includes('money') || jobTitle.includes('finance')) themes.push('finance');
+    if (jobTitle.includes('social') || jobDescription.includes('social') || customerTitle.includes('community')) themes.push('social');
+    if (jobTitle.includes('creative') || jobDescription.includes('creative') || businessAreaTitle.includes('creative')) themes.push('creative');
+    
+    // If no specific themes found, use general problem-solving approach
+    if (themes.length === 0) {
+      themes.push('general');
+    }
+
+    // Generate solutions based on identified themes
+    const solutionTypes: Record<string, Array<{ title: string; description: string; icon: string }>> = {
+      'time management': [
+        { title: 'Smart Scheduling System', description: 'Help customers organize their time more efficiently', icon: '📅' },
+        { title: 'Priority Management Tool', description: 'Help customers focus on what matters most', icon: '🎯' },
+        { title: 'Automation Service', description: 'Help customers automate repetitive tasks', icon: '⚙️' },
+        { title: 'Productivity Coaching', description: 'Help customers develop better work habits', icon: '📈' },
+        { title: 'Time Tracking App', description: 'Help customers understand how they spend their time', icon: '⏱️' }
+      ],
+      'childcare': [
+        { title: 'Childcare Network Platform', description: 'Connect parents with reliable childcare providers', icon: '👶' },
+        { title: 'Activity Planning Service', description: 'Help parents plan engaging activities for their children', icon: '🎨' },
+        { title: 'Safety Monitoring System', description: 'Provide tools to ensure children are safe and supervised', icon: '🛡️' },
+        { title: 'Educational Support Service', description: 'Help children with homework and learning activities', icon: '📚' },
+        { title: 'Parenting Resource Hub', description: 'Provide guidance and resources for parenting challenges', icon: '👨‍👩‍👧‍👦' }
+      ],
+      'education': [
+        { title: 'Learning Management Platform', description: 'Create an online platform for effective learning', icon: '💻' },
+        { title: 'Study Group Organizer', description: 'Help students form and manage study groups', icon: '👥' },
+        { title: 'Memory Enhancement System', description: 'Teach effective memory and retention strategies', icon: '🧠' },
+        { title: 'Note-Taking Tool', description: 'Help students develop better note-taking methods', icon: '📝' },
+        { title: 'Exam Preparation Service', description: 'Provide tools and resources for exam preparation', icon: '📖' }
+      ],
+      'business': [
+        { title: 'Marketing Strategy Service', description: 'Help businesses develop effective marketing campaigns', icon: '📢' },
+        { title: 'Customer Acquisition Platform', description: 'Help businesses find and retain new customers', icon: '🎯' },
+        { title: 'Sales Training Program', description: 'Help businesses improve their sales processes', icon: '💰' },
+        { title: 'Brand Development Service', description: 'Help businesses build strong brand identities', icon: '🏷️' },
+        { title: 'Growth Consulting Service', description: 'Provide strategic advice for business expansion', icon: '📈' }
+      ],
+      'fitness': [
+        { title: 'Personal Training Platform', description: 'Create a mobile app for personalized fitness coaching', icon: '💪' },
+        { title: 'Workout Planning Service', description: 'Help people create effective workout routines', icon: '📋' },
+        { title: 'Nutrition Guidance Service', description: 'Provide personalized nutrition advice and meal plans', icon: '🥗' },
+        { title: 'Progress Tracking System', description: 'Help people track their fitness progress and goals', icon: '📊' },
+        { title: 'Fitness Community Platform', description: 'Create fitness communities and group activities', icon: '👥' }
+      ],
+      'food': [
+        { title: 'Food Discovery App', description: 'Help customers discover and order great food in their area', icon: '🍽️' },
+        { title: 'Food Delivery Service', description: 'Deliver quality food to customers at their location', icon: '🚚' },
+        { title: 'Food Event Planning', description: 'Plan and cater food-themed events and parties', icon: '🎉' },
+        { title: 'Food Review Platform', description: 'Create a platform for customers to review and rate restaurants', icon: '⭐' },
+        { title: 'Food Subscription Service', description: 'Curate and deliver monthly food experiences', icon: '📦' }
+      ],
+      'technology': [
+        { title: 'Tech Support Service', description: 'Help customers with technical issues and setup', icon: '🛠️' },
+        { title: 'Software Training Platform', description: 'Help customers learn and master new software', icon: '💻' },
+        { title: 'Digital Transformation Service', description: 'Help businesses modernize their technology', icon: '🚀' },
+        { title: 'Tech Consulting Service', description: 'Provide expert advice on technology decisions', icon: '💡' },
+        { title: 'App Development Service', description: 'Create custom applications for specific needs', icon: '📱' }
+      ],
+      'finance': [
+        { title: 'Financial Planning Service', description: 'Help customers manage their money more effectively', icon: '💰' },
+        { title: 'Budget Tracking App', description: 'Help customers track and control their spending', icon: '📊' },
+        { title: 'Investment Guidance Service', description: 'Help customers make smart investment decisions', icon: '📈' },
+        { title: 'Debt Management Service', description: 'Help customers reduce and manage their debt', icon: '💳' },
+        { title: 'Financial Education Platform', description: 'Teach customers about personal finance', icon: '📚' }
+      ],
+      'social': [
+        { title: 'Community Building Platform', description: 'Help people connect and build communities', icon: '👥' },
+        { title: 'Event Planning Service', description: 'Help organize and manage social events', icon: '🎉' },
+        { title: 'Networking Platform', description: 'Help people build professional and personal networks', icon: '🤝' },
+        { title: 'Social Media Management', description: 'Help businesses and individuals manage their social presence', icon: '📱' },
+        { title: 'Community Support Service', description: 'Provide support and resources for communities', icon: '❤️' }
+      ],
+      'creative': [
+        { title: 'Creative Design Service', description: 'Help customers create beautiful and effective designs', icon: '🎨' },
+        { title: 'Content Creation Platform', description: 'Help customers create engaging content', icon: '✍️' },
+        { title: 'Creative Coaching Service', description: 'Help people develop their creative skills', icon: '🎭' },
+        { title: 'Portfolio Building Service', description: 'Help creatives showcase their work effectively', icon: '📁' },
+        { title: 'Creative Workshop Platform', description: 'Host workshops and classes for creative skills', icon: '🎪' }
+      ],
+      'general': [
+        { title: 'Problem-Solving Service', description: 'Help customers solve their specific challenges', icon: '🔧' },
+        { title: 'Consulting Platform', description: 'Provide expert advice and guidance', icon: '💡' },
+        { title: 'Support Network Service', description: 'Connect customers with the help they need', icon: '🤝' },
+        { title: 'Resource Hub', description: 'Provide tools and resources for customer success', icon: '📚' },
+        { title: 'Custom Solution Service', description: 'Create tailored solutions for specific needs', icon: '⚙️' }
+      ]
+    };
+
+    // Use the primary theme or mix themes for variety
+    const primaryTheme = themes[0];
+    const secondaryTheme = themes[1] || 'general';
+    
+    const primarySolutions = solutionTypes[primaryTheme] || solutionTypes['general'];
+    const secondarySolutions = solutionTypes[secondaryTheme] || solutionTypes['general'];
+    
+    // Mix solutions from different themes for variety
+    for (let i = 0; i < 5; i++) {
+      const solutionPool = i < 3 ? primarySolutions : secondarySolutions;
+      const solution = solutionPool[i % solutionPool.length];
+      solutions.push({
+        id: `dynamic-${i + 1}`,
+        title: solution.title,
+        description: solution.description,
+        icon: solution.icon
+      });
+    }
+    
+    return solutions;
   };
 
-  // Try to match job title with templates, or use general templates
-  let templates = solutionTemplates['Time Management']; // default
-  for (const [key, value] of Object.entries(solutionTemplates)) {
-    if (job.title.toLowerCase().includes(key.toLowerCase())) {
-      templates = value;
-      break;
-    }
-  }
+  const dynamicSolutions = generateDynamicSolutions();
   
   // Create fallback solutions starting from the given index
   for (let i = 0; i < 5 - startIndex; i++) {
-    const template = templates[i] || templates[0];
+    const solution = dynamicSolutions[startIndex + i] || dynamicSolutions[0];
     fallbackSolutions.push({
       id: `fallback-${startIndex + i + 1}`,
-      title: template.title,
-      description: template.description,
-      icon: template.icon
+      title: solution.title,
+      description: solution.description,
+      icon: solution.icon
     });
   }
   
@@ -180,11 +274,11 @@ export function SolutionSelectionPage({ job, onSelect, interests, businessArea, 
       // Set a timeout to show defaults if AI request takes too long
       const timeoutFallback = setTimeout(() => {
         console.log('SolutionSelection: Timeout fallback triggered');
-        setError('AI request timed out. Showing defaults.');
+        setError('AI request timed out. Showing context-aware solutions.');
         setOptions([]);
         setProgress(100);
         setIsLoading(false);
-      }, 15000); // 15 second timeout
+      }, 10000); // 10 second timeout
       
       try {
         // Animate progress bar to 90% while loading
@@ -198,19 +292,34 @@ export function SolutionSelectionPage({ job, onSelect, interests, businessArea, 
         if (customer) contextString += `Customer: ${customer.title} - ${customer.description}\n`;
         contextString += `Job/Problem: ${job.title} - ${job.description}`;
         
-        const prompt = `Generate 5 creative solutions for: ${job.title}
+        const prompt = `Generate 5 unique, creative business solutions for this specific problem:
 
-Business area: ${businessArea?.title || 'general'}
-Customer: ${customer?.title || 'users'}
-Job: ${job.description}
-${location ? `Location: ${location.city}, ${location.region}, ${location.country}` : ''}
-${scheduleGoals ? `Availability: ${scheduleGoals.hoursPerWeek} hours/week, Target: $${scheduleGoals.incomeTarget}/month` : ''}
+PROBLEM: ${job.title}
+PROBLEM DESCRIPTION: ${job.description}
 
-Focus on practical, part-time solutions that can be implemented locally and match the user's schedule and income goals.
+CONTEXT:
+- User Interests: "${interests}"
+- Business Area: ${businessArea?.title || 'general'} (${businessArea?.description || ''})
+- Target Customer: ${customer?.title || 'users'} (${customer?.description || ''})
+${location ? `- Location: ${location.city}, ${location.region}, ${location.country}` : ''}
+${scheduleGoals ? `- Availability: ${scheduleGoals.hoursPerWeek} hours/week` : ''}
+${scheduleGoals ? `- Income Target: $${scheduleGoals.incomeTarget}/month` : ''}
 
-Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
+REQUIREMENTS:
+1. Solutions must be directly related to the user's interests: "${interests}"
+2. Focus on practical, part-time solutions that can be implemented locally
+3. Solutions should match the user's schedule (${scheduleGoals?.hoursPerWeek || 'flexible'} hours/week)
+4. Solutions should be achievable with the income target of $${scheduleGoals?.incomeTarget || 'realistic'}/month
+5. Each solution should be unique and different from the others
+6. Solutions should be specific to the problem, not generic
 
-Example: [{"id": "digital-calendar", "title": "Digital Calendar System", "description": "Help customers organize their schedule with smart digital tools", "icon": "📅"}]
+Return ONLY a JSON array with exactly 5 objects. Each object must have:
+- id: unique identifier (lowercase, no spaces)
+- title: descriptive solution name
+- description: how this solution helps solve the specific problem
+- icon: relevant emoji
+
+Example format: [{"id": "ice-cream-app", "title": "Ice Cream Finder App", "description": "Help customers discover and order the best ice cream in their area", "icon": "🍦"}]
 
 No explanation, just the JSON array.`;
         const response = await fetchChatGPT(prompt);
@@ -243,7 +352,7 @@ No explanation, just the JSON array.`;
           );
         
         // If we have fewer than 5 valid options, add better fallback options
-        const fallbackSolutions = generateFallbackSolutions(job, businessArea, customer, validOptions.length);
+        const fallbackSolutions = generateFallbackSolutions(job, businessArea, customer, interests || '', validOptions.length);
         while (validOptions.length < 5) {
           const fallbackSolution = fallbackSolutions[validOptions.length] || {
             id: `fallback-${validOptions.length + 1}`,
@@ -260,7 +369,7 @@ No explanation, just the JSON array.`;
         clearTimeout(timeoutFallback); // Clear timeout if successful
       } catch (err: any) {
         console.error('SolutionSelection error:', err);
-        setError('Could not generate solutions. Try again or pick a different job.');
+        setError('Could not generate AI solutions. Showing context-aware alternatives.');
         setOptions([]);
         setProgress(100);
         clearTimeout(timeoutFallback); // Clear timeout on error

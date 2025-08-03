@@ -95,11 +95,10 @@ const InfoText = styled.p`
 
 export interface LocationSelectionProps {
   onSelect: (location: LocationData) => void;
-  interests?: string;
-  businessArea?: { title: string; description: string; icon: string } | null;
+  ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
 }
 
-export function LocationSelection({ onSelect, interests, businessArea }: LocationSelectionProps) {
+export function LocationSelection({ onSelect, ideaType }: LocationSelectionProps) {
   const [city, setCity] = useState('');
   const [region, setRegion] = useState('');
   const [country, setCountry] = useState('');
@@ -115,7 +114,7 @@ export function LocationSelection({ onSelect, interests, businessArea }: Locatio
     <Container>
       <Title>Where are you located?</Title>
       <Subtitle>
-        This helps us find side hustle opportunities that work well in your local area
+        This helps us find {ideaType?.title.toLowerCase() || 'side hustle'} opportunities that work well in your local area
       </Subtitle>
       
       <Form onSubmit={handleSubmit}>

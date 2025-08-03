@@ -97,11 +97,12 @@ export interface CustomerSelectionProps {
   onSelect: (customer: CustomerOption) => void;
   businessArea: { title: string; description: string; icon: string } | null;
   interests?: string; // Make interests optional
+  ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
   location?: { city: string; region: string; country: string } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
-export function CustomerSelection({ onSelect, businessArea, interests, location, scheduleGoals }: CustomerSelectionProps) {
+export function CustomerSelection({ onSelect, businessArea, interests, ideaType, location, scheduleGoals }: CustomerSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<CustomerOption[]>(customers);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -146,11 +147,14 @@ export function CustomerSelection({ onSelect, businessArea, interests, location,
         console.log('CustomerSelection context:', { businessArea, interests, location, scheduleGoals });
         console.log('CustomerSelection contextString:', contextString);
         
-        const prompt = `Generate 5 customer types for a side hustle business in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
+        const prompt = `Generate 5 customer types for a ${ideaType?.title.toLowerCase() || 'side hustle'} business in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
 
 Business area: ${businessArea.title}
+${ideaType ? `Service type: ${ideaType.title} - ${ideaType.description}` : ''}
 ${interests ? `Interests: ${interests}` : ''}
 ${scheduleGoals ? `Availability: ${scheduleGoals.hoursPerWeek} hours/week, Target: $${scheduleGoals.incomeTarget}/month` : ''}
+
+Focus on customers who would use ${ideaType?.title.toLowerCase() || 'side hustle'} services.
 
 Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
 
@@ -197,7 +201,7 @@ No explanation, just the JSON array.`;
       }
     }
     fetchCustomerOptions();
-  }, [businessArea, interests, location, scheduleGoals]);
+  }, [businessArea, interests, ideaType, location, scheduleGoals]);
 
   function handleSelect(customer: CustomerOption) {
     console.log('CustomerSelection handleSelect:', customer);

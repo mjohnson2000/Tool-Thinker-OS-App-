@@ -32,41 +32,31 @@ const Title = styled.h2`
   font-weight: 700;
   margin-bottom: 2rem;
   text-align: center;
+  color: #181a1b;
 `;
 
 const Subtitle = styled.p`
-  color: var(--text-secondary);
+  color: #666;
   margin-bottom: 2rem;
   text-align: center;
-`;
-
-const TextAreaWrapper = styled.div.attrs({ 'data-textarea-wrapper': true } as any)`
-  width: 100%;
-  border: 2px solid #E5E5E5;
-  border-radius: 12px;
-  background: #fafbfc;
-  transition: border-color 0.2s;
-  outline: none !important;
-  box-shadow: none !important;
-  &:focus-within {
-    border-color: #181a1b;
-    outline: none !important;
-    box-shadow: none !important;
-  }
+  font-size: 1.1rem;
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
   height: 120px;
   padding: 1rem;
-  border: none;
+  border: 2px solid #E5E5E5;
   border-radius: 12px;
   font-size: 1rem;
-  margin-bottom: 0;
-  resize: none;
   background: #fafbfc;
-  outline: none !important;
-  box-shadow: none !important;
+  resize: none;
+  margin-bottom: 2rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #181a1b;
+  }
 `;
 
 const Button = styled.button`
@@ -79,9 +69,12 @@ const Button = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  margin-bottom: 2rem;
+  
   &:hover {
     background: #000;
   }
+  
   &:disabled {
     background: #ccc;
     cursor: not-allowed;
@@ -93,41 +86,44 @@ const AreaGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   width: 100%;
-  margin-top: 2rem;
 `;
 
 const AreaCard = styled.button<{ isSelected: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--card-background);
+  padding: 1.5rem;
   border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  background: ${props => props.isSelected ? '#f0f0f0' : 'white'};
   cursor: pointer;
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-  &:hover, &:focus {
-    border: 2px solid #181a1b;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  transition: all 0.2s;
+  text-align: center;
+  
+  &:hover {
+    border-color: #181a1b;
+    background: #f0f0f0;
   }
 `;
 
 const Icon = styled.div`
-  font-size: 2.5rem;
+  font-size: 2rem;
   margin-bottom: 1rem;
 `;
 
 const AreaTitle = styled.div`
-  font-weight: 600;
   font-size: 1.1rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #181a1b;
 `;
 
 const AreaDescription = styled.div`
+  font-size: 1rem;
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  line-height: 1.4;
+  text-align: center;
+  margin-top: 0.5rem;
 `;
 
 const ProgressBarContainer = styled.div`
@@ -149,9 +145,10 @@ const ProgressBarFill = styled.div<{ percent: number }>`
 
 export interface IdeaSelectionProps {
   onSelect: (idea: { interests: string; area: BusinessArea }) => void;
+  ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
 }
 
-export function IdeaSelection({ onSelect }: IdeaSelectionProps) {
+export function IdeaSelection({ onSelect, ideaType }: IdeaSelectionProps) {
   const [interests, setInterests] = useState('');
   const [selectedArea, setSelectedArea] = useState<BusinessArea | null>(null);
   const [showAreas, setShowAreas] = useState(false);
@@ -162,26 +159,50 @@ export function IdeaSelection({ onSelect }: IdeaSelectionProps) {
 
   async function handleFindAreas() {
     if (!interests.trim()) return;
+    
     setIsLoading(true);
     setProgress(0);
     setError(null);
-    setShowAreas(false);
     setAreas([]);
     let progressInterval: ReturnType<typeof setInterval> | null = null;
+    
+    // Set a timeout to show defaults if AI request takes too long
+    const timeoutFallback = setTimeout(() => {
+      console.log('IdeaSelection: Timeout fallback triggered');
+      setError('AI request timed out. Showing defaults.');
+      setAreas(defaultBusinessAreas);
+      setProgress(100);
+      setIsLoading(false);
+    }, 15000); // 15 second timeout
+    
     try {
       // Animate progress bar to 90% while loading
       progressInterval = setInterval(() => {
         setProgress(prev => (prev < 90 ? prev + 5 : 90));
       }, 200);
-      const prompt = `Return ONLY a JSON array of 5 business areas for someone interested in: ${interests}. Each object must have id, title, description, and icon (as an emoji, not a name or text). No explanation, no markdown, just the JSON array.`;
+
+      const prompt = `Generate 5 business areas for a ${ideaType?.title.toLowerCase() || 'side hustle'} based on these interests: "${interests}"
+
+Focus on business areas that align with the user's interests and can be done as a side hustle.
+
+Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
+
+Example: [{"id": "education", "title": "Education", "description": "Learning and teaching", "icon": "📚"}]
+
+No explanation, just the JSON array.`;
+
       const response = await fetchChatGPT(prompt);
+      if (response && response.error) {
+        console.error('ChatGPT API error:', response.error);
+        throw new Error(response.error);
+      }
+
       let parsed: BusinessArea[] = Array.isArray(response) ? response : [];
       if (!parsed.length) {
         try {
           parsed = JSON.parse(response);
         } catch {
-          // fallback: try to extract the first valid JSON array from the response
-          const match = response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
+          const match = response && response.match && response.match(/\[\s*{[\s\S]*?}\s*\]/);
           if (match) {
             try {
               parsed = JSON.parse(match[0]);
@@ -189,20 +210,28 @@ export function IdeaSelection({ onSelect }: IdeaSelectionProps) {
           }
         }
       }
-      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No business areas found');
-      setAreas(parsed);
-      setShowAreas(true);
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        console.error('Failed to parse business areas from response:', response);
+        throw new Error('No business areas found');
+      }
+
+      setAreas(parsed.map(area => ({ ...area, id: String(area.id) })));
       setProgress(100);
+      clearTimeout(timeoutFallback); // Clear timeout if successful
     } catch (err: any) {
+      console.error('IdeaSelection error:', err);
       setError('Could not generate business areas. Showing defaults.');
       setAreas(defaultBusinessAreas);
-      setShowAreas(true);
       setProgress(100);
+      clearTimeout(timeoutFallback); // Clear timeout on error
     } finally {
       setIsLoading(false);
       if (progressInterval) clearInterval(progressInterval);
       setTimeout(() => setProgress(0), 800);
     }
+    
+    setShowAreas(true);
   }
 
   function handleAreaSelect(area: BusinessArea) {
@@ -212,36 +241,44 @@ export function IdeaSelection({ onSelect }: IdeaSelectionProps) {
 
   return (
     <Container>
-      <Title>What interests you?</Title>
-      <Subtitle>Tell us what you like doing or what problems you've noticed</Subtitle>
-      <TextAreaWrapper>
-        <TextArea
-          value={interests}
-          onChange={(e) => setInterests(e.target.value)}
-          placeholder="e.g., I love teaching, I notice people struggle with time management, I'm passionate about fitness..."
-        />
-      </TextAreaWrapper>
+      <Title>What interests you in {ideaType?.title.toLowerCase() || 'side hustles'}?</Title>
+      <Subtitle>
+        Tell us about your interests, skills, or hobbies related to {ideaType?.title.toLowerCase() || 'side hustles'}. 
+        This helps us find the perfect {ideaType?.title.toLowerCase() || 'side hustle'} opportunity for you.
+      </Subtitle>
+      
+      <TextArea
+        value={interests}
+        onChange={(e) => setInterests(e.target.value)}
+        placeholder="e.g., I love teaching, I notice people struggle with time management, I'm passionate about fitness..."
+      />
+      
       <Button 
         onClick={handleFindAreas}
         disabled={!interests.trim() || isLoading}
       >
-        {isLoading ? 'Finding...' : 'Find Business Areas'}
+        {isLoading ? 'Finding Business Areas...' : 'Find Business Areas'}
       </Button>
-      {error && <Subtitle style={{ color: 'red' }}>{error}</Subtitle>}
+      
       {isLoading && (
         <ProgressBarContainer>
           <ProgressBarFill percent={progress} />
         </ProgressBarContainer>
       )}
+      
+      {error && (
+        <p style={{ color: '#666', textAlign: 'center', marginBottom: '1rem' }}>
+          {error}
+        </p>
+      )}
+      
       {showAreas && (
         <AreaGrid>
-          {(areas.length > 0 ? areas : defaultBusinessAreas).map(area => (
+          {areas.map(area => (
             <AreaCard
               key={area.id}
               isSelected={selectedArea?.id === area.id}
               onClick={() => handleAreaSelect(area)}
-              aria-pressed={selectedArea?.id === area.id}
-              tabIndex={0}
             >
               <Icon>{area.icon}</Icon>
               <AreaTitle>{area.title}</AreaTitle>

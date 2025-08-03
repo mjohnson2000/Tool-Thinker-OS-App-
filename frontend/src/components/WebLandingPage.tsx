@@ -55,28 +55,45 @@ const glassyBgAnim = keyframes`
 `;
 
 const Hero = styled.section`
-  background: ${colors.black};
+  /* Success theme: Person celebrating success with money/achievement */
+  background: linear-gradient(135deg, rgba(24,26,27,0.7) 0%, rgba(24,26,27,0.6) 100%), 
+              url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=600&fit=crop&crop=center') center/cover;
+  
+  /* Alternative side hustle options (uncomment to use):
+  background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
+              url('https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&h=600&fit=crop&crop=center') center/cover;
+  background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
+              url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop&crop=center') center/cover;
+  background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
+              url('https://images.unsplash.com/photo-1494790108755-2616b612b786?w=1200&h=600&fit=crop&crop=center') center/cover;
+  background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
+              url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=600&fit=crop&crop=center') center/cover;
+  background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
+              url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=600&fit=crop&crop=center') center/cover;
+  */
+  
   color: ${colors.white};
   padding: 5rem 1.5rem 4rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
   animation: ${fadeInUp} 1.1s cubic-bezier(0.4,0,0.2,1);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const HeroGlassyBg = styled.div`
   position: absolute;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(120deg, rgba(255,255,255,0.08) 0%, rgba(36,36,36,0.12) 100%);
-  filter: blur(32px) saturate(1.2);
-  opacity: 0.7;
-  animation: ${glassyBgAnim} 12s ease-in-out infinite;
-  background-size: 200% 200%;
+  background: linear-gradient(135deg, rgba(24,26,27,0.7) 0%, rgba(24,26,27,0.5) 50%, rgba(24,26,27,0.8) 100%);
+  opacity: 1;
 `;
 
 const HeroContent = styled.div`
@@ -168,64 +185,58 @@ const GlassSection = styled.section`
 
 const SocialProofSection = styled.section`
   position: relative;
-  background: ${colors.white};
-  padding: 3.5rem 1.5rem 3.5rem 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 4rem 1.5rem 4rem 1.5rem;
   text-align: center;
   overflow: hidden;
-  margin-top: -3rem;
+  margin-top: -2rem;
   z-index: 1;
-  
-  &:before, &:after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    height: 48px;
-    z-index: 2;
-    pointer-events: none;
-  }
-  &:before {
-    top: 0;
-    background: linear-gradient(to bottom, #cfd1d6 0%, rgba(255,255,255,0) 100%);
-  }
-  &:after {
-    bottom: 0;
-    background: linear-gradient(to top, #e5e7eb 0%, rgba(255,255,255,0) 100%);
-  }
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
 `;
 
 const SocialProofText = styled.div`
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: ${colors.black};
-  margin-bottom: 2.2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #181a1b 0%, #44474f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 3rem;
   letter-spacing: 0.01em;
 `;
 
 const SocialLogos = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 2.5rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
 const SocialLogo = styled.div`
-  min-width: 140px;
-  min-height: 48px;
-  padding: 0 2.2rem;
-  background: rgba(245,245,245,0.7);
-  border-radius: 999px;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.18rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   color: #23272f;
   letter-spacing: 0.01em;
-  box-shadow: none;
-  border: none;
-  transition: none;
-  margin-bottom: 1rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
   user-select: none;
+  text-align: center;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    border-color: #007bff;
+  }
 `;
 
 const HowItWorks = styled(GlassSection)`
@@ -573,6 +584,261 @@ const WalkthroughCaption = styled.div`
   text-align: center;
 `;
 
+// Placeholder Image Components
+const PlaceholderImage = styled.div`
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-weight: 500;
+  border: 2px dashed #ccc;
+  margin: 1rem 0;
+`;
+
+const HeroImage = styled(PlaceholderImage)`
+  height: 300px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  color: #fff;
+  border: 2px dashed #444;
+`;
+
+const ComparisonImage = styled(PlaceholderImage)`
+  height: 250px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+`;
+
+const TestimonialImage = styled.div`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 0 auto 1rem auto;
+`;
+
+const IconContainer = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ImageGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+`;
+
+const BeforeAfterContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const BeforeAfterCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+`;
+
+const BeforeAfterTitle = styled.h3`
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+`;
+
+const BeforeAfterImage = styled(PlaceholderImage)`
+  height: 150px;
+  margin: 1rem 0;
+`;
+
+// Visual Content Components
+const ComparisonVisual = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  height: 300px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+`;
+
+const ComparisonSide = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+`;
+
+const VisualComparisonTitle = styled.h3`
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const VisualComparisonList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+`;
+
+const VisualComparisonItem = styled.li`
+  margin: 0.5rem 0;
+  opacity: 0.8;
+`;
+
+const ProcessStep = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 200px;
+`;
+
+const StepIcon = styled.div`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const VisualStepTitle = styled.h4`
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+`;
+
+const StepDescription = styled.p`
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+`;
+
+const BeforeAfterVisual = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: 150px;
+  justify-content: center;
+`;
+
+const BeforeAfterIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+`;
+
+const BeforeAfterText = styled.div`
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.4;
+`;
+
+const IncomeChart = styled.div`
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 100px;
+  margin: 1.5rem 0 0.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+`;
+
+const ChartBar = styled.div<{ height: number; color: string }>`
+  width: 24px;
+  height: ${props => props.height}px;
+  background: linear-gradient(135deg, ${props => props.color} 0%, ${props => props.color}dd 100%);
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  &::after {
+    content: '$${props => props.height === 75 ? '1.5k' : props.height === 60 ? '1.2k' : props.height === 50 ? '800' : '600'}';
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #333;
+    background: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+`;
+
+// Profile Images - Using realistic placeholder images
+const ProfileImage = styled.img`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 1rem auto;
+  display: block;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+`;
+
 const WebLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const howItWorksRef = React.useRef<HTMLDivElement>(null);
@@ -615,38 +881,88 @@ const WebLandingPage: React.FC = () => {
           <HeroGlassyBg />
           <HeroContent>
             <LogoImg src={logoImg} alt="Tool Thinker Logo" />
-            <Tagline>Turn Your Skills Into Extra Income</Tagline>
-            <SubTagline>Your Side Hustle Idea Generator</SubTagline>
+            <Tagline>Stop Guessing, Start Earning</Tagline>
+            <SubTagline>AI-Powered Side Hustle Ideas That Actually Work</SubTagline>
             <HeroText>
-              Discover profitable side hustle ideas that fit your schedule and skills. Tool Thinker helps busy professionals find, validate, and launch part-time businesses for extra income—no quitting your day job required.
+              Tired of generic "start a blog" advice? Get personalized side hustle ideas based on your location, skills, and schedule. Our AI analyzes your local market to suggest profitable opportunities you can start this weekend.
             </HeroText>
             <CTAButton onClick={handleStartForFree}>Start for Free</CTAButton>
             <SecondaryButton onClick={handleSeeHowItWorks}>See How It Works</SecondaryButton>
           </HeroContent>
         </Hero>
+        
+        {/* Hero Visual - Moved below */}
+        <ComparisonVisual style={{ marginTop: '-2rem', marginBottom: '2rem' }}>
+          <ComparisonSide>
+            <VisualComparisonTitle>❌ Generic Advice</VisualComparisonTitle>
+            <VisualComparisonList>
+              <VisualComparisonItem>• "Start a blog"</VisualComparisonItem>
+              <VisualComparisonItem>• "Become a freelancer"</VisualComparisonItem>
+              <VisualComparisonItem>• "Start dropshipping"</VisualComparisonItem>
+              <VisualComparisonItem>• Vague promises</VisualComparisonItem>
+            </VisualComparisonList>
+          </ComparisonSide>
+          <ComparisonSide>
+            <VisualComparisonTitle>✅ Tool Thinker</VisualComparisonTitle>
+            <VisualComparisonList>
+              <VisualComparisonItem>• Pet sitting in Austin: $1,200/month</VisualComparisonItem>
+              <VisualComparisonItem>• Social media for restaurants: $1,500/month</VisualComparisonItem>
+              <VisualComparisonItem>• Tutoring students: $800/month</VisualComparisonItem>
+              <VisualComparisonItem>• Real local opportunities</VisualComparisonItem>
+            </VisualComparisonList>
+          </ComparisonSide>
+        </ComparisonVisual>
 
         {/* Social Proof */}
         <SocialProofSection>
-          <SocialProofText>Trusted by side hustlers from</SocialProofText>
-          <SocialLogos>
-            <SocialLogo>SideHustle Pro</SocialLogo>
-            <SocialLogo>Freelance Hub</SocialLogo>
-            <SocialLogo>Part-Time Pros</SocialLogo>
-            <SocialLogo>Income Multipliers</SocialLogo>
-          </SocialLogos>
+          <SocialProofText>Join 2,000+ side hustlers who found their perfect opportunity</SocialProofText>
+                      <SocialLogos>
+                          <SocialLogo>
+              <ProfileImage src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
+              <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Sarah M.</div>
+              <div style={{ color: '#666', marginBottom: '1rem' }}>Pet Sitting</div>
+              <IncomeChart>
+                <ChartBar height={60} color="#28a745" />
+              </IncomeChart>
+            </SocialLogo>
+            <SocialLogo>
+              <ProfileImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face" alt="Mike T" />
+              <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Mike T.</div>
+              <div style={{ color: '#666', marginBottom: '1rem' }}>Virtual Assistant</div>
+              <IncomeChart>
+                <ChartBar height={50} color="#007bff" />
+              </IncomeChart>
+            </SocialLogo>
+            <SocialLogo>
+              <ProfileImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face" alt="Lisa K" />
+              <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Lisa K.</div>
+              <div style={{ color: '#666', marginBottom: '1rem' }}>Social Media</div>
+              <IncomeChart>
+                <ChartBar height={75} color="#ffc107" />
+              </IncomeChart>
+            </SocialLogo>
+            <SocialLogo>
+              <ProfileImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face" alt="David R" />
+              <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>David R.</div>
+              <div style={{ color: '#666', marginBottom: '1rem' }}>Tutoring</div>
+              <IncomeChart>
+                <ChartBar height={40} color="#6f42c1" />
+              </IncomeChart>
+            </SocialLogo>
+            </SocialLogos>
         </SocialProofSection>
 
         {/* Interactive Demo & Walkthrough */}
         <DemoSection>
           <DemoWidget>
-            <DemoTitle>Try Side Hustle Finder Instantly</DemoTitle>
+            <DemoTitle>See How It Works in 30 Seconds</DemoTitle>
             <DemoInput
-              placeholder="Describe your skills or interests… (e.g. 'I'm good at writing and have 2 hours a day')"
+              placeholder="What are you good at? How much time do you have? (e.g. 'I'm good at writing, live in Austin, have 2 hours a day, want $500/month')"
               value={demoInput}
               onChange={e => setDemoInput(e.target.value)}
               rows={3}
             />
-            <DemoButton onClick={handleDemoClarify}>Find Ideas</DemoButton>
+            <DemoButton onClick={handleDemoClarify}>Get Personalized Ideas</DemoButton>
             <DemoOutput visible={demoOutputVisible}>
               {demoOutputVisible && demoOutput}
             </DemoOutput>
@@ -664,63 +980,141 @@ const WebLandingPage: React.FC = () => {
           </Walkthrough>
         </DemoSection>
 
+        {/* Before/After Comparison */}
+        <GlassSection>
+          <h2>Generic Advice vs. Tool Thinker Results</h2>
+          <BeforeAfterContainer>
+            <BeforeAfterCard>
+              <BeforeAfterTitle>❌ Generic Advice</BeforeAfterTitle>
+              <BeforeAfterVisual>
+                <BeforeAfterIcon style={{ background: '#dc3545' }}>❌</BeforeAfterIcon>
+                <BeforeAfterText>
+                  "Start a blog and monetize it"<br/>
+                  "Become a freelancer"<br/>
+                  "Start dropshipping"
+                </BeforeAfterText>
+              </BeforeAfterVisual>
+            </BeforeAfterCard>
+            <BeforeAfterCard>
+              <BeforeAfterTitle>✅ Tool Thinker Results</BeforeAfterTitle>
+              <BeforeAfterVisual>
+                <BeforeAfterIcon style={{ background: '#28a745' }}>✅</BeforeAfterIcon>
+                <BeforeAfterText>
+                  "Pet sitting in Austin: $1,200/month"<br/>
+                  "Social media for restaurants: $1,500/month"<br/>
+                  "Tutoring students: $800/month"
+                </BeforeAfterText>
+              </BeforeAfterVisual>
+            </BeforeAfterCard>
+          </BeforeAfterContainer>
+        </GlassSection>
+
         {/* How It Works */}
         <HowItWorks ref={howItWorksRef}>
-          <h2>How Side Hustle Finder Works</h2>
+          <h2>Why Tool Thinker Works Better Than Generic Advice</h2>
           <Steps>
             <Step>
               <StepNumber>1</StepNumber>
-              <StepTitle>Share Your Skills & Time</StepTitle>
-              <StepText>Tell us what you're good at and how much time you have available for extra income.</StepText>
+              <StepTitle>Personalized to Your Location</StepTitle>
+              <StepText>We analyze your local market to find opportunities that actually exist in your area, not generic online advice.</StepText>
             </Step>
             <Step>
               <StepNumber>2</StepNumber>
-              <StepTitle>AI-Powered Idea Generation</StepTitle>
-              <StepText>Our AI finds profitable side hustle opportunities that match your skills, schedule, and income goals.</StepText>
+              <StepTitle>Matched to Your Reality</StepTitle>
+              <StepText>We consider your actual schedule, income goals, and existing skills—no unrealistic "quit your job" advice.</StepText>
             </Step>
             <Step>
               <StepNumber>3</StepNumber>
-              <StepTitle>Your Action Plan</StepTitle>
-              <StepText>Get a step-by-step plan to launch your side hustle—from validation to first customer.</StepText>
+              <StepTitle>Ready-to-Launch Ideas</StepTitle>
+              <StepText>Get specific business ideas with real customer problems and solutions you can start implementing today.</StepText>
             </Step>
           </Steps>
+          
+          {/* Process Visualization */}
+          <ImageGrid>
+            <ProcessStep>
+              <StepIcon>📍</StepIcon>
+              <VisualStepTitle>Enter Your Details</VisualStepTitle>
+              <StepDescription>
+                Tell us your location, skills, and schedule. We analyze your local market for opportunities.
+              </StepDescription>
+            </ProcessStep>
+            <ProcessStep>
+              <StepIcon>🤖</StepIcon>
+              <VisualStepTitle>AI Analysis</VisualStepTitle>
+              <StepDescription>
+                Our AI finds real opportunities in your area that match your skills and schedule.
+              </StepDescription>
+            </ProcessStep>
+            <ProcessStep>
+              <StepIcon>💡</StepIcon>
+              <VisualStepTitle>Get Results</VisualStepTitle>
+              <StepDescription>
+                Receive specific business ideas with real income potential and customer problems to solve.
+              </StepDescription>
+            </ProcessStep>
+          </ImageGrid>
         </HowItWorks>
 
         {/* Benefits */}
         <Benefits>
-          <h2>Why Side Hustle Finder?</h2>
+          <h2>Why Tool Thinker Works When Other Methods Fail</h2>
           <BenefitsList>
-            <Benefit><Check>✓</Check>Keep your day job—no quitting required</Benefit>
-            <Benefit><Check>✓</Check>Find ideas that fit your schedule</Benefit>
-            <Benefit><Check>✓</Check>AI-powered opportunity matching</Benefit>
-            <Benefit><Check>✓</Check>Low-risk, high-reward side hustles</Benefit>
-            <Benefit><Check>✓</Check>Start with skills you already have</Benefit>
-            <Benefit><Check>✓</Check>Step-by-step launch roadmap</Benefit>
-            <Benefit><Check>✓</Check>Validate ideas before investing time</Benefit>
-            <Benefit><Check>✓</Check>Track progress and income goals</Benefit>
+            <Benefit>
+              <IconContainer>🚫</IconContainer>
+              <Check>✓</Check>No more generic "start a blog" advice
+            </Benefit>
+            <Benefit>
+              <IconContainer>📍</IconContainer>
+              <Check>✓</Check>Ideas that actually exist in your area
+            </Benefit>
+            <Benefit>
+              <IconContainer>💰</IconContainer>
+              <Check>✓</Check>Realistic income expectations
+            </Benefit>
+            <Benefit>
+              <IconContainer>🎯</IconContainer>
+              <Check>✓</Check>Start with skills you already have
+            </Benefit>
+            <Benefit>
+              <IconContainer>⏰</IconContainer>
+              <Check>✓</Check>No quitting your day job required
+            </Benefit>
+            <Benefit>
+              <IconContainer>🔍</IconContainer>
+              <Check>✓</Check>Specific customer problems to solve
+            </Benefit>
+            <Benefit>
+              <IconContainer>🚀</IconContainer>
+              <Check>✓</Check>Ready-to-implement solutions
+            </Benefit>
+            <Benefit>
+              <IconContainer>✅</IconContainer>
+              <Check>✓</Check>Local market validation built-in
+            </Benefit>
           </BenefitsList>
         </Benefits>
 
         {/* Comparison */}
         <Comparison>
-          <h2>Side Hustle Finder vs. Traditional Methods</h2>
+          <h2>Tool Thinker vs. Generic Side Hustle Advice</h2>
           <ComparisonTable>
             <ComparisonCol>
-              <ComparisonTitle>Side Hustle Finder</ComparisonTitle>
+              <ComparisonTitle>Tool Thinker</ComparisonTitle>
               <ComparisonList>
-                <ComparisonItem>AI-powered idea generation</ComparisonItem>
-                <ComparisonItem>Fits your existing schedule</ComparisonItem>
-                <ComparisonItem>Low-risk, validated opportunities</ComparisonItem>
-                <ComparisonItem>Start with skills you have</ComparisonItem>
+                <ComparisonItem>Personalized to your location & skills</ComparisonItem>
+                <ComparisonItem>Realistic income expectations</ComparisonItem>
+                <ComparisonItem>Specific customer problems to solve</ComparisonItem>
+                <ComparisonItem>Ready-to-implement solutions</ComparisonItem>
               </ComparisonList>
             </ComparisonCol>
             <ComparisonCol>
-              <ComparisonTitle>Traditional Methods</ComparisonTitle>
+              <ComparisonTitle>Generic Advice</ComparisonTitle>
               <ComparisonList>
-                <ComparisonItem>Random internet searches</ComparisonItem>
-                <ComparisonItem>Requires quitting your job</ComparisonItem>
-                <ComparisonItem>High-risk, unvalidated ideas</ComparisonItem>
-                <ComparisonItem>Assumes you need new skills</ComparisonItem>
+                <ComparisonItem>"Start a blog" (everyone says this)</ComparisonItem>
+                <ComparisonItem>Unrealistic income promises</ComparisonItem>
+                <ComparisonItem>Vague "find a problem" advice</ComparisonItem>
+                <ComparisonItem>No specific next steps</ComparisonItem>
               </ComparisonList>
             </ComparisonCol>
           </ComparisonTable>
@@ -735,19 +1129,22 @@ const WebLandingPage: React.FC = () => {
 
         {/* Testimonials */}
         <Testimonials>
-          <h2>What Our Side Hustlers Say</h2>
+          <h2>Real Results from Real Side Hustlers</h2>
           <TestimonialList>
             <Testimonial>
-              "Side Hustle Finder helped me discover I could make $500/month writing content—while keeping my day job!"
-              <TestimonialName>— Alex, Marketing Manager</TestimonialName>
+              <ProfileImage src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
+              "Finally! No more 'start a blog' advice. Tool Thinker found me a pet-sitting business that makes $1,200/month in my neighborhood."
+              <TestimonialName>— Sarah, Office Manager</TestimonialName>
             </Testimonial>
             <Testimonial>
-              "I found 3 side hustle ideas that fit my 2-hour evening schedule. Now I'm making extra income without stress."
-              <TestimonialName>— Jamie, Software Developer</TestimonialName>
+              <ProfileImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face" alt="Mike T" />
+              "I was skeptical, but the AI found 3 local businesses that needed social media help. Now I'm making $1,500/month on weekends."
+              <TestimonialName>— Mike, Teacher</TestimonialName>
             </Testimonial>
             <Testimonial>
-              "The AI matched my photography skills with local business opportunities. I'm booked solid on weekends!"
-              <TestimonialName>— Priya, Teacher</TestimonialName>
+              <ProfileImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face" alt="Lisa K" />
+              "The location-based suggestions are gold. I found tutoring opportunities in my area that I never knew existed."
+              <TestimonialName>— Lisa, Software Developer</TestimonialName>
             </Testimonial>
           </TestimonialList>
         </Testimonials>

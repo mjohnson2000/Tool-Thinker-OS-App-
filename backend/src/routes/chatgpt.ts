@@ -25,7 +25,8 @@ router.post('/', async (req, res) => {
       {
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 256
+        max_tokens: 1000,
+        temperature: 0.7
       },
       {
         headers: {
@@ -37,21 +38,29 @@ router.post('/', async (req, res) => {
 
     const message = response.data.choices?.[0]?.message?.content || '';
     let parsed = null;
+    
+    // First, try to parse the entire message as JSON
     try {
       parsed = JSON.parse(message);
+      console.log('Successfully parsed JSON response:', parsed);
     } catch (err) {
-      // Try to extract JSON from the response if it's not valid JSON
+      console.log('Failed to parse as JSON, trying to extract JSON array...');
+      
+      // Try to extract JSON array from the response
       try {
-        const jsonMatch = message.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-          console.warn('Extracted JSON from OpenAI response:', jsonMatch[0]);
+        // Look for JSON array pattern more specifically
+        const jsonArrayMatch = message.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+        if (jsonArrayMatch) {
+          parsed = JSON.parse(jsonArrayMatch[0]);
+          console.log('Extracted JSON array from OpenAI response:', jsonArrayMatch[0]);
         } else {
           // If no JSON found, return the original message
+          console.log('No JSON array found in response, returning original message');
           parsed = message;
         }
       } catch (extractErr) {
-        console.error('Failed to extract JSON from OpenAI response:', extractErr, message);
+        console.error('Failed to extract JSON from OpenAI response:', extractErr);
+        console.log('Original message:', message);
         parsed = message;
       }
     }

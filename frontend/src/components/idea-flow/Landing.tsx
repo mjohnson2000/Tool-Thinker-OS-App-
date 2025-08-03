@@ -55,14 +55,14 @@ const OptionButton = styled.button`
 export function Landing({ onSelect }: LandingProps) {
   return (
     <Container>
-      <Tagline>Build A Business In 5 Mins</Tagline>
-      <Title>Where are you in your journey?</Title>
+      <Tagline>Find Your Perfect Side Hustle</Tagline>
+      <Title>What's your situation?</Title>
       <Options>
-        <OptionButton onClick={() => onSelect('idea')} aria-label="I need an idea">
-          I need an idea
+        <OptionButton onClick={() => onSelect('idea')} aria-label="I need a side hustle idea">
+          I need a side hustle idea
         </OptionButton>
-        <OptionButton onClick={() => onSelect('customer')} aria-label="My idea is premature">
-          My idea is premature
+        <OptionButton onClick={() => onSelect('customer')} aria-label="I have an idea but need help">
+          I have an idea but need help
         </OptionButton>
       </Options>
     </Container>

@@ -175,7 +175,8 @@ const SkillGapSection = styled.div`
   border-radius: 12px;
   padding: 1.5rem;
   margin-top: 1.5rem;
-  border-left: 4px solid #666;
+  border-left: 4px solid #ccc;
+  border-right: 4px solid #ccc;
 `;
 
 const SkillGapTitle = styled.div`
@@ -218,7 +219,8 @@ const LearningPathSection = styled.div`
   border-radius: 12px;
   padding: 1.5rem;
   margin-top: 1rem;
-  border-left: 4px solid #333;
+  border-left: 4px solid #ccc;
+  border-right: 4px solid #ccc;
 `;
 
 const LearningPathTitle = styled.div`
@@ -261,7 +263,8 @@ const SkillsYouHaveSection = styled.div`
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  border-left: 4px solid #181a1b;
+  border-left: 4px solid #ccc;
+  border-right: 4px solid #ccc;
 `;
 
 const SkillsYouHaveTitle = styled.div`
@@ -303,6 +306,130 @@ const SkillGapWrapper = styled.div`
   padding: 1.5rem;
   margin-top: 1rem;
   background: #fafbfc;
+`;
+
+const MarketResearchSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #f0f0f0;
+  border-right: 4px solid #f0f0f0;
+`;
+
+const MarketResearchSubsection = styled.div`
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(2px);
+  }
+`;
+
+const MarketResearchTitle = styled.div`
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const MarketResearchContent = styled.div`
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.5;
+`;
+
+const MarketResearchList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+`;
+
+const MarketResearchListItem = styled.li`
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f0f0f0;
+    transform: translateX(2px);
+  }
+`;
+
+const TextSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #f0f0f0;
+  border-right: 4px solid #f0f0f0;
+`;
+
+const TextContent = styled.div`
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: justify;
+`;
+
+const ListSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #f0f0f0;
+  border-right: 4px solid #f0f0f0;
+`;
+
+const ListSectionTitle = styled.div`
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ListSectionList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+`;
+
+const ListSectionItem = styled.li`
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(4px);
+  }
 `;
 
 export interface StartupPlanPageDiscoveryProps {
@@ -658,36 +785,63 @@ No extra text, just valid JSON.`;
           <SectionCard key={index} style={section.type === 'skillGap' ? { border: '2px solid #000', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' } : {}}>
             <SectionTitle>{section.title}</SectionTitle>
             {section.type === 'list' ? (
-              <ListContent>
-                {Array.isArray(section.content) && section.content.map((item, i) => (
-                  <ListItem key={i}>{item}</ListItem>
-                ))}
-              </ListContent>
+              <ListSection>
+                <ListSectionList>
+                  {Array.isArray(section.content) && section.content.map((item, i) => (
+                    <ListSectionItem key={i}>
+                      {item}
+                    </ListSectionItem>
+                  ))}
+                </ListSectionList>
+              </ListSection>
             ) : section.type === 'marketResearch' ? (
               (() => {
                 const content = section.content as { marketSize: string; trends: string[]; competitors: string[] };
                 return (
-                  <>
-                    <div style={{ marginBottom: 8 }}>
-                      <strong>Market Size:</strong> {content.marketSize || 'N/A'}
-                    </div>
-                    <div style={{ marginTop: 12, marginBottom: 4 }}><strong>Market Trends:</strong></div>
-                    <ListContent>
-                      {Array.isArray(content.trends) && content.trends.length > 0 ? (
-                        content.trends.map((trend: string, i: number) => <ListItem key={i}>{trend}</ListItem>)
-                      ) : (
-                        <ListItem>N/A</ListItem>
-                      )}
-                    </ListContent>
-                    <div style={{ marginTop: 12, marginBottom: 4 }}><strong>Competitors:</strong></div>
-                    <ListContent>
-                      {Array.isArray(content.competitors) && content.competitors.length > 0 ? (
-                        content.competitors.map((comp: string, i: number) => <ListItem key={i}>{comp}</ListItem>)
-                      ) : (
-                        <ListItem>N/A</ListItem>
-                      )}
-                    </ListContent>
-                  </>
+                  <MarketResearchSection>
+                    <MarketResearchSubsection>
+                      <MarketResearchTitle>
+                        Market Size
+                      </MarketResearchTitle>
+                      <MarketResearchContent>
+                        {content.marketSize || 'N/A'}
+                      </MarketResearchContent>
+                    </MarketResearchSubsection>
+                    
+                    <MarketResearchSubsection>
+                      <MarketResearchTitle>
+                        Market Trends
+                      </MarketResearchTitle>
+                      <MarketResearchList>
+                        {Array.isArray(content.trends) && content.trends.length > 0 ? (
+                          content.trends.map((trend: string, i: number) => (
+                            <MarketResearchListItem key={i}>
+                              {trend}
+                            </MarketResearchListItem>
+                          ))
+                        ) : (
+                          <MarketResearchListItem>N/A</MarketResearchListItem>
+                        )}
+                      </MarketResearchList>
+                    </MarketResearchSubsection>
+                    
+                    <MarketResearchSubsection>
+                      <MarketResearchTitle>
+                        Competitors
+                      </MarketResearchTitle>
+                      <MarketResearchList>
+                        {Array.isArray(content.competitors) && content.competitors.length > 0 ? (
+                          content.competitors.map((comp: string, i: number) => (
+                            <MarketResearchListItem key={i}>
+                              {comp}
+                            </MarketResearchListItem>
+                          ))
+                        ) : (
+                          <MarketResearchListItem>N/A</MarketResearchListItem>
+                        )}
+                      </MarketResearchList>
+                    </MarketResearchSubsection>
+                  </MarketResearchSection>
                 );
               })()
             ) : section.type === 'skillGap' ? (
@@ -741,7 +895,11 @@ No extra text, just valid JSON.`;
                 );
               })()
             ) : (
-              <SectionContent>{typeof section.content === 'string' ? section.content : ''}</SectionContent>
+              <TextSection>
+                <TextContent>
+                  {typeof section.content === 'string' ? section.content : ''}
+                </TextContent>
+              </TextSection>
             )}
           </SectionCard>
         ))}

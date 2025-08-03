@@ -170,6 +170,141 @@ const CenteredText = styled.p`
   margin-top: 1rem;
 `;
 
+const SkillGapSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border-left: 4px solid #666;
+`;
+
+const SkillGapTitle = styled.div`
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SkillGapList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+`;
+
+const SkillGapListItem = styled.li`
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(4px);
+  }
+`;
+
+const LearningPathSection = styled.div`
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #333;
+`;
+
+const LearningPathTitle = styled.div`
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const LearningPathList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+`;
+
+const LearningPathListItem = styled.li`
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(4px);
+  }
+`;
+
+const SkillsYouHaveSection = styled.div`
+  background: #f0f0f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #181a1b;
+`;
+
+const SkillsYouHaveTitle = styled.div`
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SkillsYouHaveList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+`;
+
+const SkillsYouHaveListItem = styled.li`
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(4px);
+  }
+`;
+
+const SkillGapWrapper = styled.div`
+  padding: 1.5rem;
+  margin-top: 1rem;
+  background: #fafbfc;
+`;
+
 export interface StartupPlanPageDiscoveryProps {
   context: {
     idea: any;
@@ -178,6 +313,7 @@ export interface StartupPlanPageDiscoveryProps {
     problemDescription?: string | null;
     solutionDescription?: string | null;
     competitionDescription?: string | null;
+    skillAssessment?: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] } | null;
     [key: string]: any;
   };
   onSignup?: () => void;
@@ -441,8 +577,29 @@ No extra text, just valid JSON.`;
     }
   }, [plan]);
 
+  // Function to generate skill gap analysis
+  const generateSkillGapAnalysis = (skillAssessment: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] }) => {
+    const selectedSkillTitles = skillAssessment.skills
+      .filter(skill => skillAssessment.selectedSkills.includes(skill.id))
+      .map(skill => skill.title);
+    
+    const missingSkillTitles = skillAssessment.skills
+      .filter(skill => !skillAssessment.selectedSkills.includes(skill.id))
+      .map(skill => skill.title);
+
+    return {
+      selectedSkills: selectedSkillTitles,
+      missingSkills: missingSkillTitles,
+      recommendations: skillAssessment.recommendations,
+      learningPath: skillAssessment.learningPath
+    };
+  };
+
   const renderNewPlanSections = () => {
     if (!newPlan) return null;
+
+    // Generate skill gap analysis if skillAssessment is available
+    const skillGapAnalysis = context.skillAssessment ? generateSkillGapAnalysis(context.skillAssessment) : null;
 
     const sections = [
       {
@@ -481,13 +638,24 @@ No extra text, just valid JSON.`;
       },
     ];
 
+    // Add skill gap analysis section if available
+    if (skillGapAnalysis) {
+      sections.push({
+        title: 'Skill Gap Analysis',
+        content: skillGapAnalysis,
+        type: 'skillGap'
+      });
+    }
+
+
+
     // Only show first 2 sections for unauthenticated users
     const visibleSections = isAuthenticated ? sections : sections.slice(0, 2);
 
     return (
       <>
         {visibleSections.map((section, index) => (
-          <SectionCard key={index}>
+          <SectionCard key={index} style={section.type === 'skillGap' ? { border: '2px solid #000', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' } : {}}>
             <SectionTitle>{section.title}</SectionTitle>
             {section.type === 'list' ? (
               <ListContent>
@@ -520,6 +688,56 @@ No extra text, just valid JSON.`;
                       )}
                     </ListContent>
                   </>
+                );
+              })()
+            ) : section.type === 'skillGap' ? (
+              (() => {
+                const content = section.content as { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
+                return (
+                  <SkillGapWrapper>
+                    {content.selectedSkills.length > 0 && (
+                      <SkillsYouHaveSection>
+                        <SkillsYouHaveTitle>
+                          Skills You Have
+                        </SkillsYouHaveTitle>
+                        <SkillsYouHaveList>
+                          {content.selectedSkills.map((skill: string, i: number) => (
+                            <SkillsYouHaveListItem key={i}>
+                              {skill}
+                            </SkillsYouHaveListItem>
+                          ))}
+                        </SkillsYouHaveList>
+                      </SkillsYouHaveSection>
+                    )}
+                    {content.missingSkills.length > 0 && (
+                      <SkillGapSection>
+                        <SkillGapTitle>
+                          Skills You Need to Learn
+                        </SkillGapTitle>
+                        <SkillGapList>
+                          {content.missingSkills.map((skill: string, i: number) => (
+                            <SkillGapListItem key={i}>
+                              {skill}
+                            </SkillGapListItem>
+                          ))}
+                        </SkillGapList>
+                      </SkillGapSection>
+                    )}
+                    {content.learningPath.length > 0 && (
+                      <LearningPathSection>
+                        <LearningPathTitle>
+                          Learning Path
+                        </LearningPathTitle>
+                        <LearningPathList>
+                          {content.learningPath.map((step: string, i: number) => (
+                            <LearningPathListItem key={i}>
+                              {step}
+                            </LearningPathListItem>
+                          ))}
+                        </LearningPathList>
+                      </LearningPathSection>
+                    )}
+                  </SkillGapWrapper>
                 );
               })()
             ) : (

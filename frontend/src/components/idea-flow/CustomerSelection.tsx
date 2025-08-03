@@ -99,10 +99,11 @@ export interface CustomerSelectionProps {
   interests?: string; // Make interests optional
   ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
   location?: { city: string; region: string; country: string } | null;
+  skillAssessment?: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
-export function CustomerSelection({ onSelect, businessArea, interests, ideaType, location, scheduleGoals }: CustomerSelectionProps) {
+export function CustomerSelection({ onSelect, businessArea, interests, ideaType, location, skillAssessment, scheduleGoals }: CustomerSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<CustomerOption[]>(customers);
   const [isLoading, setIsLoading] = React.useState(false);

@@ -102,7 +102,6 @@ function generateFallbackSolutions(job: any, businessArea: any, customer: any, i
 
   // Generate dynamic solutions based on job description and context
   const generateDynamicSolutions = () => {
-    const solutions = [];
     const jobTitle = job.title.toLowerCase();
     const jobDescription = job.description.toLowerCase();
     const customerTitle = customer?.title?.toLowerCase() || '';
@@ -185,64 +184,36 @@ function generateFallbackSolutions(job: any, businessArea: any, customer: any, i
         { title: 'Financial Education Platform', description: 'Teach customers about personal finance', icon: '📚' }
       ],
       'social': [
-        { title: 'Community Building Platform', description: 'Help people connect and build communities', icon: '👥' },
-        { title: 'Event Planning Service', description: 'Help organize and manage social events', icon: '🎉' },
-        { title: 'Networking Platform', description: 'Help people build professional and personal networks', icon: '🤝' },
-        { title: 'Social Media Management', description: 'Help businesses and individuals manage their social presence', icon: '📱' },
-        { title: 'Community Support Service', description: 'Provide support and resources for communities', icon: '❤️' }
+        { title: 'Community Building Platform', description: 'Help people connect and build meaningful relationships', icon: '🤝' },
+        { title: 'Event Organization Service', description: 'Plan and organize social events and gatherings', icon: '🎪' },
+        { title: 'Social Networking App', description: 'Create a platform for people to connect and network', icon: '🌐' },
+        { title: 'Volunteer Coordination Service', description: 'Help organize and manage volunteer activities', icon: '❤️' },
+        { title: 'Social Impact Consulting', description: 'Help organizations create positive social change', icon: '🌍' }
       ],
       'creative': [
-        { title: 'Creative Design Service', description: 'Help customers create beautiful and effective designs', icon: '🎨' },
-        { title: 'Content Creation Platform', description: 'Help customers create engaging content', icon: '✍️' },
-        { title: 'Creative Coaching Service', description: 'Help people develop their creative skills', icon: '🎭' },
-        { title: 'Portfolio Building Service', description: 'Help creatives showcase their work effectively', icon: '📁' },
-        { title: 'Creative Workshop Platform', description: 'Host workshops and classes for creative skills', icon: '🎪' }
+        { title: 'Creative Portfolio Platform', description: 'Help artists showcase their work and find opportunities', icon: '🎨' },
+        { title: 'Art Commission Service', description: 'Connect artists with clients for custom artwork', icon: '🖼️' },
+        { title: 'Creative Workshop Service', description: 'Organize and lead creative workshops and classes', icon: '🎭' },
+        { title: 'Design Consultation Service', description: 'Provide expert design advice and solutions', icon: '🎯' },
+        { title: 'Creative Content Creation', description: 'Create engaging content for brands and businesses', icon: '📝' }
       ],
       'general': [
         { title: 'Problem-Solving Service', description: 'Help customers solve their specific challenges', icon: '🔧' },
-        { title: 'Consulting Platform', description: 'Provide expert advice and guidance', icon: '💡' },
-        { title: 'Support Network Service', description: 'Connect customers with the help they need', icon: '🤝' },
-        { title: 'Resource Hub', description: 'Provide tools and resources for customer success', icon: '📚' },
-        { title: 'Custom Solution Service', description: 'Create tailored solutions for specific needs', icon: '⚙️' }
+        { title: 'Consultation Platform', description: 'Connect customers with expert advice and guidance', icon: '💼' },
+        { title: 'Resource Hub', description: 'Create a comprehensive resource center for customers', icon: '📚' },
+        { title: 'Support Network Service', description: 'Build a community of support for customers', icon: '🤗' },
+        { title: 'Innovation Lab', description: 'Help customers develop new ideas and solutions', icon: '💡' }
       ]
     };
 
-    // Use the primary theme or mix themes for variety
+    // Get solutions for the primary theme
     const primaryTheme = themes[0];
-    const secondaryTheme = themes[1] || 'general';
+    const solutions = solutionTypes[primaryTheme] || solutionTypes['general'];
     
-    const primarySolutions = solutionTypes[primaryTheme] || solutionTypes['general'];
-    const secondarySolutions = solutionTypes[secondaryTheme] || solutionTypes['general'];
-    
-    // Mix solutions from different themes for variety
-    for (let i = 0; i < 5; i++) {
-      const solutionPool = i < 3 ? primarySolutions : secondarySolutions;
-      const solution = solutionPool[i % solutionPool.length];
-      solutions.push({
-        id: `dynamic-${i + 1}`,
-        title: solution.title,
-        description: solution.description,
-        icon: solution.icon
-      });
-    }
-    
-    return solutions;
+    return solutions.slice(startIndex, startIndex + 5);
   };
 
-  const dynamicSolutions = generateDynamicSolutions();
-  
-  // Create fallback solutions starting from the given index
-  for (let i = 0; i < 5 - startIndex; i++) {
-    const solution = dynamicSolutions[startIndex + i] || dynamicSolutions[0];
-    fallbackSolutions.push({
-      id: `fallback-${startIndex + i + 1}`,
-      title: solution.title,
-      description: solution.description,
-      icon: solution.icon
-    });
-  }
-  
-  return fallbackSolutions;
+  return generateDynamicSolutions();
 }
 
 export interface SolutionSelectionPageProps {
@@ -253,9 +224,10 @@ export interface SolutionSelectionPageProps {
   customer?: { title: string; description: string; icon: string } | null;
   location?: { city: string; region: string; country: string } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
+  skillAssessment?: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] } | null;
 }
 
-export function SolutionSelectionPage({ job, onSelect, interests, businessArea, customer, location, scheduleGoals }: SolutionSelectionPageProps) {
+export function SolutionSelectionPage({ job, onSelect, interests, businessArea, customer, location, scheduleGoals, skillAssessment }: SolutionSelectionPageProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<SolutionOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -285,12 +257,6 @@ export function SolutionSelectionPage({ job, onSelect, interests, businessArea, 
         progressInterval = setInterval(() => {
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
-        // Build context string
-        let contextString = '';
-        if (interests) contextString += `User Interests: ${interests}\n`;
-        if (businessArea) contextString += `Business Area: ${businessArea.title} - ${businessArea.description}\n`;
-        if (customer) contextString += `Customer: ${customer.title} - ${customer.description}\n`;
-        contextString += `Job/Problem: ${job.title} - ${job.description}`;
         
         const prompt = `Generate 5 unique, creative business solutions for this specific problem:
 

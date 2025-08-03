@@ -252,10 +252,11 @@ export interface JobSelectionProps {
   businessArea?: { title: string; description: string; icon: string } | null; // Add business area prop
   ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
   location?: { city: string; region: string; country: string } | null;
+  skillAssessment?: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] } | null;
   scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
 }
 
-export function JobSelection({ onSelect, customer, interests, businessArea, ideaType, location, scheduleGoals }: JobSelectionProps) {
+export function JobSelection({ onSelect, customer, interests, businessArea, ideaType, location, skillAssessment, scheduleGoals }: JobSelectionProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [options, setOptions] = React.useState<JobOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);

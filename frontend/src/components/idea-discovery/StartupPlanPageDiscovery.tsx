@@ -302,6 +302,56 @@ const SkillsYouHaveListItem = styled.li`
   }
 `;
 
+// New styled components for comprehensive gap analysis
+const GapAnalysisSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border-left: 4px solid #ccc;
+  border-right: 4px solid #ccc;
+`;
+
+const GapAnalysisSubsection = styled.div`
+  margin-bottom: 1.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const GapAnalysisSubtitle = styled.h4`
+  font-weight: 700;
+  font-size: 1rem;
+  color: #181a1b;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const GapAnalysisList = styled.ul`
+  padding-left: 0;
+  list-style: none;
+`;
+
+const GapAnalysisListItem = styled.li`
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateX(4px);
+  }
+`;
+
 const SkillGapWrapper = styled.div`
   padding: 1.5rem;
   margin-top: 1rem;
@@ -704,8 +754,8 @@ No extra text, just valid JSON.`;
     }
   }, [plan]);
 
-  // Function to generate skill gap analysis
-  const generateSkillGapAnalysis = (skillAssessment: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] }) => {
+  // Function to generate comprehensive gap analysis
+  const generateGapAnalysis = (skillAssessment: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] }, businessPlan: any) => {
     const selectedSkillTitles = skillAssessment.skills
       .filter(skill => skillAssessment.selectedSkills.includes(skill.id))
       .map(skill => skill.title);
@@ -714,19 +764,63 @@ No extra text, just valid JSON.`;
       .filter(skill => !skillAssessment.selectedSkills.includes(skill.id))
       .map(skill => skill.title);
 
+    // Generate resource gaps
+    const resourceGaps = {
+      financial: [
+        'Initial startup capital',
+        'Operating expenses for first 6 months',
+        'Emergency fund for unexpected costs'
+      ],
+      human: [
+        'Technical expertise for development',
+        'Marketing and sales skills',
+        'Administrative support'
+      ],
+      physical: [
+        'Office space or workspace',
+        'Equipment and technology',
+        'Inventory and supplies'
+      ]
+    };
+
+
+
+    // Generate operational gaps
+    const operationalGaps = {
+      processes: [
+        'Standard operating procedures',
+        'Quality control systems',
+        'Customer service protocols'
+      ],
+      systems: [
+        'Technology infrastructure',
+        'Business management software',
+        'Data security and backup'
+      ],
+      infrastructure: [
+        'Legal and business registration',
+        'Insurance and risk management',
+        'Vendor and supplier relationships'
+      ]
+    };
+
     return {
-      selectedSkills: selectedSkillTitles,
-      missingSkills: missingSkillTitles,
-      recommendations: skillAssessment.recommendations,
-      learningPath: skillAssessment.learningPath
+      skills: {
+        selectedSkills: selectedSkillTitles,
+        missingSkills: missingSkillTitles,
+        recommendations: skillAssessment.recommendations,
+        learningPath: skillAssessment.learningPath
+      },
+      resources: resourceGaps,
+      operations: operationalGaps
     };
   };
 
   const renderNewPlanSections = () => {
     if (!newPlan) return null;
 
-    // Generate skill gap analysis if skillAssessment is available
-    const skillGapAnalysis = context.skillAssessment ? generateSkillGapAnalysis(context.skillAssessment) : null;
+    // Generate comprehensive gap analysis if skillAssessment is available
+    const gapAnalysis = context.skillAssessment ? generateGapAnalysis(context.skillAssessment, newPlan) : null;
 
     const sections = [
       {
@@ -765,12 +859,12 @@ No extra text, just valid JSON.`;
       },
     ];
 
-    // Add skill gap analysis section if available
-    if (skillGapAnalysis) {
+    // Add comprehensive gap analysis section if available
+    if (gapAnalysis) {
       sections.push({
-        title: 'Skill Gap Analysis',
-        content: skillGapAnalysis,
-        type: 'skillGap'
+        title: 'Comprehensive Gap Analysis',
+        content: gapAnalysis,
+        type: 'gapAnalysis'
       });
     }
 
@@ -779,10 +873,10 @@ No extra text, just valid JSON.`;
     // Only show first 2 sections for unauthenticated users
     const visibleSections = isAuthenticated ? sections : sections.slice(0, 2);
 
-    return (
-      <>
-        {visibleSections.map((section, index) => (
-          <SectionCard key={index} style={section.type === 'skillGap' ? { border: '2px solid #000', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' } : {}}>
+            return (
+          <>
+            {visibleSections.map((section, index) => (
+              <SectionCard key={index} style={section.type === 'gapAnalysis' ? { border: '2px solid #000', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' } : {}}>
             <SectionTitle>{section.title}</SectionTitle>
             {section.type === 'list' ? (
               <ListSection>
@@ -844,54 +938,116 @@ No extra text, just valid JSON.`;
                   </MarketResearchSection>
                 );
               })()
-            ) : section.type === 'skillGap' ? (
+            ) : section.type === 'gapAnalysis' ? (
               (() => {
-                const content = section.content as { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
+                const content = section.content as {
+                  skills: { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
+                  resources: { financial: string[]; human: string[]; physical: string[] };
+                  operations: { processes: string[]; systems: string[]; infrastructure: string[] };
+                };
                 return (
-                  <SkillGapWrapper>
-                    {content.selectedSkills.length > 0 && (
-                      <SkillsYouHaveSection>
-                        <SkillsYouHaveTitle>
-                          Skills You Have
-                        </SkillsYouHaveTitle>
-                        <SkillsYouHaveList>
-                          {content.selectedSkills.map((skill: string, i: number) => (
-                            <SkillsYouHaveListItem key={i}>
-                              {skill}
-                            </SkillsYouHaveListItem>
+                  <GapAnalysisSection>
+                    {/* Skills Gap */}
+                    <GapAnalysisSubsection>
+                      <GapAnalysisSubtitle>Skills Gap</GapAnalysisSubtitle>
+                      {content.skills.selectedSkills.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Skills You Have:</div>
+                          <GapAnalysisList>
+                            {content.skills.selectedSkills.map((skill: string, i: number) => (
+                              <GapAnalysisListItem key={i}>
+                                {skill}
+                              </GapAnalysisListItem>
+                            ))}
+                          </GapAnalysisList>
+                        </div>
+                      )}
+                      {content.skills.missingSkills.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Skills You Need:</div>
+                          <GapAnalysisList>
+                            {content.skills.missingSkills.map((skill: string, i: number) => (
+                              <GapAnalysisListItem key={i}>
+                                {skill}
+                              </GapAnalysisListItem>
+                            ))}
+                          </GapAnalysisList>
+                        </div>
+                      )}
+                    </GapAnalysisSubsection>
+
+                    {/* Resource Gap */}
+                    <GapAnalysisSubsection>
+                      <GapAnalysisSubtitle>Resource Gap</GapAnalysisSubtitle>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Financial Resources:</div>
+                        <GapAnalysisList>
+                          {content.resources.financial.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
                           ))}
-                        </SkillsYouHaveList>
-                      </SkillsYouHaveSection>
-                    )}
-                    {content.missingSkills.length > 0 && (
-                      <SkillGapSection>
-                        <SkillGapTitle>
-                          Skills You Need to Learn
-                        </SkillGapTitle>
-                        <SkillGapList>
-                          {content.missingSkills.map((skill: string, i: number) => (
-                            <SkillGapListItem key={i}>
-                              {skill}
-                            </SkillGapListItem>
+                        </GapAnalysisList>
+                      </div>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Human Resources:</div>
+                        <GapAnalysisList>
+                          {content.resources.human.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
                           ))}
-                        </SkillGapList>
-                      </SkillGapSection>
-                    )}
-                    {content.learningPath.length > 0 && (
-                      <LearningPathSection>
-                        <LearningPathTitle>
-                          Learning Path
-                        </LearningPathTitle>
-                        <LearningPathList>
-                          {content.learningPath.map((step: string, i: number) => (
-                            <LearningPathListItem key={i}>
-                              {step}
-                            </LearningPathListItem>
+                        </GapAnalysisList>
+                      </div>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Physical Resources:</div>
+                        <GapAnalysisList>
+                          {content.resources.physical.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
                           ))}
-                        </LearningPathList>
-                      </LearningPathSection>
-                    )}
-                  </SkillGapWrapper>
+                        </GapAnalysisList>
+                      </div>
+                    </GapAnalysisSubsection>
+
+
+
+                    {/* Operational Gap */}
+                    <GapAnalysisSubsection>
+                      <GapAnalysisSubtitle>Operational Gap</GapAnalysisSubtitle>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Processes:</div>
+                        <GapAnalysisList>
+                          {content.operations.processes.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
+                          ))}
+                        </GapAnalysisList>
+                      </div>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Systems:</div>
+                        <GapAnalysisList>
+                          {content.operations.systems.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
+                          ))}
+                        </GapAnalysisList>
+                      </div>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Infrastructure:</div>
+                        <GapAnalysisList>
+                          {content.operations.infrastructure.map((item: string, i: number) => (
+                            <GapAnalysisListItem key={i}>
+                              {item}
+                            </GapAnalysisListItem>
+                          ))}
+                        </GapAnalysisList>
+                      </div>
+                    </GapAnalysisSubsection>
+                  </GapAnalysisSection>
                 );
               })()
             ) : (

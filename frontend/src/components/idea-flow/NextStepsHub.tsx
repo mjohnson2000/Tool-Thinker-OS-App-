@@ -103,20 +103,7 @@ const PageBackground = styled.div`
   flex-direction: column;
 `;
 
-const TopBar = styled.div`
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2rem 1rem 1.5rem 1rem;
-  background: transparent;
-  
-  @media (max-width: 768px) {
-    padding: 1.5rem 1rem 1rem 1rem;
-  }
-`;
+
 
 const Container = styled.div`
   max-width: 1200px;
@@ -1322,46 +1309,6 @@ export function NextStepsHub({ setAppState, currentStep }: NextStepsHubProps) {
 
   return (
     <PageBackground>
-      <TopBar>
-        <img 
-          src={logo} 
-          alt="ToolThinker Logo" 
-          style={{ 
-            height: 90, 
-            width: 90, 
-            borderRadius: 50, 
-            cursor: 'pointer', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)' 
-          }} 
-          onClick={() => navigate('/app')} 
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', marginLeft: 'auto' }}>
-          <MyPlansButton onClick={() => navigate('/plans')}><FaArrowLeft /> My Business Ideas</MyPlansButton>
-          {user && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-              {user.profilePic ? (
-                <Avatar 
-                  src={user.profilePic} 
-                  alt="Profile" 
-                  onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))} 
-                />
-              ) : user.email ? (
-                <Initials 
-                  onClick={() => setAppState((prev: any) => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }))}
-                >
-                  {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-                </Initials>
-              ) : null}
-              <PlanBadge>
-                {!user?.isSubscribed
-                  ? PLAN_DISPLAY_NAMES['free']
-                  : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-              </PlanBadge>
-            </div>
-          )}
-        </div>
-      </TopBar>
-
       <Container>
         <Header>
           <Title>Business Discovery Roadmap</Title>

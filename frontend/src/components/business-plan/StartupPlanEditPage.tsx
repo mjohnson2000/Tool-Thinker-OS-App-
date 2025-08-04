@@ -3,74 +3,8 @@ import styled from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaMagic, FaSave, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import logo from '../../assets/logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
-const Logo = styled.img`
-  position: fixed;
-  top: 24px;
-  left: 24px;
-  height: 80px;
-  width: 80px;
-  margin-right: 1rem;
-  cursor: pointer;
-  user-select: none;
-  z-index: 1101;
-`;
-
-const TopBar = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 100vw;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 2.7rem 2rem 0 0;
-  z-index: 1000;
-`;
-
-const AvatarButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 1rem;
-  cursor: pointer;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: box-shadow 0.2s;
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  }
-`;
-
-const TopBarAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #007aff22;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  color: #007aff;
-  font-weight: 700;
-`;
-
-const TopBarAvatarImg = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #e5e5e5;
-`;
-
-const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
 const Container = styled.div`
   max-width: 700px;
@@ -261,25 +195,6 @@ export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPage
 
   return (
     <>
-      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
-      <TopBar>
-        <AvatarButton onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'edit', currentStep: 'profile' }))} aria-label="Profile">
-          {user && user.profilePic ? (
-            <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-          ) : user && user.email ? (
-            <TopBarAvatar>
-              {user.email
-                .split('@')[0]
-                .split(/[._-]/)
-                .map(part => part[0]?.toUpperCase())
-                .join('')
-                .slice(0, 2) || 'U'}
-            </TopBarAvatar>
-          ) : (
-            <TopBarAvatarImg src={defaultAvatar} alt="Avatar" />
-          )}
-        </AvatarButton>
-      </TopBar>
       <Container>
         <Title>Edit Business Plan</Title>
         {Object.entries(sections).map(([key, value]) => (

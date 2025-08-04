@@ -21,25 +21,82 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 700px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
+const FormCard = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  width: 100%;
+  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
+  }
+`;
+
 const Title = styled.h2`
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
   text-align: center;
-  color: #181a1b;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 2px;
+  }
 `;
 
 const Subtitle = styled.p`
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   text-align: center;
-  font-size: 1.1rem;
-  line-height: 1.5;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  max-width: 550px;
+  font-weight: 400;
+  opacity: 0.9;
 `;
 
 const SkillsGrid = styled.div`
@@ -48,25 +105,40 @@ const SkillsGrid = styled.div`
   gap: 1.5rem;
   width: 100%;
   margin-bottom: 2rem;
+  margin-top: 2rem;
 `;
 
 const SkillCard = styled.div<{ category: string; importance: string; isSelected: boolean }>`
-  padding: 1.5rem;
+  padding: 1.8rem 1.5rem;
   border: 2px solid ${props => {
     if (props.isSelected) return '#181a1b';
-    if (props.importance === 'critical') return '#dc3545';
-    if (props.importance === 'important') return '#ffc107';
-    return '#28a745';
+    if (props.importance === 'critical') return '#666666';
+    if (props.importance === 'important') return '#999999';
+    return '#cccccc';
   }};
-  border-radius: 12px;
-  background: ${props => props.isSelected ? '#f8f9fa' : 'white'};
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  background: ${props => props.isSelected ? 'linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)'};
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => props.isSelected ? 'linear-gradient(90deg, #181a1b, #4a4a4a)' : 'transparent'};
+    border-radius: 16px 16px 0 0;
+  }
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
   }
 `;
 
@@ -94,10 +166,11 @@ const SkillTitle = styled.h3`
 `;
 
 const SkillDescription = styled.p`
-  font-size: 0.95rem;
-  color: #666;
+  font-size: 1rem;
+  color: var(--text-secondary);
   line-height: 1.4;
   margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 const SkillMeta = styled.div`
@@ -106,6 +179,7 @@ const SkillMeta = styled.div`
   align-items: center;
   font-size: 0.85rem;
   color: #888;
+  margin-top: 1rem;
 `;
 
 const CategoryBadge = styled.span<{ category: string }>`
@@ -114,14 +188,14 @@ const CategoryBadge = styled.span<{ category: string }>`
   font-size: 0.75rem;
   font-weight: 500;
   background: ${props => {
-    if (props.category === 'technical') return '#e3f2fd';
-    if (props.category === 'soft') return '#f3e5f5';
-    return '#e8f5e8';
+    if (props.category === 'technical') return '#f5f5f5';
+    if (props.category === 'soft') return '#f0f0f0';
+    return '#f8f8f8';
   }};
   color: ${props => {
-    if (props.category === 'technical') return '#1976d2';
-    if (props.category === 'soft') return '#7b1fa2';
-    return '#388e3c';
+    if (props.category === 'technical') return '#333333';
+    if (props.category === 'soft') return '#555555';
+    return '#444444';
   }};
 `;
 
@@ -131,36 +205,68 @@ const ImportanceBadge = styled.span<{ importance: string }>`
   font-size: 0.75rem;
   font-weight: 500;
   background: ${props => {
-    if (props.importance === 'critical') return '#ffebee';
-    if (props.importance === 'important') return '#fff8e1';
-    return '#e8f5e8';
+    if (props.importance === 'critical') return '#e0e0e0';
+    if (props.importance === 'important') return '#f0f0f0';
+    return '#f8f8f8';
   }};
   color: ${props => {
-    if (props.importance === 'critical') return '#c62828';
-    if (props.importance === 'important') return '#f57f17';
-    return '#2e7d32';
+    if (props.importance === 'critical') return '#181a1b';
+    if (props.importance === 'important') return '#333333';
+    return '#666666';
   }};
 `;
 
 const Button = styled.button`
-  background: #181a1b;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 16px;
+  padding: 1.4rem 2rem;
+  font-size: 1.3rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 1rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 2rem;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   
-  &:hover {
-    background: #000;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
   }
   
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #000 0%, #181a1b 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   }
 `;
 
@@ -481,46 +587,48 @@ export function SkillAssessment({ businessArea, interests, ideaType, solution, o
         Check the skills you already have for this specific solution. This helps us tailor the business plan to your current capabilities.
       </Subtitle>
       
-      <SelectionInfo>
-        <strong>Selected {selectedCount} of {totalSkills} skills</strong>
-        <br />
-        <small>Don't worry if you don't have all skills - we'll suggest learning paths for missing ones</small>
-      </SelectionInfo>
-      
-      <SkillsGrid>
-        {skills.map(skill => (
-          <SkillCard 
-            key={skill.id} 
-            category={skill.category} 
-            importance={skill.importance}
-            isSelected={selectedSkills.includes(skill.id)}
-            onClick={() => handleSkillToggle(skill.id)}
-          >
-            <SkillHeader>
-              <SkillTitle>{skill.title}</SkillTitle>
-              <Checkbox
-                type="checkbox"
-                checked={selectedSkills.includes(skill.id)}
-                onChange={() => handleSkillToggle(skill.id)}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </SkillHeader>
-            <SkillDescription>{skill.description}</SkillDescription>
-            <SkillMeta>
-              <CategoryBadge category={skill.category}>
-                {skill.category.charAt(0).toUpperCase() + skill.category.slice(1)}
-              </CategoryBadge>
-              <ImportanceBadge importance={skill.importance}>
-                {skill.importance.charAt(0).toUpperCase() + skill.importance.slice(1)}
-              </ImportanceBadge>
-            </SkillMeta>
-          </SkillCard>
-        ))}
-      </SkillsGrid>
-      
-      <Button onClick={handleContinue}>
-        Continue to Business Plan
-      </Button>
+      <FormCard>
+        <SelectionInfo>
+          <strong>Selected {selectedCount} of {totalSkills} skills</strong>
+          <br />
+          <small>Don't worry if you don't have all skills - we'll suggest learning paths for missing ones</small>
+        </SelectionInfo>
+        
+        <SkillsGrid>
+          {skills.map(skill => (
+            <SkillCard 
+              key={skill.id} 
+              category={skill.category} 
+              importance={skill.importance}
+              isSelected={selectedSkills.includes(skill.id)}
+              onClick={() => handleSkillToggle(skill.id)}
+            >
+              <SkillHeader>
+                <SkillTitle>{skill.title}</SkillTitle>
+                <Checkbox
+                  type="checkbox"
+                  checked={selectedSkills.includes(skill.id)}
+                  onChange={() => handleSkillToggle(skill.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </SkillHeader>
+              <SkillDescription>{skill.description}</SkillDescription>
+              <SkillMeta>
+                <CategoryBadge category={skill.category}>
+                  {skill.category.charAt(0).toUpperCase() + skill.category.slice(1)}
+                </CategoryBadge>
+                <ImportanceBadge importance={skill.importance}>
+                  {skill.importance.charAt(0).toUpperCase() + skill.importance.slice(1)}
+                </ImportanceBadge>
+              </SkillMeta>
+            </SkillCard>
+          ))}
+        </SkillsGrid>
+        
+        <Button onClick={handleContinue}>
+          Continue to Business Plan
+        </Button>
+      </FormCard>
     </Container>
   );
 } 

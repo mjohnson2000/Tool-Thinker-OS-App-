@@ -266,11 +266,11 @@ const PlanBadge = styled.div`
 
 interface ProfileProps {
   setAppState: (fn: (prev: any) => any) => void;
-  isTrackerVisible: boolean;
+  isTrackerCollapsed: boolean;
   onClose?: () => void;
 }
 
-export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps) {
+export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfileProps) {
   const { user, isLoading, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState(user?.name || '');
@@ -437,7 +437,7 @@ export function Profile({ setAppState, isTrackerVisible, onClose }: ProfileProps
                       problemDescription: null,
                       solutionDescription: null,
                       competitionDescription: null,
-                      isTrackerVisible,
+                      isTrackerCollapsed,
                       stepBeforeAuth: null
                     }}));
                     navigate('/');

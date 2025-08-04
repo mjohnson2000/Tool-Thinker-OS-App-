@@ -1917,7 +1917,8 @@ export function AutomatedDiscoveryPage() {
   // Handlers for Launch stage buttons
   async function handleGenerate(type: 'summary' | 'plan' | 'pitch' | 'financial' | 'businessModel', forceRegenerate: boolean = false) {
     if (!id) {
-      alert('Business plan ID not found');
+              // TODO: Replace with custom error notification
+        console.error('Business plan ID not found');
       return;
     }
 
@@ -2026,7 +2027,8 @@ export function AutomatedDiscoveryPage() {
         }
       } catch (error) {
         console.error('Error generating financial plan:', error);
-        alert('Failed to generate financial plan. Please try again.');
+        // TODO: Replace with custom error notification
+        console.error('Failed to generate financial plan. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -2095,17 +2097,20 @@ export function AutomatedDiscoveryPage() {
           }
         } else {
           console.error('API Error:', data);
-          alert('Failed to generate professional business plan. Please try again.');
+          // TODO: Replace with custom error notification
+        console.error('Failed to generate professional business plan. Please try again.');
         }
       } catch (error) {
         console.error('Error generating professional business plan:', error);
-        alert('Failed to generate professional business plan. Please try again.');
+        // TODO: Replace with custom error notification
+        console.error('Failed to generate professional business plan. Please try again.');
       } finally {
         setLoading(false);
       }
     } else {
       // TODO: Implement other generation types
-      alert(`Generate: ${type}`);
+      // TODO: Replace with custom error notification
+        console.error(`Generate: ${type}`);
     }
   }
 
@@ -2200,7 +2205,8 @@ export function AutomatedDiscoveryPage() {
         setShowPitchDeckEditor(false);
       })
       .catch(err => {
-        alert('Failed to download pitch deck.');
+        // TODO: Replace with custom error notification
+        console.error('Failed to download pitch deck.');
         console.error(err);
       });
   }

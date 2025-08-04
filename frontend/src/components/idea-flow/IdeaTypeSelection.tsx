@@ -44,46 +44,107 @@ const Grid = styled.div`
 const Card = styled.button<{ isSelected: boolean }>`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #fff;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 1.8rem 1.5rem;
   cursor: pointer;
   outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  position: relative;
+  transform: translateY(0);
   
   &:hover, &:focus {
     border: 2px solid #181a1b;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    transform: translateY(-8px) scale(1.02);
+    z-index: 10;
   }
+  
+  &:active {
+    transform: translateY(-4px) scale(1.01);
+  }
+  
+  /* Stack effect - each card slightly offset */
+  &:nth-child(1) { transform: translateY(0); }
+  &:nth-child(2) { transform: translateY(2px); }
+  &:nth-child(3) { transform: translateY(4px); }
+  &:nth-child(4) { transform: translateY(6px); }
+  
+  &:nth-child(1):hover { transform: translateY(-8px) scale(1.02); }
+  &:nth-child(2):hover { transform: translateY(-6px) scale(1.02); }
+  &:nth-child(3):hover { transform: translateY(-4px) scale(1.02); }
+  &:nth-child(4):hover { transform: translateY(-2px) scale(1.02); }
 `;
 
 const Icon = styled.div`
-  font-size: 3rem;
+  font-size: 2.5rem;
   margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+  border: 2px solid #f1f3f4;
+  transition: all 0.2s ease;
+  align-self: center;
+  
+  ${Card}:hover & {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: #dee2e6;
+  }
 `;
 
 const CardTitle = styled.h3`
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 `;
 
 const CardDescription = styled.p`
   color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.4;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
+  font-weight: 400;
 `;
 
 const Examples = styled.div`
   font-size: 0.85rem;
   color: var(--text-secondary);
-  font-style: italic;
+  font-weight: 500;
+  opacity: 0.9;
+  padding: 0.4rem 0.8rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  width: 100%;
+`;
+
+const ExampleTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+`;
+
+const ExampleTag = styled.span`
+  font-size: 0.75rem;
+  color: #6c757d;
+  background: #f1f3f4;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  font-weight: 500;
 `;
 
 export interface IdeaTypeSelectionProps {
@@ -167,7 +228,12 @@ export function IdeaTypeSelection({ onSelect, interests }: IdeaTypeSelectionProp
             <CardTitle>{ideaType.title}</CardTitle>
             <CardDescription>{ideaType.description}</CardDescription>
             <Examples>
-              Examples: {ideaType.examples.slice(0, 3).join(', ')}...
+              Examples:
+              <ExampleTags>
+                {ideaType.examples.slice(0, 3).map((example, index) => (
+                  <ExampleTag key={index}>{example}</ExampleTag>
+                ))}
+              </ExampleTags>
             </Examples>
           </Card>
         ))}

@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar, FaInfoCircle } from 'react-icons/fa';
-import logo from '../../assets/logo.png';
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -20,75 +19,7 @@ const Logo = styled.img`
   z-index: 1101;
 `;
 
-const TopBar = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 100vw;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 2.7rem 2rem 0 0;
-  z-index: 1000;
-`;
 
-const AvatarButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 1rem;
-  cursor: pointer;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: box-shadow 0.2s;
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  }
-`;
-
-const TopBarAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #007aff22;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  color: #007aff;
-  font-weight: 700;
-`;
-
-const TopBarAvatarImg = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #e5e5e5;
-`;
-
-const PlanBadge = styled.div`
-  margin-top: -0.2rem;
-  background: #f3f4f6;
-  color: #181a1b;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1.5px solid #181a1b;
-  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  min-height: 22px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  letter-spacing: 0.01em;
-  user-select: none;
-`;
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
   free: 'Free',
@@ -113,29 +44,70 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #181a1b;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 2px;
+  }
 `;
 
 const CreateButton = styled.button<{ disabled?: boolean }>`
-  background: ${({ disabled }) => disabled ? '#ccc' : '#181a1b'};
+  background: ${({ disabled }) => disabled ? '#ccc' : 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)'};
   color: ${({ disabled }) => disabled ? '#666' : '#fff'};
   border: none;
-  border-radius: 12px;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 16px;
+  padding: 1.2rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
+  }
   
   &:hover {
-    background: ${({ disabled }) => disabled ? '#ccc' : '#000'};
+    background: ${({ disabled }) => disabled ? '#ccc' : 'linear-gradient(135deg, #000 0%, #181a1b 100%)'};
+    transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-3px)'};
+    box-shadow: ${({ disabled }) => disabled ? '0 4px 12px rgba(0,0,0,0.15)' : '0 12px 32px rgba(0,0,0,0.25)'};
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
     transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-1px)'};
+    box-shadow: ${({ disabled }) => disabled ? '0 4px 12px rgba(0,0,0,0.15)' : '0 6px 16px rgba(0,0,0,0.2)'};
   }
 `;
 
@@ -147,33 +119,57 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  border: 1px solid #e5e5e5;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  }
 `;
 
 const StatTitle = styled.div`
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 0.8rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
 const StatValue = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   color: #181a1b;
+  letter-spacing: -0.02em;
 `;
 
 const StatSubtitle = styled.div`
-  font-size: 0.85rem;
-  color: #888;
-  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  opacity: 0.8;
 `;
 
 const Filters = styled.div`
@@ -184,18 +180,21 @@ const Filters = styled.div`
 `;
 
 const FilterButton = styled.button<{ active?: boolean }>`
-  background: ${({ active }) => active ? '#181a1b' : '#fff'};
+  background: ${({ active }) => active ? 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)'};
   color: ${({ active }) => active ? '#fff' : '#181a1b'};
-  border: 2px solid #181a1b;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border: 2px solid ${({ active }) => active ? '#181a1b' : '#e5e5e5'};
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   
   &:hover {
-    background: ${({ active }) => active ? '#000' : '#f8f9fa'};
+    background: ${({ active }) => active ? 'linear-gradient(135deg, #000 0%, #181a1b 100%)' : 'linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%)'};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   }
 `;
 
@@ -206,17 +205,33 @@ const PlansGrid = styled.div`
 `;
 
 const PlanCard = styled.div`
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  border: 1px solid #e5e5e5;
-  transition: all 0.2s;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+  }
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
   }
 `;
 
@@ -224,25 +239,26 @@ const PlanHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 `;
 
 const PlanTitle = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #181a1b;
   margin: 0;
   line-height: 1.3;
+  letter-spacing: -0.02em;
 `;
 
 const PlanStatus = styled.div<{ status: string }>`
   background: ${({ status }) => {
     switch (status) {
-      case 'active': return '#e8f5e8';
-      case 'draft': return '#fff3cd';
-      case 'archived': return '#f8d7da';
-      case 'validated': return '#d1ecf1';
-      default: return '#e9ecef';
+      case 'active': return 'linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%)';
+      case 'draft': return 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)';
+      case 'archived': return 'linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)';
+      case 'validated': return 'linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)';
+      default: return 'linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)';
     }
   }};
   color: ${({ status }) => {
@@ -254,18 +270,19 @@ const PlanStatus = styled.div<{ status: string }>`
       default: return '#6c757d';
     }
   }};
-  padding: 0.3rem 0.8rem;
+  padding: 0.4rem 1rem;
   border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   text-transform: capitalize;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 `;
 
 const PlanSummary = styled.p`
-  color: #666;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -276,40 +293,44 @@ const PlanMeta = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: #888;
+  margin-bottom: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
-  height: 6px;
-  background: #e5e5e5;
-  border-radius: 3px;
+  height: 8px;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e5e5e5 100%);
+  border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 `;
 
 const ProgressFill = styled.div<{ percent: number }>`
   height: 100%;
-  background: linear-gradient(90deg, #181a1b 0%, #444 100%);
+  background: linear-gradient(90deg, #181a1b 0%, #4a4a4a 100%);
   width: ${({ percent }) => percent}%;
-  transition: width 0.3s ease;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
 `;
 
 const PlanActions = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
+  margin-top: 1.5rem;
 `;
 
 const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   background: ${({ variant }) => {
     switch (variant) {
-      case 'primary': return '#181a1b';
-      case 'secondary': return '#fff';
-      case 'danger': return '#dc3545';
-      default: return '#f8f9fa';
+      case 'primary': return 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)';
+      case 'secondary': return 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)';
+      case 'danger': return 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+      default: return 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
     }
   }};
   color: ${({ variant }) => {
@@ -320,26 +341,49 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'danger
       default: return '#666';
     }
   }};
-  border: 1px solid ${({ variant }) => {
+  border: 2px solid ${({ variant }) => {
     switch (variant) {
       case 'primary': return '#181a1b';
-      case 'secondary': return '#181a1b';
+      case 'secondary': return '#e5e5e5';
       case 'danger': return '#dc3545';
       default: return '#e5e5e5';
     }
   }};
-  border-radius: 6px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8rem;
-  font-weight: 500;
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  transition: all 0.2s;
+  gap: 0.4rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
+  }
   
   &:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 `;
@@ -347,20 +391,28 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'danger
 const EmptyState = styled.div`
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--text-secondary);
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
 `;
 
 const EmptyIcon = styled.div`
   font-size: 4rem;
-  color: #ccc;
-  margin-bottom: 1rem;
+  color: #e5e5e5;
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
 `;
 
 const EmptyTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: #181a1b;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
 `;
 
 const EmptyText = styled.p`
@@ -617,25 +669,6 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
 
   return (
     <>
-      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/app')} />
-      <TopBar>
-        {user && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-            {user.profilePic ? (
-              <TopBarAvatarImg src={user.profilePic} alt="Profile" onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} />
-            ) : user.email ? (
-              <TopBarAvatar onClick={() => setAppState && setAppState(prev => ({ ...prev, stepBeforeAuth: 'dashboard', currentStep: 'profile' }))} >
-                {user.email.split('@')[0].split(/[._-]/).map(part => part[0]?.toUpperCase()).join('').slice(0, 2) || 'U'}
-              </TopBarAvatar>
-            ) : null}
-            <PlanBadge>
-              {!user?.isSubscribed
-                ? PLAN_DISPLAY_NAMES['free']
-                : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-            </PlanBadge>
-          </div>
-        )}
-      </TopBar>
       <Container>
         <Header>
           <Title>Business Ideas</Title>

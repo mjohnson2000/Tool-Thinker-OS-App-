@@ -29,6 +29,7 @@ const GlobalStyle = createGlobalStyle`
 const Page = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, ${colors.white} 0%, ${colors.lightGrey} 100%);
+  padding-bottom: 200px;
 `;
 
 // Animations
@@ -48,6 +49,21 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `;
 
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+`;
+
+const floatSlow = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+`;
+
+const floatFast = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+`;
+
 const glassyBgAnim = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -55,9 +71,9 @@ const glassyBgAnim = keyframes`
 `;
 
 const Hero = styled.section`
-  /* Success theme: Person celebrating success with money/achievement */
-  background: linear-gradient(135deg, rgba(24,26,27,0.7) 0%, rgba(24,26,27,0.6) 100%), 
-              url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=600&fit=crop&crop=center') center/cover;
+  /* Success theme: Woman with money - financial success */
+  background: linear-gradient(135deg, rgba(24,26,27,0.5) 0%, rgba(24,26,27,0.4) 100%), 
+              url('/src/assets/money-woman.jpg') center/cover;
   
   /* Alternative side hustle options (uncomment to use):
   background: linear-gradient(135deg, rgba(24,26,27,0.9) 0%, rgba(24,26,27,0.8) 100%), 
@@ -116,10 +132,10 @@ const LogoImg = styled.img`
 const Tagline = styled.h1`
   font-size: 2.8rem;
   font-weight: 800;
-  margin: 0 0 1.2rem 0;
+  margin: 0 0 -1rem 0;
   letter-spacing: -1px;
   color: ${colors.white};
-  animation: ${fadeInUp} 1.2s 0.2s both;
+  animation: ${fadeInUp} 1.2s 0.2s both, ${floatSlow} 3s ease-in-out infinite;
 `;
 
 const SubTagline = styled.h2`
@@ -131,11 +147,14 @@ const SubTagline = styled.h2`
 `;
 
 const HeroText = styled.p`
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
   max-width: 540px;
   margin: 0 auto 2.5rem auto;
   color: ${colors.lightGrey};
   animation: ${fadeInUp} 1.2s 0.4s both;
+  font-style: italic;
+  line-height: 1.6;
 `;
 
 const CTAButton = styled.button`
@@ -151,7 +170,7 @@ const CTAButton = styled.button`
   box-shadow: 0 2px 16px rgba(24,26,27,0.10);
   transition: background 0.2s, color 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1);
   backdrop-filter: blur(8px);
-  animation: ${fadeInUp} 1.2s 0.5s both;
+  animation: ${fadeInUp} 1.2s 0.5s both, ${float} 4s ease-in-out infinite;
   will-change: transform;
   &:hover, &:focus {
     background: ${colors.lightGrey};
@@ -185,57 +204,113 @@ const GlassSection = styled.section`
 
 const SocialProofSection = styled.section`
   position: relative;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  padding: 4rem 1.5rem 4rem 1.5rem;
+  background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+  padding: 5rem 2rem;
   text-align: center;
   overflow: hidden;
-  margin-top: -2rem;
+  margin: 4rem 0;
   z-index: 1;
-  border-radius: 24px 24px 0 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+  }
 `;
 
 const SocialProofText = styled.div`
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #181a1b 0%, #44474f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 3rem;
-  letter-spacing: 0.01em;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #181a1b;
+  margin-bottom: 4rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  animation: slideRightToLeft 12s linear infinite;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #181a1b, transparent);
+    border-radius: 2px;
+  }
+  
+  @keyframes slideRightToLeft {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
 `;
 
 const SocialLogos = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  max-width: 1400px;
   margin: 0 auto;
 `;
 
 const SocialLogo = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   font-weight: 600;
-  color: #23272f;
+  color: #333;
   letter-spacing: 0.01em;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #e0e0e0, #f0f0f0, #e0e0e0);
+  }
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    border-color: #007bff;
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    border-color: #999;
+    
+    &::before {
+      background: linear-gradient(90deg, #999, #666, #999);
+    }
+  }
+  
+  &:nth-child(odd) {
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+  
+  &:nth-child(even) {
+    animation: fadeInUp 0.8s ease-out 0.4s both;
   }
 `;
 
@@ -464,6 +539,22 @@ const FooterLink = styled.a`
   }
 `;
 
+const FooterMoneyImage = styled.img`
+  width: 200px;
+  height: auto;
+  border-radius: 8px;
+  margin: 0 auto 1.5rem auto;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+  filter: grayscale(20%) brightness(1.1) contrast(1.2);
+  mix-blend-mode: multiply;
+  display: block;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
 // Add new styled-components for the interactive demo and walkthrough section
 const DemoSection = styled.section`
   display: flex;
@@ -501,13 +592,14 @@ const DemoTitle = styled.h3`
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 1.2rem;
+  text-align: center;
 `;
 
 const DemoInput = styled.textarea`
   border: 1.5px solid ${colors.lightGrey};
   border-radius: 10px;
   padding: 0.9rem 1rem;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   min-height: 60px;
   resize: none;
   margin-bottom: 1rem;
@@ -679,12 +771,31 @@ const BeforeAfterImage = styled(PlaceholderImage)`
 const ComparisonVisual = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  height: 300px;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
+  gap: 2rem;
+  height: 380px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-radius: 16px;
+  padding: 2rem;
   color: white;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+  }
 `;
 
 const ComparisonSide = styled.div`
@@ -693,28 +804,85 @@ const ComparisonSide = styled.div`
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 1rem;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  
+  &:hover {
+    background: rgba(255,255,255,0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+  }
 `;
 
 const VisualComparisonTitle = styled.h3`
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  margin: 0 0 1.2rem 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  }
 `;
 
 const VisualComparisonList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.6;
+  width: 100%;
 `;
 
 const VisualComparisonItem = styled.li`
-  margin: 0.5rem 0;
-  opacity: 0.8;
+  margin: 0.8rem 0;
+  opacity: 0.9;
+  padding: 0.5rem 0;
+  position: relative;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+  
+  &::before {
+    content: '→';
+    position: absolute;
+    left: -20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
 `;
 
 const ProcessStep = styled.div`
@@ -829,14 +997,74 @@ const ChartBar = styled.div<{ height: number; color: string }>`
 
 // Profile Images - Using realistic placeholder images
 const ProfileImage = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  margin: 0 auto 1rem auto;
+  margin: 0 auto 1.5rem auto;
   display: block;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+`;
+
+const SuccessStoriesTitle = styled.h2`
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #181a1b;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #181a1b, transparent);
+    border-radius: 2px;
+  }
+`;
+
+const SuccessStoriesSubtitle = styled.p`
+  font-size: 1.3rem;
+  text-align: center;
+  color: #666;
+  margin-bottom: 4rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+`;
+
+const SuccessStoriesHeader = styled.div`
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #e0e0e0, #f0f0f0, #e0e0e0);
+    border-radius: 20px 20px 0 0;
+  }
 `;
 
 const WebLandingPage: React.FC = () => {
@@ -881,44 +1109,52 @@ const WebLandingPage: React.FC = () => {
           <HeroGlassyBg />
           <HeroContent>
             <LogoImg src={logoImg} alt="Tool Thinker Logo" />
-            <Tagline>Stop Guessing, Start Earning</Tagline>
-            <SubTagline>AI-Powered Side Hustle Ideas That Actually Work</SubTagline>
-            <HeroText>
-              Tired of generic "start a blog" advice? Get personalized side hustle ideas based on your location, skills, and schedule. Our AI analyzes your local market to suggest profitable opportunities you can start this weekend.
-            </HeroText>
+            <Tagline>Need Extra Money?</Tagline>
+                          <SubTagline>Get financial stability, security, and freedom</SubTagline>
+                                  <HeroText>
+          Discover personalized <strong>SIDE HUSTLE IDEAS</strong> tailored to your location, skills, and schedule.
+        </HeroText>
             <CTAButton onClick={handleStartForFree}>Start for Free</CTAButton>
             <SecondaryButton onClick={handleSeeHowItWorks}>See How It Works</SecondaryButton>
           </HeroContent>
-        </Hero>
+                </Hero>
         
         {/* Hero Visual - Moved below */}
         <ComparisonVisual style={{ marginTop: '-2rem', marginBottom: '2rem' }}>
           <ComparisonSide>
-            <VisualComparisonTitle>❌ Generic Advice</VisualComparisonTitle>
+            <VisualComparisonTitle>✗ Generic Advice</VisualComparisonTitle>
             <VisualComparisonList>
-              <VisualComparisonItem>• "Start a blog"</VisualComparisonItem>
-              <VisualComparisonItem>• "Become a freelancer"</VisualComparisonItem>
-              <VisualComparisonItem>• "Start dropshipping"</VisualComparisonItem>
-              <VisualComparisonItem>• Vague promises</VisualComparisonItem>
+              <VisualComparisonItem>"Start a blog" (everyone says this)</VisualComparisonItem>
+              <VisualComparisonItem>"Become a freelancer" (how?)</VisualComparisonItem>
+              <VisualComparisonItem>"Start dropshipping" (where?)</VisualComparisonItem>
+              <VisualComparisonItem>Vague promises, no specifics</VisualComparisonItem>
             </VisualComparisonList>
           </ComparisonSide>
           <ComparisonSide>
-            <VisualComparisonTitle>✅ Tool Thinker</VisualComparisonTitle>
+            <VisualComparisonTitle>✓ Tool Thinker Results</VisualComparisonTitle>
             <VisualComparisonList>
-              <VisualComparisonItem>• Pet sitting in Austin: $1,200/month</VisualComparisonItem>
-              <VisualComparisonItem>• Social media for restaurants: $1,500/month</VisualComparisonItem>
-              <VisualComparisonItem>• Tutoring students: $800/month</VisualComparisonItem>
-              <VisualComparisonItem>• Real local opportunities</VisualComparisonItem>
+              <VisualComparisonItem>Pet sitting in Austin: $1,200/month</VisualComparisonItem>
+              <VisualComparisonItem>Social media for restaurants: $1,500/month</VisualComparisonItem>
+              <VisualComparisonItem>Tutoring students: $800/month</VisualComparisonItem>
+              <VisualComparisonItem>Real local opportunities with specific income</VisualComparisonItem>
             </VisualComparisonList>
           </ComparisonSide>
         </ComparisonVisual>
 
         {/* Social Proof */}
         <SocialProofSection>
+          <SuccessStoriesHeader>
+            <SuccessStoriesTitle>
+              Success Stories
+            </SuccessStoriesTitle>
+            <SuccessStoriesSubtitle>
+              Real people, real results
+            </SuccessStoriesSubtitle>
+          </SuccessStoriesHeader>
           <SocialProofText>Join 2,000+ side hustlers who found their perfect opportunity</SocialProofText>
                       <SocialLogos>
                           <SocialLogo>
-              <ProfileImage src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
+              <ProfileImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
               <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Sarah M.</div>
               <div style={{ color: '#666', marginBottom: '1rem' }}>Pet Sitting</div>
               <IncomeChart>
@@ -942,7 +1178,7 @@ const WebLandingPage: React.FC = () => {
               </IncomeChart>
             </SocialLogo>
             <SocialLogo>
-              <ProfileImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face" alt="David R" />
+              <ProfileImage src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=face" alt="David R" />
               <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>David R.</div>
               <div style={{ color: '#666', marginBottom: '1rem' }}>Tutoring</div>
               <IncomeChart>
@@ -957,7 +1193,7 @@ const WebLandingPage: React.FC = () => {
           <DemoWidget>
             <DemoTitle>See How It Works in 30 Seconds</DemoTitle>
             <DemoInput
-              placeholder="What are you good at? How much time do you have? (e.g. 'I'm good at writing, live in Austin, have 2 hours a day, want $500/month')"
+              placeholder="e.g. 'I'm good at writing, live in Austin, have 2 hours a day, want $500/month'"
               value={demoInput}
               onChange={e => setDemoInput(e.target.value)}
               rows={3}
@@ -980,34 +1216,7 @@ const WebLandingPage: React.FC = () => {
           </Walkthrough>
         </DemoSection>
 
-        {/* Before/After Comparison */}
-        <GlassSection>
-          <h2>Generic Advice vs. Tool Thinker Results</h2>
-          <BeforeAfterContainer>
-            <BeforeAfterCard>
-              <BeforeAfterTitle>❌ Generic Advice</BeforeAfterTitle>
-              <BeforeAfterVisual>
-                <BeforeAfterIcon style={{ background: '#dc3545' }}>❌</BeforeAfterIcon>
-                <BeforeAfterText>
-                  "Start a blog and monetize it"<br/>
-                  "Become a freelancer"<br/>
-                  "Start dropshipping"
-                </BeforeAfterText>
-              </BeforeAfterVisual>
-            </BeforeAfterCard>
-            <BeforeAfterCard>
-              <BeforeAfterTitle>✅ Tool Thinker Results</BeforeAfterTitle>
-              <BeforeAfterVisual>
-                <BeforeAfterIcon style={{ background: '#28a745' }}>✅</BeforeAfterIcon>
-                <BeforeAfterText>
-                  "Pet sitting in Austin: $1,200/month"<br/>
-                  "Social media for restaurants: $1,500/month"<br/>
-                  "Tutoring students: $800/month"
-                </BeforeAfterText>
-              </BeforeAfterVisual>
-            </BeforeAfterCard>
-          </BeforeAfterContainer>
-        </GlassSection>
+
 
         {/* How It Works */}
         <HowItWorks ref={howItWorksRef}>
@@ -1030,30 +1239,7 @@ const WebLandingPage: React.FC = () => {
             </Step>
           </Steps>
           
-          {/* Process Visualization */}
-          <ImageGrid>
-            <ProcessStep>
-              <StepIcon>📍</StepIcon>
-              <VisualStepTitle>Enter Your Details</VisualStepTitle>
-              <StepDescription>
-                Tell us your location, skills, and schedule. We analyze your local market for opportunities.
-              </StepDescription>
-            </ProcessStep>
-            <ProcessStep>
-              <StepIcon>🤖</StepIcon>
-              <VisualStepTitle>AI Analysis</VisualStepTitle>
-              <StepDescription>
-                Our AI finds real opportunities in your area that match your skills and schedule.
-              </StepDescription>
-            </ProcessStep>
-            <ProcessStep>
-              <StepIcon>💡</StepIcon>
-              <VisualStepTitle>Get Results</VisualStepTitle>
-              <StepDescription>
-                Receive specific business ideas with real income potential and customer problems to solve.
-              </StepDescription>
-            </ProcessStep>
-          </ImageGrid>
+
         </HowItWorks>
 
         {/* Benefits */}
@@ -1061,64 +1247,33 @@ const WebLandingPage: React.FC = () => {
           <h2>Why Tool Thinker Works When Other Methods Fail</h2>
           <BenefitsList>
             <Benefit>
-              <IconContainer>🚫</IconContainer>
               <Check>✓</Check>No more generic "start a blog" advice
             </Benefit>
             <Benefit>
-              <IconContainer>📍</IconContainer>
               <Check>✓</Check>Ideas that actually exist in your area
             </Benefit>
             <Benefit>
-              <IconContainer>💰</IconContainer>
               <Check>✓</Check>Realistic income expectations
             </Benefit>
             <Benefit>
-              <IconContainer>🎯</IconContainer>
               <Check>✓</Check>Start with skills you already have
             </Benefit>
             <Benefit>
-              <IconContainer>⏰</IconContainer>
               <Check>✓</Check>No quitting your day job required
             </Benefit>
             <Benefit>
-              <IconContainer>🔍</IconContainer>
               <Check>✓</Check>Specific customer problems to solve
             </Benefit>
             <Benefit>
-              <IconContainer>🚀</IconContainer>
               <Check>✓</Check>Ready-to-implement solutions
             </Benefit>
             <Benefit>
-              <IconContainer>✅</IconContainer>
               <Check>✓</Check>Local market validation built-in
             </Benefit>
           </BenefitsList>
         </Benefits>
 
-        {/* Comparison */}
-        <Comparison>
-          <h2>Tool Thinker vs. Generic Side Hustle Advice</h2>
-          <ComparisonTable>
-            <ComparisonCol>
-              <ComparisonTitle>Tool Thinker</ComparisonTitle>
-              <ComparisonList>
-                <ComparisonItem>Personalized to your location & skills</ComparisonItem>
-                <ComparisonItem>Realistic income expectations</ComparisonItem>
-                <ComparisonItem>Specific customer problems to solve</ComparisonItem>
-                <ComparisonItem>Ready-to-implement solutions</ComparisonItem>
-              </ComparisonList>
-            </ComparisonCol>
-            <ComparisonCol>
-              <ComparisonTitle>Generic Advice</ComparisonTitle>
-              <ComparisonList>
-                <ComparisonItem>"Start a blog" (everyone says this)</ComparisonItem>
-                <ComparisonItem>Unrealistic income promises</ComparisonItem>
-                <ComparisonItem>Vague "find a problem" advice</ComparisonItem>
-                <ComparisonItem>No specific next steps</ComparisonItem>
-              </ComparisonList>
-            </ComparisonCol>
-          </ComparisonTable>
-        </Comparison>
+
 
         {/* Video Section */}
         <VideoSection>
@@ -1132,7 +1287,7 @@ const WebLandingPage: React.FC = () => {
           <h2>Real Results from Real Side Hustlers</h2>
           <TestimonialList>
             <Testimonial>
-              <ProfileImage src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
+              <ProfileImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=face" alt="Sarah M" />
               "Finally! No more 'start a blog' advice. Tool Thinker found me a pet-sitting business that makes $1,200/month in my neighborhood."
               <TestimonialName>— Sarah, Office Manager</TestimonialName>
             </Testimonial>
@@ -1149,16 +1304,7 @@ const WebLandingPage: React.FC = () => {
           </TestimonialList>
         </Testimonials>
 
-        {/* Footer */}
-        <Footer>
-          <div>© {new Date().getFullYear()} Tool Thinker. All rights reserved.</div>
-          <FooterLinks>
-            <FooterLink href="#">About</FooterLink>
-            <FooterLink href="#">Blog</FooterLink>
-            <FooterLink href="#">Contact</FooterLink>
-            <FooterLink href="#">Privacy</FooterLink>
-          </FooterLinks>
-        </Footer>
+
       </Page>
     </>
   );

@@ -351,7 +351,8 @@ export default function StartupPlanViewPage() {
       setRawPlan(updated);
       setEditMode(false);
     } catch (err) {
-      alert('Failed to save changes.');
+              // TODO: Replace with custom error notification
+        console.error('Failed to save changes.');
     } finally {
       setSaving(false);
     }
@@ -392,7 +393,8 @@ export default function StartupPlanViewPage() {
       setPlan(prev => prev ? { ...prev, marketEvaluation: { ...prev.marketEvaluation, score: result.totalScore } } : prev);
       setEvaluationResult(result);
     } catch (err) {
-      alert('Failed to evaluate plan.');
+              // TODO: Replace with custom error notification
+        console.error('Failed to evaluate plan.');
     } finally {
       setEvaluating(false);
     }

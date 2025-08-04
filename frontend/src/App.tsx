@@ -52,6 +52,7 @@ import AdminLogsPage from './components/business-plan/AdminLogsPage';
 import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
 import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
 import { trackPageView, trackEvent } from './utils/analytics';
+import { ErrorNotification } from './components/common/ErrorNotification';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -74,8 +75,24 @@ const Footer = styled.footer`
   position: fixed;
   left: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 1000;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+  backdrop-filter: blur(8px);
+`;
+
+const FooterMoneyImage = styled.img`
+  width: 150px;
+  height: auto;
+  border-radius: 6px;
+  margin: 0 auto 0.8rem auto;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+  filter: grayscale(30%) brightness(1.2) contrast(1.3);
+  display: block;
+  
+  &:hover {
+    opacity: 0.5;
+  }
 `;
 
 const NavBar = styled.div`
@@ -96,20 +113,53 @@ const Logo = styled.img`
   cursor: pointer;
   user-select: none;
   z-index: 1101;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+  
+  &:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  }
+  
+  @media (max-width: 768px) {
+    height: 70px;
+    width: 70px;
+    top: 20px;
+    left: 20px;
+  }
 `;
 
 const NavButton = styled.button`
-  background: none;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
   border: none;
-  color: var(--primary-color);
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: background 0.2s;
-  &:hover, &:focus {
-    background: #e6f0ff;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(24, 26, 27, 0.2);
+  letter-spacing: 0.02em;
+  
+  &:hover {
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(24, 26, 27, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0px);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -121,32 +171,88 @@ const TopBar = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 1.1rem 2.7rem 0 0;
+  padding: 1.5rem 2.5rem;
   z-index: 1000;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @media (max-width: 768px) {
+    padding: 1rem 1.5rem;
+  }
 `;
 
 const TopBarRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 1.1rem;
+  gap: 1.2rem;
+  padding: 0.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    padding: 0.4rem;
+  }
 `;
 
 const AvatarButton = styled.button`
-  background: none;
-  border: none;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   padding: 0;
-  margin-left: 1rem;
-  margin-top: 0rem;
+  margin-left: 0;
   cursor: pointer;
   border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: visible;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+  }
+  
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
   }
 `;
 
@@ -160,99 +266,210 @@ const AvatarImg = styled.img`
 `;
 
 const LoginButton = styled.button`
-  background: #fff;
-  color: #222;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 999px;
-  padding: 0.5rem 1.5rem;
-  font-size: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #181a1b;
+  border: 2px solid rgba(24, 26, 27, 0.15);
+  border-radius: 12px;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  margin-left: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: background 0.2s, color 0.2s, border 0.2s;
+  margin-left: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+  
   &:hover {
-    background: #ededed;
-    border-color: #181a1b;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-color: rgba(24, 26, 27, 0.25);
     color: #181a1b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
 const SignupFreeButton = styled.button`
-  background: #000;
-  color: #fff;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
   border: none;
-  border-radius: 999px;
-  padding: 0.5rem 1.5rem;
-  font-size: 1rem;
+  border-radius: 12px;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   margin-left: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 4px 12px rgba(24, 26, 27, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+  
   &:hover {
-    background: #222;
-    color: #fff;
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(24, 26, 27, 0.3);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
-const ToggleTrackerButton = styled.button`
-  background: #f5f5f7;
-  color: #007aff;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
+const SidebarToggle = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #181a1b;
+  border: 2px solid #e9ecef;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  transition: background 0.2s, color 0.2s;
-  &:hover, &:focus {
-    background: #e6f0ff;
-    color: #0056b3;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  z-index: 10;
+  
+  &:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-color: #d1d5db;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1);
+  }
+  
+  @media (max-width: 1024px) {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1001;
+  }
+`;
+
+const FloatingToggle = styled.button`
+  position: fixed;
+  top: 300px;
+  left: 1rem;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
+  border: 2px solid #181a1b;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(24, 26, 27, 0.25);
+  z-index: 1000;
+  font-size: 1.2rem;
+  font-weight: 600;
+  
+  &:hover {
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(24, 26, 27, 0.35);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
+  }
+  
+  @media (max-width: 1024px) {
+    top: 280px;
+    left: 1rem;
+    z-index: 1002;
+  }
+`;
+
+const MobileOverlay = styled.div<{ $isVisible: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: ${({ $isVisible }) => $isVisible ? '1' : '0'};
+  visibility: ${({ $isVisible }) => $isVisible ? 'visible' : 'hidden'};
+  transition: all 0.3s ease;
+  
+  @media (min-width: 1025px) {
+    display: none;
   }
 `;
 
 const TopBarAvatar = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: #007aff22;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
-  color: #007aff;
+  color: #ffffff;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
 `;
 
 const TopBarAvatarImg = styled.img`
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
   background: #e5e5e5;
-  margin-top: 1.3rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const PlanBadge = styled.div`
-  margin-top: -0.2rem;
-  background: #f3f4f6;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #181a1b;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1.5px solid #181a1b;
-  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 2px solid rgba(24, 26, 27, 0.2);
+  padding: 0.3rem 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  min-height: 22px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  letter-spacing: 0.01em;
+  min-width: 52px;
+  min-height: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  letter-spacing: 0.02em;
   user-select: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-color: rgba(24, 26, 27, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
 `;
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
@@ -265,9 +482,34 @@ const PageLayout = styled.div`
   display: flex;
   width: 100%;
   max-width: 1400px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 6rem auto 2rem auto;
+  padding: 0 2rem 200px 2rem;
   gap: 3rem;
+  position: relative;
+  overflow-x: hidden;
+  
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(24, 26, 27, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(24, 26, 27, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(24, 26, 27, 0.01) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: parallax 20s ease-in-out infinite;
+  }
+  
+  @keyframes parallax {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    25% { transform: translateY(-10px) translateX(5px); }
+    50% { transform: translateY(-5px) translateX(-5px); }
+    75% { transform: translateY(10px) translateX(3px); }
+  }
 `;
 
 const MainContent = styled.main<{ isExpanded: boolean }>`
@@ -275,11 +517,29 @@ const MainContent = styled.main<{ isExpanded: boolean }>`
   transition: flex 0.3s ease-in-out;
 `;
 
-const Sidebar = styled.aside`
-  flex: 1;
+const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
+  flex: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
   position: sticky;
-  top: 120px;
+  top: 158px;
   height: fit-content;
+  margin-right: ${({ $isCollapsed }) => $isCollapsed ? '0' : '2rem'};
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  min-width: ${({ $isCollapsed }) => $isCollapsed ? '0' : '250px'};
+  max-width: ${({ $isCollapsed }) => $isCollapsed ? '0' : '300px'};
+  
+  @media (max-width: 1024px) {
+    position: fixed;
+    left: ${({ $isCollapsed }) => $isCollapsed ? '-100%' : '0'};
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    margin-right: 0;
+    min-width: 280px;
+    max-width: 320px;
+  }
 `;
 
 const steps = [
@@ -328,7 +588,7 @@ interface AppState {
   solutionDescription: string | null;
   solution: SolutionOption | null;
   competitionDescription: string | null;
-  isTrackerVisible: boolean;
+  isTrackerCollapsed: boolean;
   stepBeforeAuth: Step | null;
 }
 
@@ -350,7 +610,7 @@ const initialAppState: AppState = {
   solutionDescription: null,
   solution: null,
   competitionDescription: null,
-  isTrackerVisible: true,
+  isTrackerCollapsed: false,
   stepBeforeAuth: null,
 };
 
@@ -376,6 +636,29 @@ function AppContent() {
       return initialAppState;
     }
   });
+
+  // Error notification state
+  const [errorNotification, setErrorNotification] = useState<{
+    isVisible: boolean;
+    message: string;
+    type: 'error' | 'warning' | 'info';
+  }>({
+    isVisible: false,
+    message: '',
+    type: 'error'
+  });
+
+  const showError = (message: string, type: 'error' | 'warning' | 'info' = 'error') => {
+    setErrorNotification({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const hideError = () => {
+    setErrorNotification(prev => ({ ...prev, isVisible: false }));
+  };
 
   useEffect(() => {
     console.log('Saving appState to localStorage:', appState);
@@ -448,7 +731,7 @@ function AppContent() {
 
   const { 
     currentStep, entryPoint, idea, ideaType, location: userLocation, skillAssessment, scheduleGoals, customer, job, problemDescription, 
-    solutionDescription, solution, competitionDescription, isTrackerVisible, stepBeforeAuth 
+    solutionDescription, solution, competitionDescription, isTrackerCollapsed, stepBeforeAuth 
   } = appState;
 
   console.log('AppContent state:', {
@@ -558,7 +841,7 @@ function AppContent() {
   function handleRestart() {
     setAppState(prev => ({
       ...initialAppState,
-      isTrackerVisible: prev.isTrackerVisible
+      isTrackerCollapsed: prev.isTrackerCollapsed
     }));
   }
 
@@ -654,7 +937,7 @@ function AppContent() {
       {currentStep === 'profile' && (
         <Profile 
           setAppState={setAppState} 
-          isTrackerVisible={appState.isTrackerVisible}
+          isTrackerCollapsed={appState.isTrackerCollapsed}
           onClose={() => setAppState(prev => ({ ...prev, currentStep: prev.stepBeforeAuth || 'landing' }))}
         />
       )}
@@ -663,7 +946,7 @@ function AppContent() {
         <Route path="/app" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
             <TopBar>
@@ -688,10 +971,10 @@ function AppContent() {
                     }}>
                     My Business Ideas
                   </NavButton>
-                  <AvatarButton onClick={() => {
-                    setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
-                  }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <AvatarButton onClick={() => {
+                      setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
+                    }} aria-label="Profile">
                       {user && user.profilePic ? (
                         <TopBarAvatarImg src={user.profilePic} alt="Profile" />
                       ) : user && user.email ? (
@@ -706,15 +989,15 @@ function AppContent() {
                       ) : (
                         <AvatarImg src={defaultAvatar} alt="Avatar" />
                       )}
-                      {user && location.pathname !== '/' && (
-                        <PlanBadge>
-                          {!user?.isSubscribed
-                            ? PLAN_DISPLAY_NAMES['free']
-                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                        </PlanBadge>
-                      )}
-                    </div>
-                  </AvatarButton>
+                    </AvatarButton>
+                    {user && location.pathname !== '/' && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
                 </TopBarRight>
               )}
             </TopBar>
@@ -727,7 +1010,7 @@ function AppContent() {
                       await login(email, password);
                       setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
                     } catch (err: any) {
-                      alert(err.message || 'Failed to log in. Please try again.');
+                      showError(err.message || 'Failed to log in. Please try again.');
                     }
                   }}
                   onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
@@ -743,7 +1026,7 @@ function AppContent() {
                       await signup(email, password);
                       setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
                     } catch (err: any) {
-                      alert(err.message || 'Failed to sign up. Please try again.');
+                      showError(err.message || 'Failed to sign up. Please try again.');
                     }
                   }}
                   onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
@@ -754,36 +1037,38 @@ function AppContent() {
             {!['login', 'signup'].includes(currentStep) && (
               isFlowStep ? (
                 <PageLayout>
-                  {isTrackerVisible && (
-                    <Sidebar>
-                        <ProgressTracker 
-                          steps={
-                            entryPoint === 'idea'
-                              ? steps
-                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                          }
-                          currentStepKey={currentStep}
-                          onStepClick={handleStepClick}
-                          isSubscribed={user?.isSubscribed}
-                        />
-                        <ToggleTrackerButton 
-                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
-                          style={{ color: '#222' }}
-                        >
-                          Hide Tracker
-                        </ToggleTrackerButton>
-                    </Sidebar>
+                  <Sidebar $isCollapsed={isTrackerCollapsed}>
+                    <ProgressTracker 
+                      steps={
+                        entryPoint === 'idea'
+                          ? steps
+                          : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                      }
+                      currentStepKey={currentStep}
+                      onStepClick={handleStepClick}
+                      isSubscribed={user?.isSubscribed}
+                    />
+                    <SidebarToggle 
+                      onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: !prev.isTrackerCollapsed}))}
+                      aria-label={isTrackerCollapsed ? "Show tracker" : "Hide tracker"}
+                    >
+                      {isTrackerCollapsed ? '→' : '←'}
+                    </SidebarToggle>
+                  </Sidebar>
+                  <MobileOverlay 
+                    $isVisible={!isTrackerCollapsed} 
+                    onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: true}))}
+                  />
+                  {isTrackerCollapsed && (
+                    <FloatingToggle
+                      onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: false}))}
+                      aria-label="Show tracker"
+                    >
+                      →
+                    </FloatingToggle>
                   )}
-                  <MainContent isExpanded={!isTrackerVisible}>
+                  <MainContent isExpanded={isTrackerCollapsed}>
                     <>
-                      {!isTrackerVisible && (
-                        <ToggleTrackerButton 
-                          style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
-                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
-                        >
-                          Show Tracker
-                        </ToggleTrackerButton>
-                      )}
                       {currentStep === 'ideaType' && <IdeaTypeSelection onSelect={handleIdeaTypeSelect} />}
                       {currentStep === 'location' && <LocationSelection onSelect={handleLocationSelect} ideaType={ideaType} />}
                       {currentStep === 'skillAssessment' && idea.area && (
@@ -919,17 +1204,317 @@ function AppContent() {
           </AppContainer>
         } />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/next-steps-hub/:planId" element={<NextStepsHub setAppState={setAppState} currentStep={currentStep} />} />
+        <Route path="/next-steps-hub/:planId" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
+                  </NavButton>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                         <AvatarButton onClick={() => {
+                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'nextStepsHub' as Step, currentStep: 'profile' }));
+                     }} aria-label="Profile">
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                    </AvatarButton>
+                    {user && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <NextStepsHub setAppState={setAppState} currentStep={currentStep} />
+          </AppContainer>
+        } />
         <Route path="/subscribe" element={<SubscriptionPage />} />
-        <Route path="/coaches" element={<CoachMarketplace />} />
-        <Route path="/courses" element={<CourseLibrary />} />
-        <Route path="/plans" element={<StartupPlanDashboard setAppState={setAppState} />} />
-        <Route path="/startup-plan/:id/edit" element={<StartupPlanEditPage setAppState={setAppState} />} />
+        <Route path="/coaches" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
+                  </NavButton>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                         <AvatarButton onClick={() => {
+                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
+                     }} aria-label="Profile">
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                    </AvatarButton>
+                    {user && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <CoachMarketplace />
+          </AppContainer>
+        } />
+        <Route path="/courses" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
+                  </NavButton>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                         <AvatarButton onClick={() => {
+                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
+                     }} aria-label="Profile">
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                    </AvatarButton>
+                    {user && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <CourseLibrary />
+          </AppContainer>
+        } />
+        <Route path="/plans" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
+                  </NavButton>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                         <AvatarButton onClick={() => {
+                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
+                     }} aria-label="Profile">
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                    </AvatarButton>
+                    {user && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <StartupPlanDashboard setAppState={setAppState} />
+          </AppContainer>
+        } />
+        <Route path="/startup-plan/:id/edit" element={
+          <AppContainer>
+            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+              navigate('/app');
+            }} />
+            <TopBar>
+              {!isAuthenticated ? (
+                <>
+                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
+                    Log in
+                  </LoginButton>
+                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
+                    Sign up for free
+                  </SignupFreeButton>
+                </>
+              ) : (
+                <TopBarRight>
+                  <NavButton 
+                    onClick={() => window.location.href = '/plans'} 
+                    style={{
+                      background: '#000',
+                      color: '#fff',
+                      border: 'none',
+                      fontWeight: 600
+                    }}>
+                    My Business Ideas
+                  </NavButton>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                         <AvatarButton onClick={() => {
+                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
+                     }} aria-label="Profile">
+                      {user && user.profilePic ? (
+                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                      ) : user && user.email ? (
+                        <TopBarAvatar>
+                          {user.email
+                            .split('@')[0]
+                            .split(/[._-]/)
+                            .map(part => part[0]?.toUpperCase())
+                            .join('')
+                            .slice(0, 2) || 'U'}
+                        </TopBarAvatar>
+                      ) : (
+                        <AvatarImg src={defaultAvatar} alt="Avatar" />
+                      )}
+                    </AvatarButton>
+                    {user && (
+                      <PlanBadge>
+                        {!user?.isSubscribed
+                          ? PLAN_DISPLAY_NAMES['free']
+                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                      </PlanBadge>
+                    )}
+                  </div>
+                </TopBarRight>
+              )}
+            </TopBar>
+            <StartupPlanEditPage setAppState={setAppState} />
+          </AppContainer>
+        } />
         <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
         <Route path="/launch" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
             <TopBar>
@@ -985,7 +1570,7 @@ function AppContent() {
               )}
             </TopBar>
             <PageLayout>
-              <Sidebar>
+              <Sidebar $isCollapsed={false}>
                 <ProgressTracker 
                   steps={steps} 
                   currentStepKey={'launch'}
@@ -1009,7 +1594,7 @@ function AppContent() {
         <Route path="*" element={
           <AppContainer>
             <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerVisible: prev.isTrackerVisible }));
+              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
             <TopBar>
@@ -1074,7 +1659,7 @@ function AppContent() {
                       await login(email, password);
                       setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
                     } catch (err: any) {
-                      alert(err.message || 'Failed to log in. Please try again.');
+                      showError(err.message || 'Failed to log in. Please try again.');
                     }
                   }}
                   onSignup={() => setAppState(prev => ({ ...prev, currentStep: 'signup' }))}
@@ -1090,7 +1675,7 @@ function AppContent() {
                       await signup(email, password);
                       setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
                     } catch (err: any) {
-                      alert(err.message || 'Failed to sign up. Please try again.');
+                      showError(err.message || 'Failed to sign up. Please try again.');
                     }
                   }}
                   onLogin={() => setAppState(prev => ({ ...prev, currentStep: 'login' }))}
@@ -1101,36 +1686,38 @@ function AppContent() {
             {!['login', 'signup'].includes(currentStep) && (
               isFlowStep ? (
                 <PageLayout>
-                  {isTrackerVisible && (
-                    <Sidebar>
-                        <ProgressTracker 
-                          steps={
-                            entryPoint === 'idea'
-                              ? steps
-                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                          }
-                          currentStepKey={currentStep}
-                          onStepClick={handleStepClick}
-                          isSubscribed={user?.isSubscribed}
-                        />
-                        <ToggleTrackerButton 
-                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: false}))}
-                          style={{ color: '#222' }}
-                        >
-                          Hide Tracker
-                        </ToggleTrackerButton>
-                    </Sidebar>
+                  <Sidebar $isCollapsed={isTrackerCollapsed}>
+                    <ProgressTracker 
+                      steps={
+                        entryPoint === 'idea'
+                          ? steps
+                          : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                      }
+                      currentStepKey={currentStep}
+                      onStepClick={handleStepClick}
+                      isSubscribed={user?.isSubscribed}
+                    />
+                    <SidebarToggle 
+                      onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: !prev.isTrackerCollapsed}))}
+                      aria-label={isTrackerCollapsed ? "Show tracker" : "Hide tracker"}
+                    >
+                      {isTrackerCollapsed ? '→' : '←'}
+                    </SidebarToggle>
+                  </Sidebar>
+                  <MobileOverlay 
+                    $isVisible={!isTrackerCollapsed} 
+                    onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: true}))}
+                  />
+                  {isTrackerCollapsed && (
+                    <FloatingToggle
+                      onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: false}))}
+                      aria-label="Show tracker"
+                    >
+                      →
+                    </FloatingToggle>
                   )}
-                  <MainContent isExpanded={!isTrackerVisible}>
+                  <MainContent isExpanded={isTrackerCollapsed}>
                     <>
-                      {!isTrackerVisible && (
-                        <ToggleTrackerButton 
-                          style={{ marginTop: '4.5rem', width: 'auto', color: '#222' }}
-                          onClick={() => setAppState(prev => ({...prev, isTrackerVisible: true}))}
-                        >
-                          Show Tracker
-                        </ToggleTrackerButton>
-                      )}
                       {currentStep === 'idea' && <IdeaSelection onSelect={handleIdeaSelect} />}
                       {currentStep === 'customer' && <CustomerSelection onSelect={handleCustomerSelect} businessArea={idea.area} interests={entryPoint === 'idea' ? idea.interests : undefined} />}
                       {currentStep === 'job' && <JobSelection onSelect={handleJobSelect} customer={customer} interests={entryPoint === 'idea' ? idea.interests : undefined} businessArea={idea.area} />}
@@ -1241,7 +1828,20 @@ function AppContent() {
           </AppContainer>
         } />
       </Routes>
+      
+      {/* Custom Error Notification */}
+      <ErrorNotification
+        message={errorNotification.message}
+        isVisible={errorNotification.isVisible}
+        onClose={hideError}
+        type={errorNotification.type}
+      />
+      
       <Footer>
+        <FooterMoneyImage 
+          src="/src/assets/Money.jpg" 
+          alt="Financial success" 
+        />
         &copy; {new Date().getFullYear()} Tool Thinker. All rights reserved.
       </Footer>
     </>

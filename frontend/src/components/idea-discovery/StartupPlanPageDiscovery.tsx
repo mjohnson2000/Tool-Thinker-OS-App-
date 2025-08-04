@@ -6,64 +6,136 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
   max-width: 800px;
-  margin: 2rem auto;
+  margin: 0 auto;
+  padding: 2rem;
+`;
+
+const FormCard = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  width: 100%;
+  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
+  }
 `;
 
 const Title = styled.h1`
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: #222;
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
   text-align: center;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 2px;
+  }
 `;
 
 const Summary = styled.p`
   font-size: 1.15rem;
-  color: #444;
-  margin-bottom: 2.5rem;
-  background: #f5f7fa;
-  border-radius: 8px;
-  padding: 1.2rem 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  line-height: 1.6;
+  text-align: center;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const SectionCard = styled.div`
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 1.5rem 1.2rem;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  padding: 1.8rem 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  }
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #181a1b;
-  margin-bottom: 0.7rem;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  letter-spacing: -0.02em;
 `;
 
 const SectionContent = styled.p`
-  color: #333;
-  font-size: 1.05rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
   margin: 0;
+  line-height: 1.6;
 `;
 
 const ListContent = styled.ul`
-  color: #333;
-  font-size: 1.05rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
   margin: 0;
   padding-left: 1.5rem;
+  line-height: 1.6;
 `;
 
 const ListItem = styled.li`
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
 `;
 
 const Actions = styled.div`
@@ -75,21 +147,48 @@ const Actions = styled.div`
 `;
 
 const ActionButton = styled.button`
-  background: #181a1b;
-  color: #fff;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 16px;
+  padding: 1.2rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background 0.2s;
-  &:hover {
-    background: #000;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
   }
+  
+  &:hover {
+    background: linear-gradient(135deg, #000 0%, #181a1b 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+  
   &.centered {
     display: block;
     margin: 0 auto;
@@ -328,6 +427,55 @@ const GapAnalysisSubtitle = styled.h4`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #333;
+  }
+`;
+
+const CollapsibleHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f8f9fa;
+  }
+`;
+
+const CollapsibleTitle = styled.div`
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #181a1b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const CollapsibleIcon = styled.div<{ isOpen: boolean }>`
+  font-size: 1.2rem;
+  color: #666;
+  transition: transform 0.2s ease;
+  transform: rotate(${props => props.isOpen ? '180deg' : '0deg'});
+`;
+
+const CollapsibleContent = styled.div<{ isOpen: boolean }>`
+  max-height: ${props => props.isOpen ? '1000px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  opacity: ${props => props.isOpen ? '1' : '0'};
+  transform: translateY(${props => props.isOpen ? '0' : '-10px'});
+  transition: all 0.3s ease;
 `;
 
 const GapAnalysisList = styled.ul`
@@ -546,6 +694,13 @@ export function StartupPlanPageDiscovery({ context, onSignup, onLogin, isAuthent
   const [showConfetti, setShowConfetti] = useState(false);
   const [showMarketEvaluation, setShowMarketEvaluation] = useState(false);
   const prevPlanRef = useRef<StartupPlan | null>(null);
+  
+  // State for collapsible gap analysis sections
+  const [collapsedSections, setCollapsedSections] = useState({
+    skills: true,
+    resources: true,
+    operations: true
+  });
   const navigate = useNavigate();
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasSaved = useRef(false);
@@ -755,6 +910,13 @@ No extra text, just valid JSON.`;
   }, [plan]);
 
   // Function to generate comprehensive gap analysis
+  const toggleSection = (section: 'skills' | 'resources' | 'operations') => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   const generateGapAnalysis = (skillAssessment: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] }, businessPlan: any) => {
     const selectedSkillTitles = skillAssessment.skills
       .filter(skill => skillAssessment.selectedSkills.includes(skill.id))
@@ -948,8 +1110,11 @@ No extra text, just valid JSON.`;
                 return (
                   <GapAnalysisSection>
                     {/* Skills Gap */}
-                    <GapAnalysisSubsection>
-                      <GapAnalysisSubtitle>Skills Gap</GapAnalysisSubtitle>
+                    <CollapsibleHeader onClick={() => toggleSection('skills')}>
+                      <CollapsibleTitle>Skills Gap</CollapsibleTitle>
+                      <CollapsibleIcon isOpen={!collapsedSections.skills}>▼</CollapsibleIcon>
+                    </CollapsibleHeader>
+                    <CollapsibleContent isOpen={!collapsedSections.skills}>
                       {content.skills.selectedSkills.length > 0 && (
                         <div style={{ marginBottom: '1rem' }}>
                           <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Skills You Have:</div>
@@ -974,11 +1139,14 @@ No extra text, just valid JSON.`;
                           </GapAnalysisList>
                         </div>
                       )}
-                    </GapAnalysisSubsection>
+                    </CollapsibleContent>
 
                     {/* Resource Gap */}
-                    <GapAnalysisSubsection>
-                      <GapAnalysisSubtitle>Resource Gap</GapAnalysisSubtitle>
+                    <CollapsibleHeader onClick={() => toggleSection('resources')}>
+                      <CollapsibleTitle>Resource Gap</CollapsibleTitle>
+                      <CollapsibleIcon isOpen={!collapsedSections.resources}>▼</CollapsibleIcon>
+                    </CollapsibleHeader>
+                    <CollapsibleContent isOpen={!collapsedSections.resources}>
                       <div style={{ marginBottom: '1rem' }}>
                         <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Financial Resources:</div>
                         <GapAnalysisList>
@@ -1009,13 +1177,14 @@ No extra text, just valid JSON.`;
                           ))}
                         </GapAnalysisList>
                       </div>
-                    </GapAnalysisSubsection>
-
-
+                    </CollapsibleContent>
 
                     {/* Operational Gap */}
-                    <GapAnalysisSubsection>
-                      <GapAnalysisSubtitle>Operational Gap</GapAnalysisSubtitle>
+                    <CollapsibleHeader onClick={() => toggleSection('operations')}>
+                      <CollapsibleTitle>Operational Gap</CollapsibleTitle>
+                      <CollapsibleIcon isOpen={!collapsedSections.operations}>▼</CollapsibleIcon>
+                    </CollapsibleHeader>
+                    <CollapsibleContent isOpen={!collapsedSections.operations}>
                       <div style={{ marginBottom: '1rem' }}>
                         <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Processes:</div>
                         <GapAnalysisList>
@@ -1046,7 +1215,7 @@ No extra text, just valid JSON.`;
                           ))}
                         </GapAnalysisList>
                       </div>
-                    </GapAnalysisSubsection>
+                    </CollapsibleContent>
                   </GapAnalysisSection>
                 );
               })()
@@ -1086,7 +1255,7 @@ No extra text, just valid JSON.`;
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
       {newPlan && !isLoading && (
-        <>
+        <FormCard>
           <CongratsWrapper>
             {showConfetti && <Confetti numberOfPieces={180} recycle={false} style={{ pointerEvents: 'none' }} />}
             <Congrats>Congratulations!</Congrats>
@@ -1099,7 +1268,7 @@ No extra text, just valid JSON.`;
               </ActionButton>
             </Actions>
           )}
-        </>
+        </FormCard>
       )}
       {!isLoading && !newPlan && !error && (
         <CenteredText>

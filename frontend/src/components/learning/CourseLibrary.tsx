@@ -32,20 +32,7 @@ const PageBackground = styled.div`
   padding: 2rem 1rem;
 `;
 
-const TopBar = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid #e5e5e5;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 1000;
-`;
+
 
 const Container = styled.div`
   max-width: 1200px;
@@ -380,47 +367,6 @@ export function CourseLibrary() {
 
   return (
     <PageBackground>
-      <TopBar>
-        <img 
-          src={logo} 
-          alt="ToolThinker Logo" 
-          style={{ 
-            height: 60, 
-            width: 60, 
-            borderRadius: 50, 
-            cursor: 'pointer' 
-          }} 
-          onClick={() => navigate('/')} 
-        />
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => navigate('/coaches')}>Coaches</button>
-          <button onClick={() => navigate('/learning-dashboard')}>My Learning</button>
-          {user.profilePic ? (
-            <img 
-              src={user.profilePic} 
-              alt="Profile" 
-              style={{ width: 40, height: 40, borderRadius: '50%', cursor: 'pointer' }}
-            />
-          ) : (
-            <div style={{ 
-              width: 40, 
-              height: 40, 
-              borderRadius: '50%', 
-              background: '#007AFF22',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.2rem',
-              color: '#007AFF',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}>
-              {user.email?.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
-      </TopBar>
-
       <Container>
         <Header>
           <Title>Learn from the Best</Title>

@@ -41,14 +41,14 @@ const TrackerContainer = styled.div`
   }
 `;
 
-const StepItem = styled.button<{ $status: string; $isClickable: boolean }>`
+const StepItem = styled.button<{ $status: string; $isClickable: boolean; $isPremature?: boolean }>`
   background: none;
   border: none;
   outline: none;
   display: flex;
   align-items: center;
   cursor: ${({ $isClickable }) => ($isClickable ? 'pointer' : 'default')};
-  margin-bottom: 1.5rem;
+  margin-bottom: ${({ $isPremature }) => $isPremature ? '1rem' : '1.5rem'};
   padding: 0.8rem;
   width: 100%;
   border-radius: 12px;
@@ -199,9 +199,10 @@ interface ProgressTrackerProps {
   currentStepKey: string;
   onStepClick: (stepKey: string) => void;
   isSubscribed?: boolean;
+  isPremature?: boolean;
 }
 
-export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscribed = false }: ProgressTrackerProps) {
+export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscribed = false, isPremature = false }: ProgressTrackerProps) {
   const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
 
   const getStatus = (stepIndex: number) => {
@@ -227,6 +228,7 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
             <StepItem
               $status={status}
               $isClickable={isClickable}
+              $isPremature={isPremature}
               onClick={() => isClickable && onStepClick(step.key)}
               aria-current={status === 'current' ? 'step' : undefined}
               tabIndex={isClickable ? 0 : -1}

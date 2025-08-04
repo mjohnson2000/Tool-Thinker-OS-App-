@@ -126,9 +126,24 @@ interface DescribeSolutionProps {
   problemDescription: string | null;
   initialValue?: string | null;
   onClear: () => void;
+  selectedJob?: {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    problemStatement: string;
+  } | null;
+  businessContext?: {
+    idea?: string;
+    businessArea?: string;
+    interests?: string;
+    ideaType?: string;
+    location?: { city: string; region: string; country: string; operatingModel?: string } | null;
+    scheduleGoals?: { hoursPerWeek: number; incomeTarget: number } | null;
+  };
 }
 
-export function DescribeSolution({ onSubmit, problemDescription, initialValue = null, onClear }: DescribeSolutionProps) {
+export function DescribeSolution({ onSubmit, problemDescription, initialValue = null, onClear, selectedJob, businessContext }: DescribeSolutionProps) {
   const [solutionText, setSolutionText] = useState(initialValue || '');
   const [isLoading, setIsLoading] = useState(false);
   const [improvedSolution, setImprovedSolution] = useState<string | null>(null);
@@ -178,12 +193,23 @@ export function DescribeSolution({ onSubmit, problemDescription, initialValue = 
 
   return (
     <Container>
-      <Title>How will your business solve your customer's struggle?</Title>
+      <Title>
+        {selectedJob 
+          ? `How will your ${businessContext?.ideaType?.toLowerCase() || 'business'} solve the "${selectedJob.title}" problem?`
+          : businessContext?.ideaType 
+            ? `How will your ${businessContext.ideaType.toLowerCase()} business solve your customer's struggle?`
+            : 'How will your business solve your customer\'s struggle?'
+        }
+      </Title>
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         <TextArea
           value={solutionText}
           onChange={(e) => setSolutionText(e.target.value)}
-          placeholder="Describe how your product or service directly addresses the customer's struggle you identified. What makes your solution effective?"
+          placeholder={
+            selectedJob 
+              ? `Describe how your product or service solves the "${selectedJob.title}" problem: ${selectedJob.problemStatement}`
+              : "Describe how your product or service directly addresses the customer's struggle you identified. What makes your solution effective?"
+          }
         />
         <PrimaryButton type="submit" disabled={!solutionText.trim() || isLoading}>
           {isLoading ? 'Assessing...' : 'Continue'}

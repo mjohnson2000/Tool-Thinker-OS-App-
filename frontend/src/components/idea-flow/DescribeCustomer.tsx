@@ -42,7 +42,9 @@ const Container = styled.div`
 const Title = styled.h1`
   font-size: 2.4rem;
   font-weight: 800;
+  margin-top: 2rem;
   margin-bottom: 1.2rem;
+  text-align: center;
   color: var(--text-primary);
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
@@ -68,8 +70,11 @@ const Subtitle = styled.p`
   font-size: 1.15rem;
   color: var(--text-secondary);
   margin-bottom: 2rem;
+  text-align: center;
   line-height: 1.6;
-  max-width: 550px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
   font-weight: 400;
   opacity: 0.9;
 `;
@@ -251,42 +256,97 @@ const OptionCard = styled.button<{ isSelected: boolean }>`
 
 const PersonaGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
-  margin-top: 2rem;
+  width: 100%;
+  max-width: 700px;
 `;
 
-const PersonaCard = styled.div`
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  border: 2px solid #e5e5e5;
+const PersonaCard = styled.button<{ isSelected?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: ${props => props.isSelected ? 'linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)'};
+  border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 1.8rem 1.5rem;
   cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #181a1b;
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => props.isSelected ? 'linear-gradient(90deg, #181a1b, #4a4a4a)' : 'transparent'};
+    border-radius: 16px 16px 0 0;
+  }
+  
+  &:hover, &:focus {
+    border: 2px solid #181a1b;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   }
 `;
 
 const Emoji = styled.div`
   font-size: 2.5rem;
   margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+  border: 2px solid #f1f3f4;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  ${PersonaCard}:hover & {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: #ced4da;
+  }
 `;
 
 const CardTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
 `;
 
 const CardDescription = styled.p`
-  font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  text-align: center;
+  font-weight: 400;
+`;
+
+const ProgressBarContainer = styled.div`
+  width: 100%;
+  max-width: 400px;
+  height: 8px;
+  background: #e5e5e5;
+  border-radius: 4px;
+  margin: 2rem auto 1.5rem auto;
+  overflow: hidden;
+`;
+
+const ProgressBarFill = styled.div<{ percent: number }>`
+  height: 100%;
+  background: #181a1b;
+  width: ${({ percent }) => percent}%;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
 interface DescribeCustomerProps {
@@ -315,6 +375,7 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
   const [promptForMoreInfo, setPromptForMoreInfo] = useState(false);
   const [customerPersonas, setCustomerPersonas] = useState<CustomerPersona[]>([]);
   const [isGeneratingPersonas, setIsGeneratingPersonas] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (initialValue) {
@@ -332,6 +393,12 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
 
   async function generateCustomerPersonas() {
     setIsGeneratingPersonas(true);
+    setProgress(0);
+    
+    // Animate progress bar to 90% while loading
+    const progressInterval = setInterval(() => {
+      setProgress(prev => (prev < 90 ? prev + 5 : 90));
+    }, 200);
     
     const context = businessContext?.idea || businessContext?.businessArea || businessContext?.interests || 'a new business';
     
@@ -340,7 +407,7 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
     For each persona, provide:
     - A relevant emoji
     - A descriptive title
-    - A brief description of their characteristics and needs
+    - A concise description (12-15 words)
 
     Consider different segments like:
     - Early adopters
@@ -354,11 +421,11 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
       {
         "emoji": "relevant emoji",
         "title": "Persona Title",
-        "description": "Brief description of this customer type"
+        "description": "Concise 12-15 word description"
       }
     ]
 
-    Make the personas specific to this business idea and diverse in their characteristics.`;
+    Make the personas specific to this business idea and diverse in their characteristics. Keep descriptions concise but informative, around 12-15 words.`;
 
     try {
       const response = await fetchChatGPT(prompt);
@@ -387,11 +454,15 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
       }
 
       setCustomerPersonas(personas);
+      setProgress(100);
     } catch (error) {
       console.error("Failed to generate customer personas:", error);
       setCustomerPersonas(generateFallbackPersonas(context));
+      setProgress(100);
     } finally {
       setIsGeneratingPersonas(false);
+      clearInterval(progressInterval);
+      setTimeout(() => setProgress(0), 800);
     }
   }
 
@@ -546,90 +617,99 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
   }
 
   return (
-    <Container>
+    <>
       <Title>Who is your customer?</Title>
       
       {knowsCustomer === null && (
         <>
           <Subtitle>Do you have a specific customer in mind?</Subtitle>
-          <Options>
-            <OptionCard isSelected={false} onClick={() => handleSelect(true)}>
-              Yes, I do
-            </OptionCard>
-            <OptionCard isSelected={false} onClick={() => handleSelect(false)}>
-              No, not really
-            </OptionCard>
-          </Options>
+          <Container>
+            <Options>
+              <OptionCard isSelected={false} onClick={() => handleSelect(true)}>
+                Yes, I do
+              </OptionCard>
+              <OptionCard isSelected={false} onClick={() => handleSelect(false)}>
+                No, not really
+              </OptionCard>
+            </Options>
+          </Container>
         </>
       )}
 
       {knowsCustomer === false && (
         <>
           <Subtitle>Select the type of customer you want to help</Subtitle>
-          {isGeneratingPersonas ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤔</div>
-              <p>Generating customer personas based on your business idea...</p>
-            </div>
-          ) : (
-            <PersonaGrid>
-              {customerPersonas.map((persona) => (
-                <PersonaCard key={persona.title} onClick={() => handlePersonaSelect(persona)}>
-                  <Emoji>{persona.emoji}</Emoji>
-                  <CardTitle>{persona.title}</CardTitle>
-                  <CardDescription>{persona.description}</CardDescription>
-                </PersonaCard>
-              ))}
-            </PersonaGrid>
-          )}
+          <Container>
+            {isGeneratingPersonas ? (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <ProgressBarContainer>
+                  <ProgressBarFill percent={progress} />
+                </ProgressBarContainer>
+              </div>
+            ) : (
+              <PersonaGrid>
+                {customerPersonas.map((persona) => (
+                  <PersonaCard key={persona.title} onClick={() => handlePersonaSelect(persona)}>
+                    <Emoji>{persona.emoji}</Emoji>
+                    <CardTitle>{persona.title}</CardTitle>
+                    <CardDescription>{persona.description}</CardDescription>
+                  </PersonaCard>
+                ))}
+              </PersonaGrid>
+            )}
+          </Container>
         </>
       )}
 
       {knowsCustomer === true && (
         <>
           <Subtitle>Describe your ideal customer in a few sentences.</Subtitle>
-          <form onSubmit={handleSubmit}>
-            <Textarea
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (promptForMoreInfo) {
-                  setPromptForMoreInfo(false);
-                }
-              }}
-              placeholder="e.g., 'Freelance graphic designers who work from home and struggle with managing client invoices.'"
-              aria-label="Customer Description"
-            />
-            <SubmitButton 
-              type="submit" 
-              disabled={!description.trim() || isLoading || promptForMoreInfo}
-            >
-              {isLoading && retryCount === 0 ? 'Assessing...' : 'Continue'}
-            </SubmitButton>
-          </form>
-          <SubmitButton onClick={onClear}>Clear and restart this step</SubmitButton>
+          <Container>
+            <form onSubmit={handleSubmit}>
+              <Textarea
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (promptForMoreInfo) {
+                    setPromptForMoreInfo(false);
+                  }
+                }}
+                placeholder="e.g., 'Freelance graphic designers who work from home and struggle with managing client invoices.'"
+                aria-label="Customer Description"
+              />
+              <SubmitButton 
+                type="submit" 
+                disabled={!description.trim() || isLoading || promptForMoreInfo}
+              >
+                {isLoading && retryCount === 0 ? 'Assessing...' : 'Continue'}
+              </SubmitButton>
+            </form>
+            <div style={{ marginTop: '1rem' }}>
+              <SubmitButton onClick={onClear}>Clear and restart this step</SubmitButton>
+            </div>
 
-          {improvedDescription && !promptForMoreInfo && (
-            <ImprovementContainer>
-              <ImprovementHeader>Suggestion for a More Specific Customer</ImprovementHeader>
-              <ImprovementText>{improvedDescription}</ImprovementText>
-              <ButtonContainer>
-                <ImprovementButton onClick={handleAcceptSuggestion} accept>Accept & Continue</ImprovementButton>
-                <ImprovementButton onClick={handleRetry} disabled={isLoading}>
-                  {isLoading ? 'Retrying...' : `Retry (${retryCount}/2)`}
-                </ImprovementButton>
-              </ButtonContainer>
-            </ImprovementContainer>
-          )}
+            {improvedDescription && !promptForMoreInfo && (
+              <ImprovementContainer>
+                <ImprovementHeader>Suggestion for a More Specific Customer</ImprovementHeader>
+                <ImprovementText>{improvedDescription}</ImprovementText>
+                <ButtonContainer>
+                  <ImprovementButton onClick={handleAcceptSuggestion} accept>Accept & Continue</ImprovementButton>
+                  <ImprovementButton onClick={handleRetry} disabled={isLoading}>
+                    {isLoading ? 'Retrying...' : `Retry (${retryCount}/2)`}
+                  </ImprovementButton>
+                </ButtonContainer>
+              </ImprovementContainer>
+            )}
 
-          {promptForMoreInfo && (
-            <ImprovementContainer style={{backgroundColor: '#fffbe6', borderColor: '#ffe58f'}}>
-              <ImprovementHeader style={{color: '#d46b08'}}>Please provide more detail</ImprovementHeader>
-              <p>Add more specifics to your customer description above to help us generate a better suggestion.</p>
-            </ImprovementContainer>
-          )}
+            {promptForMoreInfo && (
+              <ImprovementContainer style={{backgroundColor: '#fffbe6', borderColor: '#ffe58f'}}>
+                <ImprovementHeader style={{color: '#d46b08'}}>Please provide more detail</ImprovementHeader>
+                <p>Add more specifics to your customer description above to help us generate a better suggestion.</p>
+              </ImprovementContainer>
+            )}
+          </Container>
         </>
       )}
-    </Container>
+    </>
   );
 } 

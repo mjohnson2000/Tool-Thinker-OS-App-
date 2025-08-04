@@ -51,6 +51,11 @@ import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage'
 import AdminLogsPage from './components/business-plan/AdminLogsPage';
 import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
 import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
+import { PrematureIdeaTypeSelection } from './components/idea-flow/PrematureIdeaTypeSelection';
+import { PrematureLocationSelection } from './components/idea-flow/PrematureLocationSelection';
+import { PrematureScheduleGoalsSelection } from './components/idea-flow/PrematureScheduleGoalsSelection';
+import { PrematureSkillAssessment } from './components/idea-flow/PrematureSkillAssessment';
+
 import { trackPageView, trackEvent } from './utils/analytics';
 import { ErrorNotification } from './components/common/ErrorNotification';
 
@@ -474,7 +479,7 @@ const PlanBadge = styled.div`
 
 const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
 
-type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution';
+type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -520,7 +525,7 @@ const MainContent = styled.main<{ isExpanded: boolean }>`
 const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
   flex: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
   position: sticky;
-  top: 158px;
+  top: 120px;
   height: fit-content;
   margin-right: ${({ $isCollapsed }) => $isCollapsed ? '0' : '2rem'};
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -557,15 +562,19 @@ const steps = [
 ];
 
 const prematureIdeaFlowSteps = [
-  { key: 'existingIdea', label: '1. Your Idea' },
-  { key: 'describeCustomer', label: '2. Customer' },
-  { key: 'describeProblem', label: '3. Problem' },
-  { key: 'describeSolution', label: '4. Solution' },
-  { key: 'businessPlan', label: '5. New Idea', isPremium: true },
-  { key: 'marketEvaluation', label: '6. Market Evaluation', isPremium: true },
-  { key: 'evaluationScore', label: '7. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '8. Discovery', isPremium: true },
-  { key: 'launch', label: '9. Launch', isPremium: true },
+  { key: 'prematureIdeaType', label: '1. Business Type' },
+  { key: 'prematureLocation', label: '2. Location' },
+  { key: 'prematureScheduleGoals', label: '3. Schedule & Goals' },
+  { key: 'existingIdea', label: '4. Your Idea' },
+  { key: 'describeCustomer', label: '5. Customer' },
+  { key: 'describeProblem', label: '6. Problem' },
+  { key: 'describeSolution', label: '7. Solution' },
+  { key: 'prematureSkillAssessment', label: '8. Skills' },
+  { key: 'businessPlan', label: '9. New Idea', isPremium: true },
+  { key: 'marketEvaluation', label: '10. Market Evaluation', isPremium: true },
+  { key: 'evaluationScore', label: '11. Validation Score', isPremium: true },
+  { key: 'nextStepsHub', label: '12. Discovery', isPremium: true },
+  { key: 'launch', label: '13. Launch', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];
@@ -590,6 +599,23 @@ interface AppState {
   competitionDescription: string | null;
   isTrackerCollapsed: boolean;
   stepBeforeAuth: Step | null;
+  // Premature path specific state
+  prematureIdeaType: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
+  prematureLocation: { city: string; region: string; country: string; operatingModel: string } | null;
+  prematureScheduleGoals: { hoursPerWeek: number; incomeTarget: number } | null;
+  prematureSkillAssessment: {
+    selectedSkills: string[];
+    missingSkills: string[];
+    recommendations: string[];
+    learningPath: string[];
+  } | null;
+  prematureJob: {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    problemStatement: string;
+  } | null;
 }
 
 const initialAppState: AppState = {
@@ -612,6 +638,12 @@ const initialAppState: AppState = {
   competitionDescription: null,
   isTrackerCollapsed: false,
   stepBeforeAuth: null,
+  // Premature path specific state
+  prematureIdeaType: null,
+  prematureLocation: null,
+  prematureScheduleGoals: null,
+  prematureSkillAssessment: null,
+  prematureJob: null,
 };
 
 function ResetPasswordRoute() {
@@ -717,7 +749,11 @@ function AppContent() {
       nextStepsHub: 'Next Steps Hub',
       startupPlan: 'Startup Plan',
       launch: 'Launch Preparation',
-      solution: 'Solution Selection'
+      solution: 'Solution Selection',
+      prematureIdeaType: 'Business Type Selection',
+      prematureLocation: 'Location Selection',
+      prematureScheduleGoals: 'Schedule & Goals',
+      prematureSkillAssessment: 'Skill Assessment'
     };
 
     const pageTitle = pageTitles[appState.currentStep] || 'Unknown Page';
@@ -758,7 +794,7 @@ function AppContent() {
     setAppState(prev => ({ 
       ...prev, 
       entryPoint: step, 
-      currentStep: step === 'customer' ? 'existingIdea' : 'ideaType'
+      currentStep: step === 'customer' ? 'prematureIdeaType' : 'ideaType'
     }));
   }
 
@@ -831,7 +867,11 @@ function AppContent() {
   }
 
   function handleDescribeSolutionSubmit(description: string) {
-    setAppState(prev => ({ ...prev, solutionDescription: description, currentStep: entryPoint === 'idea' ? 'solution' : 'businessPlan' }));
+    setAppState(prev => ({ 
+      ...prev, 
+      solutionDescription: description, 
+      currentStep: entryPoint === 'idea' ? 'solution' : 'prematureSkillAssessment' 
+    }));
   }
 
   function handleDescribeCompetitionSubmit(description: string | null) {
@@ -914,6 +954,30 @@ function AppContent() {
     setAppState(prev => ({ ...prev, solution: selectedSolution, solutionDescription: selectedSolution.description, currentStep: 'skillAssessment' }));
   }
 
+  // Premature path handlers
+  function handlePrematureIdeaTypeSelect(ideaType: { id: string; title: string; description: string; icon: string; examples: string[] }) {
+    setAppState(prev => ({ ...prev, prematureIdeaType: ideaType, currentStep: 'prematureLocation' }));
+  }
+
+  function handlePrematureLocationSelect(location: { city: string; region: string; country: string; operatingModel: string }) {
+    setAppState(prev => ({ ...prev, prematureLocation: location, currentStep: 'prematureScheduleGoals' }));
+  }
+
+  function handlePrematureScheduleGoalsSelect(scheduleGoals: { hoursPerWeek: number; incomeTarget: number }) {
+    setAppState(prev => ({ ...prev, prematureScheduleGoals: scheduleGoals, currentStep: 'existingIdea' }));
+  }
+
+  function handlePrematureSkillAssessmentComplete(assessment: {
+    selectedSkills: string[];
+    missingSkills: string[];
+    recommendations: string[];
+    learningPath: string[];
+  }) {
+    setAppState(prev => ({ ...prev, prematureSkillAssessment: assessment, currentStep: 'businessPlan' }));
+  }
+
+
+
   const PLAN_DISPLAY_NAMES: Record<string, string> = {
     free: 'Free',
     basic: 'Basic',
@@ -972,8 +1036,8 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                    <AvatarButton onClick={() => {
-                      setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
+                  <AvatarButton onClick={() => {
+                    setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
                     }} aria-label="Profile">
                       {user && user.profilePic ? (
                         <TopBarAvatarImg src={user.profilePic} alt="Profile" />
@@ -990,14 +1054,14 @@ function AppContent() {
                         <AvatarImg src={defaultAvatar} alt="Avatar" />
                       )}
                     </AvatarButton>
-                    {user && location.pathname !== '/' && (
-                      <PlanBadge>
-                        {!user?.isSubscribed
-                          ? PLAN_DISPLAY_NAMES['free']
-                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                      </PlanBadge>
-                    )}
-                  </div>
+                      {user && location.pathname !== '/' && (
+                        <PlanBadge>
+                          {!user?.isSubscribed
+                            ? PLAN_DISPLAY_NAMES['free']
+                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                        </PlanBadge>
+                      )}
+                    </div>
                 </TopBarRight>
               )}
             </TopBar>
@@ -1038,23 +1102,24 @@ function AppContent() {
               isFlowStep ? (
                 <PageLayout>
                   <Sidebar $isCollapsed={isTrackerCollapsed}>
-                    <ProgressTracker 
-                      steps={
-                        entryPoint === 'idea'
-                          ? steps
-                          : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                      }
-                      currentStepKey={currentStep}
-                      onStepClick={handleStepClick}
-                      isSubscribed={user?.isSubscribed}
-                    />
+                        <ProgressTracker 
+                          steps={
+                            entryPoint === 'idea'
+                              ? steps
+                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                          }
+                          currentStepKey={currentStep}
+                          onStepClick={handleStepClick}
+                          isSubscribed={user?.isSubscribed}
+                          isPremature={entryPoint === 'customer'}
+                        />
                     <SidebarToggle 
                       onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: !prev.isTrackerCollapsed}))}
                       aria-label={isTrackerCollapsed ? "Show tracker" : "Hide tracker"}
                     >
                       {isTrackerCollapsed ? '→' : '←'}
                     </SidebarToggle>
-                  </Sidebar>
+                    </Sidebar>
                   <MobileOverlay 
                     $isVisible={!isTrackerCollapsed} 
                     onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: true}))}
@@ -1143,17 +1208,62 @@ function AppContent() {
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />
                       )}
-                      {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
-                      {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
+                      {currentStep === 'existingIdea' && (
+                        <ExistingIdea 
+                          onSubmit={handleExistingIdeaSubmit} 
+                          initialValue={idea.existingIdeaText} 
+                          onClear={handleClearStep}
+                          ideaType={entryPoint === 'customer' ? appState.prematureIdeaType : ideaType}
+                          location={entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null)}
+                          scheduleGoals={entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals}
+                        />
+                      )}
+                      {currentStep === 'describeCustomer' && (
+                        <DescribeCustomer 
+                          onSubmit={handleDescribeCustomerSubmit} 
+                          initialValue={customer?.description} 
+                          onClear={handleClearStep}
+                          businessContext={{
+                            idea: idea.existingIdeaText,
+                            businessArea: idea.area?.title,
+                            interests: idea.interests
+                          }}
+                        />
+                      )}
                       {currentStep === 'describeProblem' && (
                         <DescribeProblem
                           onSubmit={handleDescribeProblemSubmit}
                           customer={customer}
                           initialValue={problemDescription}
                           onClear={handleClearStep}
+
+                          businessContext={{
+                            idea: idea.existingIdeaText,
+                            businessArea: idea.area?.title,
+                            interests: idea.interests,
+                            ideaType: entryPoint === 'customer' ? appState.prematureIdeaType?.title : ideaType?.title,
+                            location: entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null),
+                            scheduleGoals: entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals
+                          }}
                         />
                       )}
-                      {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'describeSolution' && (
+                        <DescribeSolution 
+                          onSubmit={handleDescribeSolutionSubmit} 
+                          problemDescription={problemDescription} 
+                          initialValue={solutionDescription} 
+                          onClear={handleClearStep}
+                          selectedJob={entryPoint === 'customer' ? appState.prematureJob : null}
+                          businessContext={{
+                            idea: idea.existingIdeaText,
+                            businessArea: idea.area?.title,
+                            interests: idea.interests,
+                            ideaType: entryPoint === 'customer' ? appState.prematureIdeaType?.title : ideaType?.title,
+                            location: entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null),
+                            scheduleGoals: entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals
+                          }}
+                        />
+                      )}
                       {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
                       {currentStep === 'prematureJobDiscovery' && (
                         <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
@@ -1171,6 +1281,34 @@ function AppContent() {
                           scheduleGoals={scheduleGoals}
                         />
                       )}
+                      {currentStep === 'prematureIdeaType' && (
+                        <PrematureIdeaTypeSelection onSelect={handlePrematureIdeaTypeSelect} />
+                      )}
+                      {currentStep === 'prematureLocation' && (
+                        <PrematureLocationSelection 
+                          onSelect={handlePrematureLocationSelect} 
+                          ideaType={appState.prematureIdeaType}
+                        />
+                      )}
+                      {currentStep === 'prematureScheduleGoals' && (
+                        <PrematureScheduleGoalsSelection 
+                          onSelect={handlePrematureScheduleGoalsSelect}
+                          interests={idea.interests}
+                          businessArea={idea.area}
+                          location={appState.prematureLocation}
+                        />
+                      )}
+
+                      {currentStep === 'prematureSkillAssessment' && (
+                        <PrematureSkillAssessment 
+                          onComplete={handlePrematureSkillAssessmentComplete}
+                          businessArea={idea.area}
+                          interests={idea.interests}
+                          ideaType={appState.prematureIdeaType}
+                          solution={solution}
+                        />
+                      )}
+
                     </>
                   </MainContent>
                 </PageLayout>
@@ -1184,19 +1322,6 @@ function AppContent() {
                       buttonText="Let's find the problem" 
                       onContinue={handleProblemGuidanceContinue} 
                     />
-                  )}
-                  {currentStep === 'prematureJobDiscovery' && customer && (
-                    <PrematureJobDiscovery 
-                      customer={customer}
-                      onSelect={(job) => {
-                        setAppState(prev => ({ ...prev, job, currentStep: 'solution' }));
-                      }}
-                    />
-                  )}
-                  {currentStep === 'prematureJobDiscovery' && !customer && (
-                    <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
-                      Please select a customer before proceeding to this step.
-                    </div>
                   )}
                 </>
               )
@@ -1687,23 +1812,23 @@ function AppContent() {
               isFlowStep ? (
                 <PageLayout>
                   <Sidebar $isCollapsed={isTrackerCollapsed}>
-                    <ProgressTracker 
-                      steps={
-                        entryPoint === 'idea'
-                          ? steps
-                          : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
-                      }
-                      currentStepKey={currentStep}
-                      onStepClick={handleStepClick}
-                      isSubscribed={user?.isSubscribed}
-                    />
+                        <ProgressTracker 
+                          steps={
+                            entryPoint === 'idea'
+                              ? steps
+                              : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                          }
+                          currentStepKey={currentStep}
+                          onStepClick={handleStepClick}
+                          isSubscribed={user?.isSubscribed}
+                        />
                     <SidebarToggle 
                       onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: !prev.isTrackerCollapsed}))}
                       aria-label={isTrackerCollapsed ? "Show tracker" : "Hide tracker"}
                     >
                       {isTrackerCollapsed ? '→' : '←'}
                     </SidebarToggle>
-                  </Sidebar>
+                    </Sidebar>
                   <MobileOverlay 
                     $isVisible={!isTrackerCollapsed} 
                     onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: true}))}

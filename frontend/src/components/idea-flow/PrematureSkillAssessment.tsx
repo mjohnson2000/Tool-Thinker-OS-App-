@@ -9,33 +9,16 @@ export interface Skill {
   importance: 'critical' | 'important' | 'helpful';
 }
 
-export interface SkillAssessmentResult {
-  skills: Skill[];
-  selectedSkills: string[];
-  recommendations: string[];
-  learningPath: string[];
-}
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
 const FormCard = styled.div`
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 2.5rem;
-  box-shadow: 
-    0 4px 20px rgba(0,0,0,0.08),
-    0 1px 3px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255,255,255,0.8);
   width: 100%;
-  margin-top: 1.5rem;
+  max-width: 700px;
+  box-shadow: 
+    0 20px 60px rgba(24,26,27,0.12),
+    0 8px 24px rgba(24,26,27,0.08);
+  border: 1px solid rgba(255,255,255,0.8);
   position: relative;
   overflow: hidden;
   
@@ -45,29 +28,34 @@ const FormCard = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
-    border-radius: 20px 20px 0 0;
+    border-radius: 24px 24px 0 0;
   }
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
-    pointer-events: none;
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
   }
+`;
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 `;
 
 const Title = styled.h2`
   font-size: 2.4rem;
   font-weight: 800;
-  margin-bottom: 1.2rem;
+  color: #181a1b;
+  margin-bottom: 2.5rem;
   text-align: center;
-  color: var(--text-primary);
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
   -webkit-background-clip: text;
@@ -78,7 +66,7 @@ const Title = styled.h2`
   &::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
     width: 60px;
@@ -86,17 +74,65 @@ const Title = styled.h2`
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
   }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const Subtitle = styled.p`
+  font-size: 1.1rem;
   color: var(--text-secondary);
-  margin-bottom: 2rem;
-  text-align: center;
-  font-size: 1.15rem;
+  margin-bottom: 2.5rem;
   line-height: 1.6;
-  max-width: 550px;
-  font-weight: 400;
-  opacity: 0.9;
+  max-width: 500px;
+`;
+
+const SelectionInfo = styled.div`
+  background: linear-gradient(135deg, rgba(24, 26, 27, 0.05) 0%, rgba(24, 26, 27, 0.02) 100%);
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+  position: relative;
+`;
+
+const ProgressBar = styled.div<{ progress: number }>`
+  width: 100%;
+  height: 4px;
+  background: #e5e5e5;
+  border-radius: 2px;
+  margin-top: 1rem;
+  overflow: hidden;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: ${props => props.progress}%;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+`;
+
+const SelectionInfoTitle = styled.h3`
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #181a1b;
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
+`;
+
+const SelectionInfoText = styled.p`
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
 `;
 
 const SkillsGrid = styled.div`
@@ -105,16 +141,18 @@ const SkillsGrid = styled.div`
   gap: 1.5rem;
   width: 100%;
   margin-bottom: 2rem;
-  margin-top: 2rem;
 `;
 
-const SkillCard = styled.button<{ category: string; importance: string; isSelected: boolean }>`
+const SkillCard = styled.button<{ isSelected: boolean; category: string }>`
   padding: 1.8rem 1.5rem;
   border: 2px solid ${props => {
     if (props.isSelected) return '#181a1b';
-    if (props.importance === 'critical') return '#666666';
-    if (props.importance === 'important') return '#999999';
-    return '#cccccc';
+    switch (props.category) {
+      case 'critical': return '#666666';
+      case 'important': return '#999999';
+      case 'helpful': return '#cccccc';
+      default: return 'rgba(24, 26, 27, 0.1)';
+    }
   }};
   border-radius: 16px;
   background: ${props => props.isSelected ? 'linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)'};
@@ -190,10 +228,11 @@ const Checkbox = styled.input`
 `;
 
 const SkillTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: #181a1b;
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
   flex: 1;
   margin-right: 1rem;
 `;
@@ -201,14 +240,13 @@ const SkillTitle = styled.h3`
 const SkillDescription = styled.p`
   font-size: 1rem;
   color: var(--text-secondary);
-  line-height: 1.4;
-  margin-bottom: 0.5rem;
-  margin-top: 0.5rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
 `;
 
 
 
-const Button = styled.button`
+const ContinueButton = styled.button`
   background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   color: white;
   border: none;
@@ -246,7 +284,7 @@ const Button = styled.button`
     pointer-events: none;
   }
   
-  &:hover {
+  &:hover:not(:disabled) {
     background: linear-gradient(135deg, #000 0%, #181a1b 100%);
     transform: translateY(-3px);
     box-shadow: 0 12px 32px rgba(0,0,0,0.25);
@@ -256,45 +294,21 @@ const Button = styled.button`
     }
   }
   
-  &:active {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
   }
-`;
-
-const SelectionInfo = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(24, 26, 27, 0.1);
-  position: relative;
-`;
-
-const ProgressBar = styled.div<{ progress: number }>`
-  width: 100%;
-  height: 4px;
-  background: #e5e5e5;
-  border-radius: 2px;
-  margin-top: 1rem;
-  overflow: hidden;
-  position: relative;
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: ${props => props.progress}%;
-    background: linear-gradient(90deg, #181a1b, #4a4a4a);
-    border-radius: 2px;
-    transition: width 0.3s ease;
+  &:disabled {
+    background: linear-gradient(135deg, #e5e5e5 0%, #d1d5db 100%);
+    color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
 `;
 
-// Predefined skills based on business areas
+// Dynamic skills based on business area
 const getSkillsForBusinessArea = (businessArea: string): Skill[] => {
   const skillsMap: Record<string, Skill[]> = {
     'Website Templates': [
@@ -437,186 +451,128 @@ const getSkillsForBusinessArea = (businessArea: string): Skill[] => {
 
   return skillsMap[businessArea] || [
     {
+      id: 'marketing',
+      title: 'Marketing & Sales',
+      description: 'Ability to promote products/services and convert prospects into customers',
+      category: 'business',
+      importance: 'critical'
+    },
+    {
       id: 'communication',
       title: 'Communication',
-      description: 'Ability to clearly communicate with customers and stakeholders',
+      description: 'Clear verbal and written communication with customers, partners, and team',
       category: 'soft',
       importance: 'critical'
     },
     {
-      id: 'marketing',
-      title: 'Marketing',
-      description: 'Understanding how to reach and attract customers',
+      id: 'financial-literacy',
+      title: 'Financial Literacy',
+      description: 'Understanding budgets, pricing, cash flow, and basic accounting',
       category: 'business',
-      importance: 'important'
-    },
-    {
-      id: 'project-management',
-      title: 'Project Management',
-      description: 'Planning and executing projects effectively',
-      category: 'business',
-      importance: 'important'
+      importance: 'critical'
     }
   ];
 };
 
-// Function to tailor skills based on the specific solution
-function tailorSkillsForSolution(skills: Skill[], solution: { title: string; description: string; icon: string }): Skill[] {
-  const solutionTitle = solution.title.toLowerCase();
-  const solutionDescription = solution.description.toLowerCase();
-  
-  // Add solution-specific skills based on the solution type
-  const solutionSpecificSkills: Skill[] = [];
-  
-  if (solutionTitle.includes('app') || solutionDescription.includes('app') || solutionTitle.includes('platform')) {
-    solutionSpecificSkills.push({
-      id: 'app-development',
-      title: 'App Development',
-      description: 'Building mobile or web applications',
-      category: 'technical',
-      importance: 'critical'
-    });
-    solutionSpecificSkills.push({
-      id: 'ui-ux-design',
-      title: 'UI/UX Design',
-      description: 'Creating user-friendly interfaces',
-      category: 'technical',
-      importance: 'important'
-    });
-  }
-  
-  if (solutionTitle.includes('service') || solutionDescription.includes('service')) {
-    solutionSpecificSkills.push({
-      id: 'customer-service',
-      title: 'Customer Service',
-      description: 'Providing excellent customer support',
-      category: 'soft',
-      importance: 'critical'
-    });
-    solutionSpecificSkills.push({
-      id: 'communication',
-      title: 'Communication',
-      description: 'Clear communication with clients',
-      category: 'soft',
-      importance: 'critical'
-    });
-  }
-  
-  if (solutionTitle.includes('consulting') || solutionDescription.includes('consulting')) {
-    solutionSpecificSkills.push({
-      id: 'consulting',
-      title: 'Consulting',
-      description: 'Providing expert advice and guidance',
-      category: 'business',
-      importance: 'critical'
-    });
-    solutionSpecificSkills.push({
-      id: 'problem-solving',
-      title: 'Problem Solving',
-      description: 'Analyzing and solving complex problems',
-      category: 'soft',
-      importance: 'critical'
-    });
-  }
-  
-  if (solutionTitle.includes('marketing') || solutionDescription.includes('marketing')) {
-    solutionSpecificSkills.push({
-      id: 'digital-marketing',
-      title: 'Digital Marketing',
-      description: 'Online marketing and promotion',
-      category: 'business',
-      importance: 'critical'
-    });
-    solutionSpecificSkills.push({
-      id: 'content-creation',
-      title: 'Content Creation',
-      description: 'Creating engaging content',
-      category: 'business',
-      importance: 'important'
-    });
-  }
-  
-  // Combine original skills with solution-specific skills
-  return [...skills, ...solutionSpecificSkills];
-}
-
-export interface SkillAssessmentProps {
-  businessArea: { title: string; description: string; icon: string };
-  interests: string;
+interface PrematureSkillAssessmentProps {
+  onComplete: (assessment: {
+    selectedSkills: string[];
+    missingSkills: string[];
+    recommendations: string[];
+    learningPath: string[];
+  }) => void;
+  businessArea?: any;
+  interests?: string;
   ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
-  solution?: { title: string; description: string; icon: string } | null;
-  onComplete: (assessment: SkillAssessmentResult) => void;
+  solution?: any;
 }
 
-export function SkillAssessment({ businessArea, interests, ideaType, solution, onComplete }: SkillAssessmentProps) {
-  const [skills, setSkills] = useState<Skill[]>([]);
+export function PrematureSkillAssessment({ onComplete, businessArea, interests, ideaType, solution }: PrematureSkillAssessmentProps) {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
 
   useEffect(() => {
-    // Generate skills based on business area and solution
-    let skillsForArea = getSkillsForBusinessArea(businessArea.title);
-    
-    // If we have a solution, tailor the skills to that specific solution
-    if (solution) {
-      skillsForArea = tailorSkillsForSolution(skillsForArea, solution);
-    }
-    
+    // Get skills based on business area
+    const businessAreaTitle = businessArea?.title || 'General';
+    const skillsForArea = getSkillsForBusinessArea(businessAreaTitle);
     setSkills(skillsForArea);
-  }, [businessArea.title, solution]);
+  }, [businessArea]);
 
-  function handleSkillToggle(skillId: string) {
+  const handleSkillToggle = (skillId: string) => {
     setSelectedSkills(prev => 
       prev.includes(skillId) 
         ? prev.filter(id => id !== skillId)
         : [...prev, skillId]
     );
-  }
+  };
 
-  function handleContinue() {
-    const recommendations = [
-      'Focus on building your core technical skills',
-      'Practice communication and client management',
-      'Learn basic marketing and sales techniques'
+  const handleContinue = () => {
+    const criticalSkills = skills.filter(skill => skill.importance === 'critical').map(skill => skill.id);
+    const importantSkills = skills.filter(skill => skill.importance === 'important').map(skill => skill.id);
+    
+    const missingSkills = [
+      ...criticalSkills.filter(skill => !selectedSkills.includes(skill)),
+      ...importantSkills.filter(skill => !selectedSkills.includes(skill))
     ];
-    const learningPath = [
-      'Start with foundational skills',
-      'Practice with small projects',
-      'Build a portfolio of work'
-    ];
+
+    const recommendations = missingSkills.length > 0 
+      ? [
+          'Focus on developing critical skills first, especially marketing and financial literacy',
+          'Consider taking online courses or workshops for missing skills',
+          'Find mentors or partners who can complement your skill gaps',
+          'Start with a smaller scope that matches your current capabilities'
+        ]
+      : [
+          'You have a strong foundation! Focus on execution and continuous improvement',
+          'Consider specializing in areas where you excel',
+          'Build systems and processes to leverage your skills effectively'
+        ];
+
+    const learningPath = missingSkills.length > 0 
+      ? [
+          'Week 1-2: Focus on marketing fundamentals and customer acquisition',
+          'Week 3-4: Develop financial management and pricing strategies',
+          'Week 5-6: Build customer service and communication skills',
+          'Week 7-8: Implement systems and processes for scalability'
+        ]
+      : [
+          'Week 1-2: Validate your business idea with potential customers',
+          'Week 3-4: Build your MVP and launch strategy',
+          'Week 5-6: Scale marketing and customer acquisition',
+          'Week 7-8: Optimize operations and prepare for growth'
+        ];
 
     onComplete({
-      skills,
       selectedSkills,
+      missingSkills: skills.filter(skill => missingSkills.includes(skill.id)).map(skill => skill.title),
       recommendations,
       learningPath
     });
-  }
-
-  const selectedCount = selectedSkills.length;
-  const totalSkills = skills.length;
+  };
 
   return (
     <Container>
-      <Title>Select Your Skills for {solution ? solution.title : businessArea.title}</Title>
+      <Title>What skills do you have?</Title>
       <Subtitle>
-        Check the skills you already have for this specific solution. This helps us tailor the business plan to your current capabilities.
+        Select the skills you currently possess. This helps us identify any gaps and provide targeted recommendations for your business journey.
       </Subtitle>
       
       <FormCard>
         <SelectionInfo>
-          <strong>Selected {selectedCount} of {totalSkills} skills</strong>
-          <br />
-          <small>Click on any skill card or checkbox to select/deselect. Don't worry if you don't have all skills - we'll suggest learning paths for missing ones</small>
-          <ProgressBar progress={(selectedCount / totalSkills) * 100} />
+          <SelectionInfoTitle>Skill Assessment Guide</SelectionInfoTitle>
+          <SelectionInfoText>
+            <strong>Selected {selectedSkills.length} of {skills.length} skills</strong><br/>
+            <small>Click on any skill card or checkbox to select/deselect. Don't worry if you don't have all skills - we'll suggest learning paths for missing ones</small>
+          </SelectionInfoText>
+          <ProgressBar progress={(selectedSkills.length / skills.length) * 100} />
         </SelectionInfo>
-        
+
         <SkillsGrid>
-          {skills.map(skill => (
-            <SkillCard 
-              key={skill.id} 
-              category={skill.category} 
-              importance={skill.importance}
+          {skills.map((skill) => (
+            <SkillCard
+              key={skill.id}
               isSelected={selectedSkills.includes(skill.id)}
+              category={skill.category}
               onClick={() => handleSkillToggle(skill.id)}
               aria-pressed={selectedSkills.includes(skill.id)}
               aria-label={`Select ${skill.title} skill`}
@@ -638,15 +594,15 @@ export function SkillAssessment({ businessArea, interests, ideaType, solution, o
           ))}
         </SkillsGrid>
         
-        <Button 
+        <ContinueButton 
           onClick={handleContinue}
-          disabled={selectedCount === 0}
+          disabled={selectedSkills.length === 0}
         >
-          {selectedCount === 0 
+          {selectedSkills.length === 0 
             ? 'Please select at least one skill to continue' 
-            : `Continue to Business Plan (${selectedCount} skills selected)`
+            : `Continue (${selectedSkills.length} skills selected)`
           }
-        </Button>
+        </ContinueButton>
       </FormCard>
     </Container>
   );

@@ -247,12 +247,13 @@ export function DescribeCompetition({ onSubmit, solutionDescription, initialValu
             placeholder="How is your solution better? (e.g., faster, cheaper, more features, better design)"
           />
           <div style={{ display: 'flex', justifyContent: 'center', width: '100%', flexDirection: 'column', alignItems: 'center' }}>
-            <SubmitButton type="submit" disabled={!description.trim() || isLoading}>
+                        <SubmitButton type="submit" disabled={!description.trim() || isLoading}>
               {isLoading ? 'Assessing...' : 'Continue'}
             </SubmitButton>
-            <ClearButton onClick={onClear}>
-              Clear and restart this step
+            <ClearButton onClick={() => window.location.reload()}>
+              Refresh Page
             </ClearButton>
+ 
           </div>
         </form>
       )}

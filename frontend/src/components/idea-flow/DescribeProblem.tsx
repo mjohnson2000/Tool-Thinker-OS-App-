@@ -296,17 +296,21 @@ const SubmitButton = styled.button`
 `;
 
 const ClearButton = styled.button`
-  background: none;
-  border: none;
-  color: #6c757d;
+  background: transparent;
+  border: 2px solid #e5e5e5;
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
   font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  margin-top: 1rem;
-  padding: 0;
-  text-decoration: none;
-
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
   &:hover {
-    text-decoration: underline;
+    border-color: #181a1b;
+    color: var(--text-primary);
+    background: #f8f9fa;
   }
 `;
 
@@ -395,6 +399,21 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
   const [selectedJob, setSelectedJob] = useState<JobOption | null>(null);
   const [isGeneratingJobs, setIsGeneratingJobs] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Update local state when initialValue prop changes
+  useEffect(() => {
+    console.log('DescribeProblem useEffect triggered, initialValue:', initialValue);
+    setDescription(initialValue || '');
+    setKnowsProblem(initialValue ? true : null);
+    // Also clear any improvement suggestions when clearing
+    if (initialValue === null || initialValue === '') {
+      setImprovedDescription(null);
+      setShowRejectionMessage(false);
+      setShowJobSelection(false);
+      setJobs([]);
+      setSelectedJob(null);
+    }
+  }, [initialValue]);
 
   async function assessAndImproveProblem(problem: string) {
     const customerContext = customer ? ` for a customer described as: '${customer.title} - ${customer.description}'` : '';
@@ -614,8 +633,9 @@ export function DescribeProblem({ onSubmit, customer, initialValue = null, onCle
                   {isLoading ? 'Assessing...' : 'Continue'}
                 </SubmitButton>
                 <div style={{ marginTop: '1rem' }}>
-                  <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
+                  <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
                 </div>
+
               </>
             )}
 

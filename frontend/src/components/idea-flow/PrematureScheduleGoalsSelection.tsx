@@ -184,6 +184,25 @@ const InfoText = styled.p`
   margin-top: 1rem;
 `;
 
+const ClearButton = styled.button`
+  background: transparent;
+  border: 2px solid #e5e5e5;
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
+  &:hover {
+    border-color: #181a1b;
+    color: var(--text-primary);
+    background: #f8f9fa;
+  }
+`;
+
 const hoursOptions = [
   { value: 5, label: '5 hours per week', icon: '⏰' },
   { value: 10, label: '10 hours per week', icon: '📅' },
@@ -202,9 +221,10 @@ interface PrematureScheduleGoalsSelectionProps {
   interests?: string;
   businessArea?: any;
   location?: { city: string; region: string; country: string; operatingModel?: string } | null;
+  onClear?: () => void;
 }
 
-export function PrematureScheduleGoalsSelection({ onSelect, interests, businessArea, location }: PrematureScheduleGoalsSelectionProps) {
+export function PrematureScheduleGoalsSelection({ onSelect, interests, businessArea, location, onClear }: PrematureScheduleGoalsSelectionProps) {
   const [hoursPerWeek, setHoursPerWeek] = useState<number>(0);
   const [incomeTarget, setIncomeTarget] = useState<number>(0);
 
@@ -270,6 +290,10 @@ export function PrematureScheduleGoalsSelection({ onSelect, interests, businessA
       <InfoText>
         We'll match you with opportunities that fit your schedule and help you reach your income goals
       </InfoText>
+      
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+        </div>
     </Container>
   );
 } 

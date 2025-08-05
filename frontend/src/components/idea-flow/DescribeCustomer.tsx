@@ -515,6 +515,8 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
 
     ${retryText}
 
+    CRITICAL: Your suggestion MUST be limited to exactly 70 words or fewer. Be concise but comprehensive.
+
     IMPORTANT: Your response MUST be a JSON object with a single key: "suggestion". Do not add any other text or formatting.
     `;
     
@@ -685,7 +687,7 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
               </SubmitButton>
             </form>
             <div style={{ marginTop: '1rem' }}>
-              <SubmitButton onClick={onClear}>Clear and restart this step</SubmitButton>
+              <SubmitButton onClick={() => window.location.reload()}>Refresh Page</SubmitButton>
             </div>
 
             {improvedDescription && !promptForMoreInfo && (

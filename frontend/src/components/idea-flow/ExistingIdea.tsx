@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
 
@@ -454,6 +454,18 @@ export function ExistingIdea({ onSubmit, initialValue = '', onClear, ideaType, l
   const [retryCount, setRetryCount] = useState(0);
   const [promptForMoreInfo, setPromptForMoreInfo] = useState(false);
 
+  // Update local state when initialValue prop changes
+  useEffect(() => {
+    console.log('ExistingIdea useEffect triggered, initialValue:', initialValue);
+    setIdeaText(initialValue);
+    // Also clear any improvement suggestions when clearing
+    if (initialValue === '') {
+      setImprovedIdea(null);
+      setRetryCount(0);
+      setPromptForMoreInfo(false);
+    }
+  }, [initialValue]);
+
   async function assessAndImproveIdea(idea: string, isRetry = false) {
     const retryText = isRetry ? "Provide a different and unique improved version of this idea." : "";
     const prompt = `Assess the following business idea. If it is specific and clear, respond with a JSON object: {"is_good": true}. If it is vague or needs improvement, respond with a JSON object: {"is_good": false, "improved_idea": "your improved version here"}. The improved idea should be a more detailed and actionable version of the original. ${retryText} Idea: "${idea}"`;
@@ -547,8 +559,9 @@ export function ExistingIdea({ onSubmit, initialValue = '', onClear, ideaType, l
             {isLoading ? 'Assessing...' : 'Continue'}
           </SubmitButton>
         </form>
+        <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
         
-        <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
+        
       </FormCard>
       
       {improvedIdea && !promptForMoreInfo && (

@@ -130,6 +130,25 @@ const ExampleTag = styled.span`
   font-weight: 500;
 `;
 
+const ClearButton = styled.button`
+  background: transparent;
+  border: 2px solid #e5e5e5;
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
+  &:hover {
+    border-color: #181a1b;
+    color: var(--text-primary);
+    background: #f8f9fa;
+  }
+`;
+
 const ideaTypes = [
   {
     id: 'digital-services',
@@ -177,9 +196,10 @@ const ideaTypes = [
 
 interface PrematureIdeaTypeSelectionProps {
   onSelect: (ideaType: { id: string; title: string; description: string; icon: string; examples: string[] }) => void;
+  onClear?: () => void;
 }
 
-export function PrematureIdeaTypeSelection({ onSelect }: PrematureIdeaTypeSelectionProps) {
+export function PrematureIdeaTypeSelection({ onSelect, onClear }: PrematureIdeaTypeSelectionProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
   function handleSelect(ideaType: typeof ideaTypes[0]) {
@@ -219,6 +239,10 @@ export function PrematureIdeaTypeSelection({ onSelect }: PrematureIdeaTypeSelect
           </Card>
         ))}
       </Grid>
+      
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+        </div>
     </Container>
   );
 } 

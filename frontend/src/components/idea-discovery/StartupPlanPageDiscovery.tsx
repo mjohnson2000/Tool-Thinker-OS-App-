@@ -121,14 +121,14 @@ const SectionTitle = styled.h2`
 
 const SectionContent = styled.p`
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 1.2rem;
   margin: 0;
   line-height: 1.6;
 `;
 
 const ListContent = styled.ul`
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 1.2rem;
   margin: 0;
   padding-left: 1.5rem;
   line-height: 1.6;
@@ -282,7 +282,7 @@ const SkillGapTitle = styled.div`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -292,7 +292,7 @@ const SkillGapList = styled.ul`
   margin: 0;
   padding-left: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 1.2rem;
   list-style: none;
 `;
 
@@ -326,7 +326,7 @@ const LearningPathTitle = styled.div`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -336,7 +336,7 @@ const LearningPathList = styled.ul`
   margin: 0;
   padding-left: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 1.2rem;
   list-style: none;
 `;
 
@@ -370,7 +370,7 @@ const SkillsYouHaveTitle = styled.div`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -581,7 +581,7 @@ const TextSection = styled.div`
 
 const TextContent = styled.div`
   color: #333;
-  font-size: 1rem;
+  font-size: 1.2rem;
   line-height: 1.6;
   text-align: justify;
 `;
@@ -609,7 +609,7 @@ const ListSectionList = styled.ul`
   margin: 0;
   padding-left: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 1.2rem;
   list-style: none;
 `;
 
@@ -903,11 +903,17 @@ No extra text, just valid JSON.`;
 
   useEffect(() => {
     if (plan && plan !== prevPlanRef.current) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 12500);
       prevPlanRef.current = plan;
     }
   }, [plan]);
+
+  // Start confetti immediately when the page is shown and business plan is available
+  useEffect(() => {
+    if (newPlan && !isLoading) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 12500);
+    }
+  }, [newPlan, isLoading]);
 
   // Function to generate comprehensive gap analysis
   const toggleSection = (section: 'skills' | 'resources' | 'operations') => {
@@ -1244,6 +1250,7 @@ No extra text, just valid JSON.`;
 
   return (
     <Container>
+      {showConfetti && <Confetti numberOfPieces={180} recycle={false} style={{ pointerEvents: 'none' }} />}
       <Title>Your Business Idea</Title>
       {isLoading && (
         <>
@@ -1257,7 +1264,6 @@ No extra text, just valid JSON.`;
       {newPlan && !isLoading && (
         <FormCard>
           <CongratsWrapper>
-            {showConfetti && <Confetti numberOfPieces={180} recycle={false} style={{ pointerEvents: 'none' }} />}
             <Congrats>Congratulations!</Congrats>
           </CongratsWrapper>
           {renderNewPlanSections()}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchChatGPT } from '../../utils/chatgpt';
 
@@ -109,15 +109,21 @@ const RejectionMessage = styled.p`
 `;
 
 const ClearButton = styled.button`
-  background: none;
-  border: none;
+  background: transparent;
+  border: 2px solid #e5e5e5;
   color: #6c757d;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
   font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  margin-top: 1rem;
-
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
   &:hover {
-    text-decoration: underline;
+    border-color: #181a1b;
+    color: #181a1b;
+    background: #f8f9fa;
   }
 `;
 
@@ -144,10 +150,26 @@ interface DescribeSolutionProps {
 }
 
 export function DescribeSolution({ onSubmit, problemDescription, initialValue = null, onClear, selectedJob, businessContext }: DescribeSolutionProps) {
+  console.log('DescribeSolution render - initialValue:', initialValue);
   const [solutionText, setSolutionText] = useState(initialValue || '');
   const [isLoading, setIsLoading] = useState(false);
   const [improvedSolution, setImprovedSolution] = useState<string | null>(null);
   const [showRejectionMessage, setShowRejectionMessage] = useState(false);
+
+  // Force reset when initialValue is null/empty
+  useEffect(() => {
+    console.log('DescribeSolution useEffect triggered, initialValue:', initialValue);
+    console.log('useEffect dependency array includes initialValue:', initialValue);
+    if (initialValue === null || initialValue === '') {
+      console.log('Forcing reset of solutionText to empty string');
+      setSolutionText('');
+      setImprovedSolution(null);
+      setShowRejectionMessage(false);
+    } else {
+      console.log('Setting solutionText to:', initialValue);
+      setSolutionText(initialValue);
+    }
+  }, [initialValue]);
 
   async function assessAndImproveSolution(solution: string) {
     const problemContext = problemDescription ? ` for the problem: '${problemDescription}'` : '';
@@ -225,12 +247,13 @@ export function DescribeSolution({ onSubmit, problemDescription, initialValue = 
           </div>
         </ImprovementContainer>
       )}
-      {showRejectionMessage && (
-        <RejectionMessage>
-          Please provide a more specific solution and try again.
-        </RejectionMessage>
-      )}
-      <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
-    </Container>
+                {showRejectionMessage && (
+            <RejectionMessage>
+              Please provide a more specific solution and try again.
+            </RejectionMessage>
+          )}
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+
+      </Container>
   );
 } 

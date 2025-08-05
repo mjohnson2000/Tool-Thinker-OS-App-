@@ -300,6 +300,25 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+const ClearButton = styled.button`
+  background: transparent;
+  border: 2px solid #e5e5e5;
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
+  &:hover {
+    border-color: #181a1b;
+    color: var(--text-primary);
+    background: #f8f9fa;
+  }
+`;
+
 const locationPreferenceOptions: LocationPreferenceOption[] = [
   {
     id: 'local',
@@ -327,9 +346,10 @@ const locationPreferenceOptions: LocationPreferenceOption[] = [
 interface PrematureLocationSelectionProps {
   onSelect: (location: LocationData) => void;
   ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
+  onClear?: () => void;
 }
 
-export function PrematureLocationSelection({ onSelect, ideaType }: PrematureLocationSelectionProps) {
+export function PrematureLocationSelection({ onSelect, ideaType, onClear }: PrematureLocationSelectionProps) {
   const [locationPreference, setLocationPreference] = useState<string>('local');
   const [city, setCity] = useState('');
   const [region, setRegion] = useState('');
@@ -464,6 +484,10 @@ export function PrematureLocationSelection({ onSelect, ideaType }: PrematureLoca
           </SubmitButton>
         </Form>
       </FormCard>
+      
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+        </div>
     </Container>
   );
 } 

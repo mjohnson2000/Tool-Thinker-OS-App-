@@ -662,7 +662,17 @@ function AppContent() {
     try {
       const storedState = window.localStorage.getItem('appState');
       console.log('Loaded appState from localStorage:', storedState);
-      return storedState ? JSON.parse(storedState) : initialAppState;
+      const parsedState = storedState ? JSON.parse(storedState) : initialAppState;
+      
+      // Ensure the idea object is properly structured
+      if (!parsedState.idea || typeof parsedState.idea !== 'object') {
+        parsedState.idea = { interests: '', area: null, existingIdeaText: '' };
+      }
+      if (parsedState.idea.existingIdeaText === undefined) {
+        parsedState.idea.existingIdeaText = '';
+      }
+      
+      return parsedState;
     } catch (error) {
       console.error("Could not load state from localStorage", error);
       return initialAppState;
@@ -922,11 +932,20 @@ function AppContent() {
 
   function handleClearStep() {
     const stepToClear = appState.currentStep;
+    console.log('handleClearStep called for step:', stepToClear);
+    console.log('Current appState before clear:', appState);
+    console.log('handleClearStep function is being executed');
+    
     const newState = { ...appState };
 
     switch (stepToClear) {
       case 'existingIdea':
+        // Ensure the idea object exists and is properly structured
+        if (!newState.idea || typeof newState.idea !== 'object') {
+          newState.idea = { interests: '', area: null, existingIdeaText: '' };
+        }
         newState.idea.existingIdeaText = '';
+        console.log('Clearing existingIdeaText, new idea object:', newState.idea);
         break;
       case 'describeCustomer':
         newState.customer = null;
@@ -940,10 +959,29 @@ function AppContent() {
       case 'describeCompetition':
         newState.competitionDescription = null;
         break;
+      case 'prematureIdeaType':
+        newState.prematureIdeaType = null;
+        break;
+      case 'prematureLocation':
+        newState.prematureLocation = null;
+        break;
+      case 'prematureScheduleGoals':
+        newState.prematureScheduleGoals = null;
+        break;
+      case 'prematureSkillAssessment':
+        newState.prematureSkillAssessment = null;
+        break;
       default:
+        console.log('No case found for step:', stepToClear);
         return; 
     }
+    
+    console.log('New appState after clear:', newState);
     setAppState(newState);
+  }
+
+  function handleClearExistingIdea() {
+    handleClearStep();
   }
 
   function handleProblemGuidanceContinue() {
@@ -1210,9 +1248,10 @@ function AppContent() {
                       )}
                       {currentStep === 'existingIdea' && (
                         <ExistingIdea 
+                          key={`existingIdea-${idea?.existingIdeaText || 'empty'}`}
                           onSubmit={handleExistingIdeaSubmit} 
-                          initialValue={idea.existingIdeaText} 
-                          onClear={handleClearStep}
+                          initialValue={idea?.existingIdeaText || ''} 
+                          onClear={handleClearExistingIdea}
                           ideaType={entryPoint === 'customer' ? appState.prematureIdeaType : ideaType}
                           location={entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null)}
                           scheduleGoals={entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals}
@@ -1282,12 +1321,13 @@ function AppContent() {
                         />
                       )}
                       {currentStep === 'prematureIdeaType' && (
-                        <PrematureIdeaTypeSelection onSelect={handlePrematureIdeaTypeSelect} />
+                        <PrematureIdeaTypeSelection onSelect={handlePrematureIdeaTypeSelect} onClear={handleClearStep} />
                       )}
                       {currentStep === 'prematureLocation' && (
                         <PrematureLocationSelection 
                           onSelect={handlePrematureLocationSelect} 
                           ideaType={appState.prematureIdeaType}
+                          onClear={handleClearStep}
                         />
                       )}
                       {currentStep === 'prematureScheduleGoals' && (
@@ -1296,6 +1336,7 @@ function AppContent() {
                           interests={idea.interests}
                           businessArea={idea.area}
                           location={appState.prematureLocation}
+                          onClear={handleClearStep}
                         />
                       )}
 
@@ -1306,6 +1347,7 @@ function AppContent() {
                           interests={idea.interests}
                           ideaType={appState.prematureIdeaType}
                           solution={solution}
+                          onClear={handleClearStep}
                         />
                       )}
 
@@ -1880,13 +1922,19 @@ function AppContent() {
                           context={{
                             idea,
                             customer,
-                            job,
+                            job: entryPoint === 'customer' ? appState.prematureJob : job,
                             problemDescription,
                             solutionDescription,
                             competitionDescription,
-                            location: userLocation,
-                            scheduleGoals,
-                            skillAssessment,
+                            location: entryPoint === 'customer' ? appState.prematureLocation : userLocation,
+                            scheduleGoals: entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals,
+                            skillAssessment: entryPoint === 'customer' ? 
+                              (appState.prematureSkillAssessment ? {
+                                skills: [],
+                                selectedSkills: appState.prematureSkillAssessment.selectedSkills,
+                                recommendations: appState.prematureSkillAssessment.recommendations,
+                                learningPath: appState.prematureSkillAssessment.learningPath
+                              } : null) : skillAssessment,
                           }}
                           onSignup={() => {
                             setAppState(prev => ({
@@ -1915,7 +1963,7 @@ function AppContent() {
                           onClear={handleClearStep}
                         />
                       )}
-                      {currentStep === 'describeSolution' && <DescribeSolution onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
+                      {currentStep === 'describeSolution' && <DescribeSolution key={`solution-${solutionDescription || 'empty'}`} onSubmit={handleDescribeSolutionSubmit} problemDescription={problemDescription} initialValue={solutionDescription} onClear={handleClearStep} />}
                       {currentStep === 'describeCompetition' && <DescribeCompetition onSubmit={handleDescribeCompetitionSubmit} solutionDescription={solutionDescription} initialValue={competitionDescription} onClear={handleClearStep} />}
                       {currentStep === 'prematureJobDiscovery' && (
                         <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>

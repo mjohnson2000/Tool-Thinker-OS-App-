@@ -454,10 +454,11 @@ export function PrematureJobSelection({ onSelect, onClear, businessContext }: Pr
               Continue with "{selectedJob.title}"
             </ContinueButton>
           </div>
-        )}
-        
-        <ClearButton onClick={onClear}>Clear and restart this step</ClearButton>
-      </FormCard>
+                  )}
+          
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+ 
+        </FormCard>
     </Container>
   );
 } 

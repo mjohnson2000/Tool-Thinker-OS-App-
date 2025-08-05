@@ -308,6 +308,25 @@ const ContinueButton = styled.button`
   }
 `;
 
+const ClearButton = styled.button`
+  background: transparent;
+  border: 2px solid #e5e5e5;
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  
+  &:hover {
+    border-color: #181a1b;
+    color: var(--text-primary);
+    background: #f8f9fa;
+  }
+`;
+
 // Dynamic skills based on business area
 const getSkillsForBusinessArea = (businessArea: string): Skill[] => {
   const skillsMap: Record<string, Skill[]> = {
@@ -485,9 +504,10 @@ interface PrematureSkillAssessmentProps {
   interests?: string;
   ideaType?: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
   solution?: any;
+  onClear?: () => void;
 }
 
-export function PrematureSkillAssessment({ onComplete, businessArea, interests, ideaType, solution }: PrematureSkillAssessmentProps) {
+export function PrematureSkillAssessment({ onComplete, businessArea, interests, ideaType, solution, onClear }: PrematureSkillAssessmentProps) {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
 
@@ -604,6 +624,10 @@ export function PrematureSkillAssessment({ onComplete, businessArea, interests, 
           }
         </ContinueButton>
       </FormCard>
+      
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
+        </div>
     </Container>
   );
 } 

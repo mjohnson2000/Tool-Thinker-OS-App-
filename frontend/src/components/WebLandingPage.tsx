@@ -293,6 +293,7 @@ const HeroButtons = styled.div`
   
   @media (max-width: 768px) {
     justify-content: center;
+    gap: 1.25rem;
   }
 `;
 
@@ -384,7 +385,7 @@ const HeroImage = styled.div`
   will-change: transform;
   
   &:hover {
-    box-shadow: 0 30px 60px rgba(24, 26, 27, 0.28);
+    box-shadow: 0 26px 52px rgba(24, 26, 27, 0.22);
   }
   
   &::before {
@@ -403,7 +404,7 @@ const HeroImage = styled.div`
     right: 0;
     bottom: 0;
     background: linear-gradient(45deg, transparent 30%, rgba(24,26,27,0.05) 50%, transparent 70%);
-    animation: shimmer 3s ease-in-out infinite;
+    animation: shimmer 6s ease-in-out infinite;
     pointer-events: none;
   }
   
@@ -471,6 +472,7 @@ const HeroGrid = styled.div`
     repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 24px);
   mix-blend-mode: normal;
   pointer-events: none;
+  @media (max-width: 768px) { display: none; }
 `;
 
 
@@ -677,7 +679,7 @@ const FeatureDescription = styled.p`
 // Stats Section
 const Stats = styled.section`
   padding: 4rem 2rem;
-  background: ${colors.gradient.primary};
+  background: linear-gradient(180deg, #1a1c1d 0%, #0f1011 100%);
   color: ${colors.white};
 `;
 
@@ -874,6 +876,15 @@ const AuthorAvatar = styled.div`
   justify-content: center;
   color: ${colors.white};
   font-weight: 600;
+`;
+
+const AuthorPhoto = styled.img`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid ${colors.white};
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 `;
 
 const AuthorInfo = styled.div`
@@ -1081,9 +1092,9 @@ const WebLandingPage: React.FC = () => {
               <span>Tool Thinker</span>
             </Logo>
             <Nav>
-              <NavLink href="#features">Features</NavLink>
-              <NavLink href="#demo">Demo</NavLink>
-              <NavLink href="#testimonials">Testimonials</NavLink>
+              <NavLink href="#features" onClick={(e) => { e.preventDefault(); trackEvent('nav_click', 'engagement', 'features'); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Features</NavLink>
+              <NavLink href="#demo" onClick={(e) => { e.preventDefault(); trackEvent('nav_click', 'engagement', 'demo'); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Demo</NavLink>
+              <NavLink href="#testimonials" onClick={(e) => { e.preventDefault(); trackEvent('nav_click', 'engagement', 'testimonials'); document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Testimonials</NavLink>
             </Nav>
             <HeaderButton onClick={() => { trackEvent('header_cta', 'engagement', 'get_started'); handleStartForFree(); }}>Get Started</HeaderButton>
           </HeaderContainer>
@@ -1132,7 +1143,7 @@ const WebLandingPage: React.FC = () => {
                   container.style.setProperty('--scale', '1.02');
                   container.style.setProperty('--gx', `${x}px`);
                   container.style.setProperty('--gy', `${y}px`);
-                  container.style.setProperty('--gOpacity', '0.9');
+                  container.style.setProperty('--gOpacity', '0.7');
                 }}
                 onMouseLeave={(e) => {
                   const container = e.currentTarget as HTMLDivElement;
@@ -1155,7 +1166,8 @@ const WebLandingPage: React.FC = () => {
                       height: '100%',
                       borderRadius: '20px',
                       objectFit: 'cover',
-                      objectPosition: 'center 40%'
+                      objectPosition: '50% 50%',
+                      transform: 'translateY(16px) scale(1.1)'
                     }}
                     sizes="(max-width: 768px) 100vw, 50vw"
                     loading="eager"
@@ -1172,7 +1184,7 @@ const WebLandingPage: React.FC = () => {
                 <CornerBL />
                 <CornerBR />
                 <HeroImageTopBanner>Stability • Confidence • Freedom</HeroImageTopBanner>
-                <HeroImageBottomBanner onClick={handleStartForFree} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleStartForFree(); } }} tabIndex={0} role="button" aria-label="Try it now">Try It Now!</HeroImageBottomBanner>
+                <HeroImageBottomBanner onClick={handleStartForFree} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleStartForFree(); } }} tabIndex={0} role="button" aria-label="Start for Free">Start for Free</HeroImageBottomBanner>
                 <HeroGrid />
               </HeroImage>
             </HeroVisual>
@@ -1320,7 +1332,7 @@ const WebLandingPage: React.FC = () => {
                   "Finally! No more 'start a blog' advice. Tool Thinker found me a pet-sitting business that makes $1,200/month in my neighborhood."
                 </TestimonialContent>
                 <TestimonialAuthor>
-                  <AuthorAvatar>SM</AuthorAvatar>
+                  <AuthorPhoto src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=96&h=96&crop=faces&auto=format&fit=crop" alt="Sarah Mitchell" />
                   <AuthorInfo>
                     <AuthorName>Sarah Mitchell</AuthorName>
                     <AuthorRole>Office Manager</AuthorRole>
@@ -1332,7 +1344,7 @@ const WebLandingPage: React.FC = () => {
                   "I was skeptical, but the AI found 3 local businesses that needed social media help. Now I'm making $1,500/month on weekends."
                 </TestimonialContent>
                 <TestimonialAuthor>
-                  <AuthorAvatar>MT</AuthorAvatar>
+                  <AuthorPhoto src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=96&h=96&crop=faces&auto=format&fit=crop" alt="Mike Thompson" />
                   <AuthorInfo>
                     <AuthorName>Mike Thompson</AuthorName>
                     <AuthorRole>Teacher</AuthorRole>
@@ -1344,7 +1356,7 @@ const WebLandingPage: React.FC = () => {
                   "The location-based suggestions are gold. I found tutoring opportunities in my area that I never knew existed."
                 </TestimonialContent>
                 <TestimonialAuthor>
-                  <AuthorAvatar>LK</AuthorAvatar>
+                  <AuthorPhoto src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=96&h=96&crop=faces&auto=format&fit=crop" alt="Lisa Kim" />
                   <AuthorInfo>
                     <AuthorName>Lisa Kim</AuthorName>
                     <AuthorRole>Software Developer</AuthorRole>

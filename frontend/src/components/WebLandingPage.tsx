@@ -2,9 +2,11 @@ import React from 'react';
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import logoImg from '../assets/logo.png';
-import moneyJourneyImg from '../assets/Money Journey.png';
+import moneyJourneyImg1200 from '../assets/money-journey-1200.jpg';
+import moneyJourneyImg800 from '../assets/money-journey-800.jpg';
 import Player from 'lottie-react';
 import walkthroughAnimation from '../assets/walkthrough.json';
+import { trackEvent } from '../utils/analytics';
 
 // Color palette matching the app's design
 const colors = {
@@ -122,7 +124,7 @@ const pulse = keyframes`
 `;
 
 // Header
-const Header = styled.header`
+const Header = styled.header<{ scrolled?: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -131,8 +133,9 @@ const Header = styled.header`
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid ${colors.gray[200]};
-  padding: 1rem 0;
+  padding: ${props => (props.scrolled ? '0.5rem' : '1rem')} 0;
   transition: all 0.3s ease;
+  ${props => props.scrolled ? 'box-shadow: 0 6px 20px rgba(0,0,0,0.06);' : ''}
 `;
 
 const HeaderContainer = styled.div`
@@ -201,7 +204,7 @@ const HeaderButton = styled.button`
 
 // Hero Section
 const Hero = styled.section`
-  padding: 8rem 2rem 6rem 2rem;
+  padding: 10rem 2rem 6rem 2rem;
   background: linear-gradient(135deg, rgba(24,26,27,0.5) 0%, rgba(24,26,27,0.4) 100%), 
               url('/src/assets/money-woman.jpg') center/cover;
   position: relative;
@@ -265,6 +268,7 @@ const HeroTitle = styled.h1`
   color: ${colors.white};
   margin-bottom: 1.5rem;
   line-height: 1.1;
+  text-wrap: balance;
   
   @media (max-width: 768px) {
     font-size: 2.5rem;
@@ -276,7 +280,10 @@ const HeroSubtitle = styled.p`
   color: ${colors.gray[200]};
   margin-bottom: 2rem;
   line-height: 1.6;
-  font-weight: 500;
+  font-weight: 600;
+  @media (max-width: 768px) {
+    font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  }
 `;
 
 const HeroButtons = styled.div`
@@ -289,12 +296,24 @@ const HeroButtons = styled.div`
   }
 `;
 
+const HeroTrust = styled.div`
+  margin-top: 0.75rem;
+  color: ${colors.gray[200]};
+  font-size: 0.95rem;
+  opacity: 0.9;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  @media (max-width: 768px) { justify-content: center; font-size: 0.9rem; }
+`;
+
 const PrimaryButton = styled.button`
   background: ${colors.white};
   color: ${colors.primary};
   border: none;
   border-radius: 12px;
-  padding: 1rem 2rem;
+  padding: 1.1rem 2.1rem;
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
@@ -305,6 +324,7 @@ const PrimaryButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(24, 26, 27, 0.3);
   }
+  &:focus-visible { outline: 3px solid rgba(24,26,27,0.6); outline-offset: 3px; }
 `;
 
 const SecondaryButton = styled.button`
@@ -312,7 +332,7 @@ const SecondaryButton = styled.button`
   color: ${colors.white};
   border: 2px solid ${colors.white};
   border-radius: 12px;
-  padding: 1rem 2rem;
+  padding: 1.1rem 2.1rem;
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
@@ -323,6 +343,7 @@ const SecondaryButton = styled.button`
     color: ${colors.primary};
     transform: translateY(-2px);
   }
+  &:focus-visible { outline: 3px solid rgba(255,255,255,0.7); outline-offset: 3px; }
 `;
 
 const HeroVisual = styled.div`
@@ -358,8 +379,23 @@ const HeroImage = styled.div`
   position: relative;
   overflow: hidden;
   border: 2px solid ${colors.gray[200]};
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
+  transition: transform 300ms ease, box-shadow 300ms ease;
+  will-change: transform;
+  
+  &:hover {
+    box-shadow: 0 30px 60px rgba(24, 26, 27, 0.28);
+  }
   
   &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.10) 40%, rgba(0,0,0,0.03) 100%);
+    pointer-events: none;
+  }
+  
+  &::after {
     content: '';
     position: absolute;
     top: 0;
@@ -368,11 +404,194 @@ const HeroImage = styled.div`
     bottom: 0;
     background: linear-gradient(45deg, transparent 30%, rgba(24,26,27,0.05) 50%, transparent 70%);
     animation: shimmer 3s ease-in-out infinite;
+    pointer-events: none;
   }
   
   @keyframes shimmer {
     0%, 100% { transform: translateX(-100%); }
     50% { transform: translateX(100%); }
+  }
+
+  /* Disable heavy effects on touch devices */
+  @media (pointer: coarse) {
+    transform: none !important;
+    transition: box-shadow 200ms ease;
+    &::after { animation: none; }
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    transform: none !important;
+    &::after { animation: none; }
+  }
+`;
+
+const HeroGlare = styled.div`
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    200px 200px at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.12) 30%,
+    rgba(255, 255, 255, 0.0) 60%
+  );
+  mix-blend-mode: screen;
+  opacity: var(--gOpacity, 0.0);
+  transition: opacity 250ms ease;
+  pointer-events: none;
+`;
+
+const HeroDividerBase = styled.div`
+  position: absolute;
+  left: 2rem;
+  right: 2rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  opacity: 0.35;
+  z-index: 2;
+  pointer-events: none;
+`;
+
+const HeroTopDivider = styled(HeroDividerBase)`
+  top: 5.5rem;
+  @media (max-width: 768px) { top: 4.5rem; }
+`;
+
+const HeroBottomDivider = styled(HeroDividerBase)`
+  bottom: 2rem;
+`;
+
+// Soft grid overlay (black)
+const HeroGrid = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 24px);
+  mix-blend-mode: normal;
+  pointer-events: none;
+`;
+
+
+// Black gradient frame
+const HeroFrame = styled.div`
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background: linear-gradient(#0000, #0000) padding-box,
+              linear-gradient(135deg, rgba(0,0,0,0.12), rgba(0,0,0,0.02)) border-box;
+  pointer-events: none;
+`;
+
+// Corner accents (black)
+const CornerTL = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 24px;
+  height: 24px;
+  border-top: 2px solid rgba(0,0,0,0.35);
+  border-left: 2px solid rgba(0,0,0,0.35);
+  border-radius: 6px 0 0 0;
+  pointer-events: none;
+`;
+
+const CornerTR = styled(CornerTL)`
+  left: auto;
+  right: 10px;
+  border-left: 0;
+  border-right: 2px solid rgba(0,0,0,0.35);
+  border-radius: 0 6px 0 0;
+`;
+
+const CornerBL = styled(CornerTL)`
+  top: auto;
+  bottom: 10px;
+  border-top: 0;
+  border-bottom: 2px solid rgba(0,0,0,0.35);
+  border-radius: 0 0 0 6px;
+`;
+
+const CornerBR = styled(CornerTR)`
+  top: auto;
+  bottom: 10px;
+  border-top: 0;
+  border-bottom: 2px solid rgba(0,0,0,0.35);
+  border-radius: 0 0 6px 0;
+`;
+
+// Internal dividers inside the hero image
+const HeroImageDividerBase = styled.div`
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.3), transparent);
+  opacity: 0.25;
+  pointer-events: none;
+  @media (max-width: 768px) { left: 8px; right: 8px; }
+`;
+
+const HeroImageTopDivider = styled(HeroImageDividerBase)`
+  top: 12px;
+`;
+
+const HeroImageBottomDivider = styled(HeroImageDividerBase)`
+  bottom: 12px;
+`;
+
+// Black banners inside hero image
+const HeroImageBannerBase = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45));
+  color: ${colors.white};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+  backdrop-filter: blur(8px) saturate(110%);
+  pointer-events: none;
+  @media (max-width: 768px) {
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+  }
+`;
+
+const HeroImageTopBanner = styled(HeroImageBannerBase)`
+  top: 0;
+`;
+
+const HeroImageBottomBanner = styled(HeroImageBannerBase)`
+  bottom: 0;
+  pointer-events: auto;
+  z-index: 3;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  &:hover {
+    background: linear-gradient(180deg, rgba(0,0,0,0.52), rgba(0,0,0,0.42));
+    box-shadow: 0 12px 30px rgba(0,0,0,0.32);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:focus-visible {
+    outline: 2px solid rgba(255,255,255,0.6);
+    outline-offset: -2px;
   }
 `;
 
@@ -405,6 +624,7 @@ const SectionSubtitle = styled.p`
   color: ${colors.gray[600]};
   max-width: 600px;
   margin: 0 auto;
+  line-height: 1.75;
 `;
 
 const FeaturesGrid = styled.div`
@@ -486,8 +706,9 @@ const StatNumber = styled.div`
 
 const StatLabel = styled.div`
   font-size: 1.125rem;
-  color: ${colors.gray[300]};
+  color: ${colors.gray[200]};
   font-weight: 500;
+  opacity: 0.95;
 `;
 
 // Demo Section
@@ -710,6 +931,36 @@ const CTAButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
   }
+  &:focus-visible { outline: 3px solid rgba(255,255,255,0.7); outline-offset: 2px; }
+`;
+
+// Sticky mobile CTA
+const StickyCTA = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem calc(env(safe-area-inset-bottom) + 0.75rem) 1rem;
+  background: rgba(24,26,27,0.9);
+  color: ${colors.white};
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  z-index: 1001;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+  @media (max-width: 768px) { display: flex; }
+`;
+
+const StickyCTAButton = styled.button`
+  background: ${colors.white};
+  color: ${colors.primary};
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 // Footer
@@ -759,10 +1010,51 @@ const WebLandingPage: React.FC = () => {
   const [demoInput, setDemoInput] = React.useState("");
   const [demoOutput, setDemoOutput] = React.useState("");
   const [demoOutputVisible, setDemoOutputVisible] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
+  const [showStickyCTA, setShowStickyCTA] = React.useState(false);
+
+  React.useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY || document.documentElement.scrollTop;
+      setScrolled(y > 24);
+      setShowStickyCTA(y > 280);
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Scroll depth tracking (fires once per threshold)
+  React.useEffect(() => {
+    const thresholds = [25, 50, 75, 100];
+    const fired = new Set<number>();
+    function onScroll() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      const depth = Math.min(100, Math.round((scrollTop / docHeight) * 100));
+      thresholds.forEach(t => {
+        if (depth >= t && !fired.has(t)) {
+          fired.add(t);
+          trackEvent('scroll_depth', 'engagement', `${t}%`);
+        }
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   function handleStartForFree() {
     window.localStorage.removeItem('appState');
     navigate('/app');
+    trackEvent('banner_click', 'get_started_free', 'hero_bottom');
+  }
+
+  function handleWatchDemo() {
+    trackEvent('watch_demo', 'engagement', 'hero');
+    const el = document.getElementById('demo');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function handleDemoClarify() {
@@ -782,7 +1074,7 @@ const WebLandingPage: React.FC = () => {
       <GlobalStyle />
       <Page>
         {/* Header */}
-        <Header>
+        <Header scrolled={scrolled}>
           <HeaderContainer>
             <Logo>
               <img src={logoImg} alt="Tool Thinker" />
@@ -793,7 +1085,7 @@ const WebLandingPage: React.FC = () => {
               <NavLink href="#demo">Demo</NavLink>
               <NavLink href="#testimonials">Testimonials</NavLink>
             </Nav>
-            <HeaderButton onClick={handleStartForFree}>Get Started</HeaderButton>
+            <HeaderButton onClick={() => { trackEvent('header_cta', 'engagement', 'get_started'); handleStartForFree(); }}>Get Started</HeaderButton>
           </HeaderContainer>
         </Header>
 
@@ -806,34 +1098,95 @@ const WebLandingPage: React.FC = () => {
                 Need Extra Money?
               </HeroTitle>
               <HeroSubtitle>
-                Turn Your Idea In A Side Hustle Business
+                Turn Your Idea into a Side Hustle Business
               </HeroSubtitle>
               <HeroButtons>
-                <PrimaryButton onClick={handleStartForFree}>
+                <PrimaryButton onClick={() => { trackEvent('hero_primary_cta', 'engagement', 'start_for_free'); handleStartForFree(); }}>
                   Start for Free
                 </PrimaryButton>
-                <SecondaryButton>
+                <SecondaryButton onClick={handleWatchDemo}>
                   Watch Demo
                 </SecondaryButton>
               </HeroButtons>
+              <HeroTrust>
+                <span>No credit card</span>
+                <span>•</span>
+                <span>15 min setup</span>
+                <span>•</span>
+                <span>Cancel anytime</span>
+              </HeroTrust>
             </HeroContent>
             <HeroVisual>
-              <HeroImage>
-                <img
-                  src={moneyJourneyImg}
-                  alt="Money Journey - Side Hustle Success"
-                  style={{ 
-                    width: '100%', 
-                    height: '100%',
-                    borderRadius: '20px',
-                    objectFit: 'cover'
-                  }}
-                />
+              <HeroImage
+                onMouseMove={(e) => {
+                  const container = e.currentTarget as HTMLDivElement;
+                  const rect = container.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  const px = (x / rect.width) * 2 - 1; // -1 to 1
+                  const py = (y / rect.height) * 2 - 1; // -1 to 1
+                  const rotateX = (-py * 6).toFixed(2);
+                  const rotateY = (px * 6).toFixed(2);
+                  container.style.setProperty('--rx', `${rotateX}deg`);
+                  container.style.setProperty('--ry', `${rotateY}deg`);
+                  container.style.setProperty('--scale', '1.02');
+                  container.style.setProperty('--gx', `${x}px`);
+                  container.style.setProperty('--gy', `${y}px`);
+                  container.style.setProperty('--gOpacity', '0.9');
+                }}
+                onMouseLeave={(e) => {
+                  const container = e.currentTarget as HTMLDivElement;
+                  container.style.setProperty('--rx', '0deg');
+                  container.style.setProperty('--ry', '0deg');
+                  container.style.setProperty('--scale', '1');
+                  container.style.setProperty('--gOpacity', '0');
+                }}
+              >
+                <picture>
+                  <source
+                    srcSet={`${moneyJourneyImg800} 800w, ${moneyJourneyImg1200} 1200w`}
+                    type="image/jpeg"
+                  />
+                  <img
+                    src={moneyJourneyImg800}
+                    alt="Money Journey - Side Hustle Success"
+                    style={{ 
+                      width: '100%', 
+                      height: '100%',
+                      borderRadius: '20px',
+                      objectFit: 'cover',
+                      objectPosition: 'center 40%'
+                    }}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
+                <HeroGlare />
+                <HeroImageTopDivider />
+                <HeroImageBottomDivider />
+                <HeroFrame />
+                <CornerTL />
+                <CornerTR />
+                <CornerBL />
+                <CornerBR />
+                <HeroImageTopBanner>Stability • Confidence • Freedom</HeroImageTopBanner>
+                <HeroImageBottomBanner onClick={handleStartForFree} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleStartForFree(); } }} tabIndex={0} role="button" aria-label="Try it now">Try It Now!</HeroImageBottomBanner>
+                <HeroGrid />
               </HeroImage>
             </HeroVisual>
           </HeroContainer>
+          <HeroTopDivider />
+          <HeroBottomDivider />
         </Hero>
 
+        {showStickyCTA && (
+          <StickyCTA>
+            <div>Turn your idea into a side hustle.</div>
+            <StickyCTAButton onClick={() => { trackEvent('sticky_cta', 'engagement', 'mobile'); handleStartForFree(); }}>Get Started</StickyCTAButton>
+          </StickyCTA>
+        )}
         {/* Stats Section */}
         <Stats>
           <Container>

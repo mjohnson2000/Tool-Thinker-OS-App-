@@ -16,6 +16,7 @@ const stripeRouter = require('./routes/stripe');
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 import logRoute from './routes/log';
 import automatedDiscoveryRouter from './routes/automatedDiscovery';
+import feedbackRouter from './routes/feedback';
 
 // Import models to ensure they're registered
 import './models/User';
@@ -24,6 +25,7 @@ import './models/Coach';
 import './models/Course';
 import './models/Booking';
 import './models/UserProgress';
+import './models/Feedback';
 
 // Load environment variables
 config();
@@ -52,6 +54,7 @@ app.use('/api/courses', coursesRouter);
 app.use('/api/stripe', stripeRouter);
 app.use('/api/log', logRoute);
 app.use('/api/automated-discovery', automatedDiscoveryRouter);
+app.use('/api/feedback', feedbackRouter);
 
 // Error handling
 app.use(errorHandler);

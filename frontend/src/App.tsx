@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Landing } from './components/idea-flow/Landing';
 import { IdeaSelection } from './components/idea-flow/IdeaSelection';
@@ -58,6 +58,7 @@ import { PrematureSkillAssessment } from './components/idea-flow/PrematureSkillA
 
 import { trackPageView, trackEvent } from './utils/analytics';
 import { ErrorNotification } from './components/common/ErrorNotification';
+import { FeedbackWidget } from './components/common/FeedbackWidget';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -512,7 +513,7 @@ const PageLayout = styled.div`
   display: flex;
   width: 100%;
   max-width: 1400px;
-  margin: 6rem auto 2rem auto;
+  margin: calc(var(--topbar-height, 96px) + 1rem) auto 2rem auto;
   padding: 0 2rem 200px 2rem;
   gap: 3rem;
   position: relative;
@@ -550,7 +551,7 @@ const MainContent = styled.main<{ isExpanded: boolean }>`
 const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
   flex: ${({ $isCollapsed }) => $isCollapsed ? '0' : '1'};
   position: sticky;
-  top: 120px;
+  top: calc(var(--topbar-height, 96px) + 36px);
   height: fit-content;
   margin-right: ${({ $isCollapsed }) => $isCollapsed ? '0' : '2rem'};
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -561,8 +562,8 @@ const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
   @media (max-width: 1024px) {
     position: fixed;
     left: ${({ $isCollapsed }) => $isCollapsed ? '-100%' : '0'};
-    top: 0;
-    height: 100vh;
+      top: calc(var(--topbar-height, 72px) + 12px);
+  height: calc(100vh - var(--topbar-height, 72px) - 12px);
     z-index: 1000;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -746,6 +747,18 @@ function AppContent() {
     }
   }, [location.search]);
 
+  // Track topbar height for layout offsets
+  const topBarRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    function setTopbarHeightVar() {
+      const h = topBarRef.current?.offsetHeight || 96;
+      document.documentElement.style.setProperty('--topbar-height', `${h}px`);
+    }
+    setTopbarHeightVar();
+    window.addEventListener('resize', setTopbarHeightVar);
+    return () => window.removeEventListener('resize', setTopbarHeightVar);
+  }, []);
+
   useEffect(() => {
     console.log('useEffect: isAuthenticated', isAuthenticated, 'currentStep', appState.currentStep);
     if (isAuthenticated && appState.currentStep === 'summary') {
@@ -755,6 +768,7 @@ function AppContent() {
 
   // Track page views when currentStep changes
   useEffect(() => {
+    const flowStepKeys: Step[] = ['landing', 'idea', 'ideaType', 'location', 'skillAssessment', 'scheduleGoals', 'customer', 'job', 'summary', 'app', 'existingIdea', 'describeCustomer', 'describeProblem', 'describeSolution', 'describeCompetition', 'customerGuidance', 'problemGuidance', 'competitionGuidance', 'businessPlan', 'prematureJobDiscovery', 'marketEvaluation', 'evaluationScore', 'nextStepsHub', 'startupPlan', 'launch', 'solution', 'prematureIdeaType', 'prematureLocation', 'prematureScheduleGoals', 'prematureSkillAssessment'];
     const pageTitles: Record<Step, string> = {
       landing: 'Landing Page',
       idea: 'Idea Selection',
@@ -1076,7 +1090,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1402,7 +1416,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1464,7 +1478,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1525,7 +1539,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1586,7 +1600,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1647,7 +1661,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1709,7 +1723,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -1789,7 +1803,7 @@ function AppContent() {
               setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
               navigate('/app');
             }} />
-            <TopBar>
+            <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
@@ -2026,6 +2040,7 @@ function AppContent() {
           </AppContainer>
         } />
       </Routes>
+      <FeedbackWidget route={location.pathname} />
       
       {/* Custom Error Notification */}
       <ErrorNotification

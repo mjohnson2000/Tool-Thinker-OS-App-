@@ -8,6 +8,7 @@ import Player from 'lottie-react';
 import walkthroughAnimation from '../assets/walkthrough.json';
 import howItWorksImg from '../assets/Howitworks1.png';
 import { trackEvent } from '../utils/analytics';
+import { FeedbackWidget } from './common/FeedbackWidget';
 
 // Color palette matching the app's design
 const colors = {
@@ -1281,6 +1282,7 @@ const WebLandingPage: React.FC = () => {
           <HeroBottomDivider />
         </Hero>
 
+        <FeedbackWidget route="/" />
         {showStickyCTA && (
           <StickyCTA>
             <div>Turn your idea into a side hustle.</div>

@@ -6,6 +6,7 @@ import logo from '../../assets/logo.png';
 import { evaluateStartupPlan } from '../../utils/evaluationRubric';
 import type { StartupPlanForEvaluation, EvaluationResult } from '../../utils/evaluationRubric';
 import { debugScore18 } from '../../utils/evaluationRubric';
+import { FeedbackBar } from '../common/FeedbackBar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -416,6 +417,9 @@ export default function StartupPlanViewPage() {
         {editMode && <PrimaryButton onClick={handleSave} disabled={saving}><FaSave /> {saving ? 'Saving...' : 'Save'}</PrimaryButton>}
         {editMode && <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>}
       </TopActions>
+      <div style={{ margin: '0 0 16px 0' }}>
+        <FeedbackBar context="plan_view_actions" />
+      </div>
       {editMode ? (
         <>
           <Section>
@@ -537,6 +541,9 @@ export default function StartupPlanViewPage() {
             <SectionLabel>Financial Summary</SectionLabel>
             <SectionContent>{plan.financialSummary}</SectionContent>
           </Section>
+          <div style={{ marginTop: '12px' }}>
+            <FeedbackBar context="plan_view_sections" />
+          </div>
         </>
       )}
     </Container>

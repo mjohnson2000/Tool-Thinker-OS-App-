@@ -7,6 +7,7 @@ import { BusinessPlanModal } from './shared/BusinessPlanModal';
 import { FinancialPlanModal } from './shared/FinancialPlanModal';
 import { ProfessionalBusinessPlanModal } from './shared/ProfessionalBusinessPlanModal';
 import { trackBusinessPlanGenerated, trackFinancialPlanGenerated } from '../../utils/analytics';
+import { FeedbackBar } from '../common/FeedbackBar';
 
 interface Persona {
   id: string;
@@ -5502,6 +5503,11 @@ export function AutomatedDiscoveryPage() {
           onClose={() => setShowProfessionalBusinessPlanModal(false)}
           businessPlanData={professionalBusinessPlanData}
         />
+      )}
+      {validationScore && (
+        <div style={{ maxWidth: 900, margin: '12px auto', padding: '0 16px' }}>
+          <FeedbackBar context={`discovery_stage_${currentStage}`} />
+        </div>
       )}
     </div>
   );

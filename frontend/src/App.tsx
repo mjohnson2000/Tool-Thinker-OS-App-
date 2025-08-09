@@ -70,19 +70,41 @@ const AppContainer = styled.div`
 `;
 
 const Footer = styled.footer`
+  background: #181a1b;
+  color: #ffffff;
+  padding: 3rem 2rem 2rem 2rem;
   width: 100%;
+`;
+
+const AppFooterContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+`;
+
+const AppFooterSection = styled.div`
+  h3 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  a {
+    color: #9ca3af; /* gray[400] */
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s ease;
+  }
+  a:hover { color: #ffffff; }
+`;
+
+const AppFooterBottom = styled.div`
+  border-top: 1px solid #1f2937; /* gray[800] */
+  margin-top: 2rem;
+  padding-top: 2rem;
   text-align: center;
-  padding: 1.2rem 0 1.2rem 0;
-  color: #888;
-  font-size: 1rem;
-  background: #f7f7fa;
-  letter-spacing: 0.01em;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  z-index: 1000;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
-  backdrop-filter: blur(8px);
+  color: #9ca3af; /* gray[400] */
 `;
 
 const FooterMoneyImage = styled.img`
@@ -138,6 +160,7 @@ const NavButton = styled.button`
   background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   color: #ffffff;
   border: none;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -276,6 +299,7 @@ const LoginButton = styled.button`
   border: 2px solid rgba(24, 26, 27, 0.15);
   border-radius: 12px;
   padding: 0.7rem 1.4rem;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -309,6 +333,7 @@ const SignupFreeButton = styled.button`
   border: none;
   border-radius: 12px;
   padding: 0.7rem 1.4rem;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -551,7 +576,7 @@ const steps = [
   { key: 'ideaType', label: 'Type' },
   { key: 'location', label: 'Location' },
   { key: 'idea', label: 'Interest' },
-  { key: 'scheduleGoals', label: 'Schedule & Goals' },
+      { key: 'scheduleGoals', label: 'Scope' },
   { key: 'customer', label: 'Customer' },
   { key: 'job', label: 'Problem' },
   { key: 'solution', label: 'Solution' },
@@ -564,7 +589,7 @@ const steps = [
 const prematureIdeaFlowSteps = [
   { key: 'prematureIdeaType', label: '1. Business Type' },
   { key: 'prematureLocation', label: '2. Location' },
-  { key: 'prematureScheduleGoals', label: '3. Schedule & Goals' },
+      { key: 'prematureScheduleGoals', label: '3. Scope' },
   { key: 'existingIdea', label: '4. Your Idea' },
   { key: 'describeCustomer', label: '5. Customer' },
   { key: 'describeProblem', label: '6. Problem' },
@@ -736,7 +761,7 @@ function AppContent() {
       ideaType: 'Idea Type Selection',
       location: 'Location Selection',
       skillAssessment: 'Skill Assessment',
-      scheduleGoals: 'Schedule & Goals',
+      scheduleGoals: 'Scope',
       customer: 'Customer Selection',
       job: 'Job Selection',
       summary: 'Summary',
@@ -762,7 +787,7 @@ function AppContent() {
       solution: 'Solution Selection',
       prematureIdeaType: 'Business Type Selection',
       prematureLocation: 'Location Selection',
-      prematureScheduleGoals: 'Schedule & Goals',
+      prematureScheduleGoals: 'Scope',
       prematureSkillAssessment: 'Skill Assessment'
     };
 
@@ -2011,11 +2036,33 @@ function AppContent() {
       />
       
       <Footer>
-        <FooterMoneyImage 
-          src="/src/assets/Money.jpg" 
-          alt="Financial success" 
-        />
-        &copy; {new Date().getFullYear()} Tool Thinker. All rights reserved.
+        <AppFooterContainer>
+          <AppFooterSection>
+            <h3>Tool Thinker</h3>
+            <p>AI-powered side hustle discovery platform helping people find their perfect opportunity.</p>
+          </AppFooterSection>
+          <AppFooterSection>
+            <h3>Product</h3>
+            <a href="#features">Features</a>
+            <a href="#demo">Demo</a>
+            <a href="#testimonials">Testimonials</a>
+          </AppFooterSection>
+          <AppFooterSection>
+            <h3>Support</h3>
+            <a href="#">Help Center</a>
+            <a href="#">Contact Us</a>
+            <a href="#">Privacy Policy</a>
+          </AppFooterSection>
+          <AppFooterSection>
+            <h3>Company</h3>
+            <a href="#">About Us</a>
+            <a href="#">Blog</a>
+            <a href="#">Careers</a>
+          </AppFooterSection>
+        </AppFooterContainer>
+        <AppFooterBottom>
+          <p>&copy; {new Date().getFullYear()} Tool Thinker. All rights reserved.</p>
+        </AppFooterBottom>
       </Footer>
     </>
   );

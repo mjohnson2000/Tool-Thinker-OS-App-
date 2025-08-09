@@ -6,6 +6,7 @@ import moneyJourneyImg1200 from '../assets/money-journey-1200.jpg';
 import moneyJourneyImg800 from '../assets/money-journey-800.jpg';
 import Player from 'lottie-react';
 import walkthroughAnimation from '../assets/walkthrough.json';
+import howItWorksImg from '../assets/Howitworks1.png';
 import { trackEvent } from '../utils/analytics';
 
 // Color palette matching the app's design
@@ -746,15 +747,73 @@ const DemoTitle = styled.h2`
 const DemoDescription = styled.p`
   font-size: 1.125rem;
   color: ${colors.gray[600]};
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   line-height: 1.6;
+`;
+
+const DemoSteps = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  display: grid;
+  gap: 0.5rem;
+`;
+
+const DemoStep = styled.li<{active?: boolean}>`
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: ${p => p.active ? 'rgba(16,185,129,0.10)' : 'transparent'};
+  border: 1px solid ${p => p.active ? 'rgba(16,185,129,0.25)' : 'rgba(229,229,229,1)'};
+`;
+
+const StepIcon = styled.div<{active?: boolean}>`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  background: ${p => p.active ? colors.success : colors.gray[200]};
+  color: ${p => p.active ? colors.white : colors.dark};
+`;
+
+const StepText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  strong { color: ${colors.dark}; font-size: 0.95rem; }
+  span { color: ${colors.gray[600]}; font-size: 0.9rem; }
 `;
 
 const DemoForm = styled.div`
   background: ${colors.white};
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid ${colors.gray[200]};
+`;
+
+const ExampleChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem 0;
+`;
+
+const Chip = styled.button`
+  border: 1px solid ${colors.gray[200]};
+  background: ${colors.white};
+  color: ${colors.dark};
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  &:hover { background: ${colors.gray[100]}; transform: translateY(-1px); }
 `;
 
 const DemoInput = styled.textarea`
@@ -763,7 +822,7 @@ const DemoInput = styled.textarea`
   border-radius: 12px;
   padding: 1rem;
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   resize: vertical;
   min-height: 100px;
   transition: border-color 0.2s ease;
@@ -793,11 +852,11 @@ const DemoButton = styled.button`
 `;
 
 const DemoOutput = styled.div<{ visible: boolean }>`
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   padding: 1rem;
   background: ${colors.gray[100]};
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: ${colors.dark};
   white-space: pre-line;
   opacity: ${props => props.visible ? 1 : 0};
@@ -808,20 +867,35 @@ const DemoOutput = styled.div<{ visible: boolean }>`
 const DemoVisual = styled.div`
   animation: ${slideInRight} 1s ease-out;
   text-align: center;
+  position: relative;
 `;
 
 const DemoImage = styled.div`
   width: 100%;
   height: 300px;
-  background: ${colors.gradient.primary};
+  background: ${colors.white};
+  border: 1px solid ${colors.gray[200]};
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${colors.white};
+  color: ${colors.dark};
   font-size: 1.25rem;
   font-weight: 600;
-  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+`;
+
+const DemoBadge = styled.div`
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background: ${colors.dark};
+  color: ${colors.white};
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 `;
 
 // Testimonials Section
@@ -1023,6 +1097,12 @@ const WebLandingPage: React.FC = () => {
   const [demoOutputVisible, setDemoOutputVisible] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const [showStickyCTA, setShowStickyCTA] = React.useState(false);
+  const [demoStep, setDemoStep] = React.useState(1);
+  const examplePrompts = [
+    "I'm good at writing, live in Austin, have 2 hours a day, want $500/month",
+    "I work nights, good with pets, want weekend income",
+    "College student in NYC, design skills, 5 hrs/week"
+  ];
 
   React.useEffect(() => {
     function onScroll() {
@@ -1069,6 +1149,8 @@ const WebLandingPage: React.FC = () => {
   }
 
   function handleDemoClarify() {
+    setDemoStep(2);
+    trackEvent('demo_get_ideas', 'engagement');
     setDemoOutputVisible(false);
     setTimeout(() => {
       setDemoOutput(
@@ -1077,7 +1159,13 @@ const WebLandingPage: React.FC = () => {
           : `Side Hustle Ideas for: Writing skills + 2 hours/day\n\n• Content Writing: $300-800/month\n• Virtual Assistant: $400-1200/month\n• Social Media Management: $500-1500/month\n\nAll fit your 2-hour daily schedule and writing skills!`
       );
       setDemoOutputVisible(true);
+      setDemoStep(3);
     }, 350);
+  }
+
+  function handleExample(prompt: string) {
+    setDemoInput(prompt);
+    trackEvent('demo_example_chip', 'engagement', prompt.slice(0, 24));
   }
 
   return (
@@ -1289,12 +1377,40 @@ const WebLandingPage: React.FC = () => {
                   Try our AI-powered side hustle finder. Tell us about your skills and situation, 
                   and we'll show you personalized opportunities.
                 </DemoDescription>
+                <DemoSteps>
+                  <DemoStep active={demoStep >= 1}>
+                    <StepIcon active={demoStep >= 1}>1</StepIcon>
+                    <StepText>
+                      <strong>Describe yourself</strong>
+                      <span>Location, skills, schedule, goals</span>
+                    </StepText>
+                  </DemoStep>
+                  <DemoStep active={demoStep >= 2}>
+                    <StepIcon active={demoStep >= 2}>2</StepIcon>
+                    <StepText>
+                      <strong>Get ideas instantly</strong>
+                      <span>Matched to your profile</span>
+                    </StepText>
+                  </DemoStep>
+                  <DemoStep active={demoStep >= 3}>
+                    <StepIcon active={demoStep >= 3}>3</StepIcon>
+                    <StepText>
+                      <strong>Start your plan</strong>
+                      <span>Turn ideas into action today</span>
+                    </StepText>
+                  </DemoStep>
+                </DemoSteps>
                 <DemoForm>
                   <DemoInput
                     placeholder="e.g., 'I'm good at writing, live in Austin, have 2 hours a day, want $500/month'"
                     value={demoInput}
                     onChange={e => setDemoInput(e.target.value)}
                   />
+                  <ExampleChips>
+                    {examplePrompts.map((p, i) => (
+                      <Chip key={i} onClick={() => handleExample(p)}>{i === 0 ? 'Example' : 'Try: '}{i+1}</Chip>
+                    ))}
+                  </ExampleChips>
                   <DemoButton onClick={handleDemoClarify}>
                     Get Personalized Ideas
                   </DemoButton>
@@ -1304,13 +1420,9 @@ const WebLandingPage: React.FC = () => {
                 </DemoForm>
               </DemoContent>
               <DemoVisual>
+                <DemoBadge>How it works</DemoBadge>
                 <DemoImage>
-                  <Player
-                    autoplay
-                    loop
-                    animationData={walkthroughAnimation}
-                    style={{ width: '100%', height: '100%' }}
-                  />
+                  <img src={howItWorksImg} alt="How it works" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                 </DemoImage>
               </DemoVisual>
             </DemoContainer>
@@ -1381,36 +1493,7 @@ const WebLandingPage: React.FC = () => {
           </CTAContent>
         </CTA>
 
-        {/* Footer */}
-        <Footer>
-          <FooterContainer>
-            <FooterSection>
-              <h3>Tool Thinker</h3>
-              <p>AI-powered side hustle discovery platform helping people find their perfect opportunity.</p>
-            </FooterSection>
-            <FooterSection>
-              <h3>Product</h3>
-              <a href="#features">Features</a>
-              <a href="#demo">Demo</a>
-              <a href="#testimonials">Testimonials</a>
-            </FooterSection>
-            <FooterSection>
-              <h3>Support</h3>
-              <a href="#">Help Center</a>
-              <a href="#">Contact Us</a>
-              <a href="#">Privacy Policy</a>
-            </FooterSection>
-            <FooterSection>
-              <h3>Company</h3>
-              <a href="#">About Us</a>
-              <a href="#">Blog</a>
-              <a href="#">Careers</a>
-            </FooterSection>
-          </FooterContainer>
-          <FooterBottom>
-            <p>&copy; 2024 Tool Thinker. All rights reserved.</p>
-          </FooterBottom>
-        </Footer>
+        {/* Footer removed to reuse App footer */}
       </Page>
     </>
   );

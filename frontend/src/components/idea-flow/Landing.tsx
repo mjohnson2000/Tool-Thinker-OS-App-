@@ -13,6 +13,11 @@ const Container = styled.div`
   min-height: 80vh;
   padding: 2rem 1rem 2rem 1rem;
   margin-bottom: 250px;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem 1rem 0.5rem;
+    min-height: 70vh;
+  }
 `;
 
 const FormCard = styled.div`
@@ -29,6 +34,12 @@ const FormCard = styled.div`
   position: relative;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -38,6 +49,10 @@ const FormCard = styled.div`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
     border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
   }
   
   &::after {
@@ -53,8 +68,9 @@ const FormCard = styled.div`
 `;
 
 const Tagline = styled.div`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -64,6 +80,12 @@ const Tagline = styled.div`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
   
   &::after {
     content: '';
@@ -87,28 +109,51 @@ const Title = styled.h1`
   line-height: 1.6;
   max-width: 550px;
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const Options = styled.div`
   display: flex;
   gap: 2rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 `;
 
 const OptionButton = styled.button`
-  padding: 1.8rem 2.5rem;
-  font-size: 1.3rem;
+  padding: 2rem 2.5rem;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: 400;
   border: none;
   border-radius: 16px;
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   color: var(--text-primary);
   cursor: pointer;
-  font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
   position: relative;
   overflow: hidden;
   border: 2px solid #E5E5E5;
+  text-align: center;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    font-size: 1.1rem;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   
   &::before {
     content: '';

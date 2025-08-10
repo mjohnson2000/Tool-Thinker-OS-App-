@@ -243,12 +243,14 @@ const PlanHeader = styled.div`
 `;
 
 const PlanTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #181a1b;
   margin: 0;
   line-height: 1.3;
   letter-spacing: -0.02em;
+  font-display: swap;
 `;
 
 const PlanStatus = styled.div<{ status: string }>`

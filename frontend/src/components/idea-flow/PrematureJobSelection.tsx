@@ -156,10 +156,12 @@ const JobIcon = styled.div`
 `;
 
 const JobTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 0.5rem;
   line-height: 1.3;
+  font-display: swap;
 `;
 
 const JobDescription = styled.p`

@@ -95,11 +95,13 @@ const Icon = styled.div`
 `;
 
 const CardTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 0.8rem;
   color: var(--text-primary);
   line-height: 1.3;
+  font-display: swap;
 `;
 
 const CardDescription = styled.p`

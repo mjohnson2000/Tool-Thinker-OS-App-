@@ -44,33 +44,30 @@ const Container = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
-  color: #181a1b;
-  margin-bottom: 2.5rem;
+  font-weight: 400;
+  margin-bottom: 1.2rem;
   text-align: center;
+  color: var(--text-primary);
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
   
   &::after {
     content: '';
     position: absolute;
-    bottom: -12px;
+    bottom: -8px;
     left: 50%;
     transform: translateX(-50%);
     width: 60px;
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
-  }
-  
-  @media (max-width: 768px) {
-    font-size: 2rem;
-    margin-bottom: 2rem;
   }
 `;
 

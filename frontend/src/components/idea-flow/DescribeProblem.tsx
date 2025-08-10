@@ -42,8 +42,9 @@ const Container = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -53,6 +54,7 @@ const Title = styled.h2`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
   
   &::after {
     content: '';
@@ -203,11 +205,13 @@ const JobIcon = styled.div`
 `;
 
 const JobTitle = styled.h3`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   font-size: 1.2rem;
   margin-bottom: 0.6rem;
   letter-spacing: -0.01em;
   color: var(--text-primary);
+  font-display: swap;
 `;
 
 const JobDescription = styled.p`

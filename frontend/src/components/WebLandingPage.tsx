@@ -72,7 +72,13 @@ const HeaderContainer = styled.div`
 const Logo = styled.div`
   display: flex; align-items: center; gap: .75rem;
   img { width: 56px; height: 56px; border-radius: 12px; }
-  span { font-family: 'Audiowide', cursive; font-size: 1.4rem; color: ${colors.dark}; }
+  span { 
+    font-family: 'Audiowide', 'Courier New', monospace; 
+    font-size: 1.4rem; 
+    color: ${colors.dark}; 
+    font-weight: 400;
+    font-display: swap;
+  }
 `;
 const Nav = styled.nav`
   display: flex; align-items: center; gap: 1.5rem;
@@ -104,7 +110,7 @@ const Badge = styled.div`
   &::before { content: '✨'; }
 `;
 const HeroTitle = styled.h1`
-  font-family: 'Audiowide', cursive;
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: clamp(2.1rem, 5.5vw, 3.8rem);
   font-weight: 400; margin-bottom: .75rem;
 `;
@@ -153,8 +159,8 @@ const StatLabel = styled.div`font-size: 1.05rem; color: ${colors.gray[200]}; opa
 const Section = styled.section`padding: 4.5rem 2rem; background: ${colors.light};`;
 const SectionInner = styled.div`max-width: 1200px; margin: 0 auto;`;
 const SectionTitle = styled.h2`
-  font-family: 'Audiowide', cursive; font-size: clamp(1.6rem, 3vw, 2.1rem);
-  text-align: center; margin-bottom: .75rem;
+  font-family: 'Audiowide', 'Courier New', monospace; font-size: clamp(1.6rem, 3vw, 2.1rem);
+  text-align: center; margin-bottom: .75rem; font-weight: 400;
 `;
 const SectionSubtitle = styled.p`
   text-align: center; color: ${colors.gray[600]}; max-width: 680px; margin: 0 auto 2.25rem auto; line-height: 1.75;
@@ -216,7 +222,7 @@ const CTA = styled.section`
   padding: 4rem 2rem; background: ${colors.gradient.primary}; color: ${colors.white}; text-align: center;
 `;
 const CTATitle = styled.h2`
-  font-family: 'Audiowide', cursive; font-size: clamp(1.6rem, 3vw, 2.1rem); margin-bottom: .8rem;
+  font-family: 'Audiowide', 'Courier New', monospace; font-size: clamp(1.6rem, 3vw, 2.1rem); margin-bottom: .8rem; font-weight: 400;
 `;
 const CTADesc = styled.p`opacity: .95; margin: 0 auto 1.2rem auto; max-width: 680px;`;
 
@@ -253,7 +259,7 @@ const WebLandingPage: React.FC = () => {
           <HeaderContainer>
             <Logo>
               <img src={logoImg} alt="Tool Thinker" />
-              <span>Tool Thinker</span>
+              <span className="font-audiowide">Tool Thinker</span>
             </Logo>
             <Nav>
               <a href="#features" onClick={scrollTo('features', 'features')}>Features</a>

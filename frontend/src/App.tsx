@@ -23,6 +23,7 @@ import { DescribeSolution } from './components/idea-flow/DescribeSolution';
 import { DescribeCompetition } from './components/idea-flow/DescribeCompetition';
 import { Guidance } from './components/idea-flow/Guidance';
 import { ProgressTracker } from './components/idea-flow/ProgressTracker';
+import { MobileTracker } from './components/idea-flow/ProgressTracker';
 import type { BusinessArea } from './components/idea-flow/IdeaSelection';
 import type { CustomerOption } from './components/idea-flow/CustomerSelection';
 import type { JobOption } from './components/idea-flow/JobSelection';
@@ -87,8 +88,10 @@ const AppFooterContainer = styled.div`
 
 const AppFooterSection = styled.div`
   h3 {
-    font-weight: 600;
+    font-family: 'Audiowide', 'Courier New', monospace;
+    font-weight: 400;
     margin-bottom: 1rem;
+    font-display: swap;
   }
   a {
     color: #9ca3af; /* gray[400] */
@@ -106,6 +109,12 @@ const AppFooterBottom = styled.div`
   padding-top: 2rem;
   text-align: center;
   color: #9ca3af; /* gray[400] */
+  
+  p {
+    font-family: 'Audiowide', 'Courier New', monospace;
+    font-weight: 400;
+    font-display: swap;
+  }
 `;
 
 const FooterMoneyImage = styled.img`
@@ -397,6 +406,10 @@ const SidebarToggle = styled.button`
     right: 1rem;
     z-index: 1001;
   }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const FloatingToggle = styled.button`
@@ -435,6 +448,10 @@ const FloatingToggle = styled.button`
     left: 1rem;
     z-index: 1002;
   }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const MobileOverlay = styled.div<{ $isVisible: boolean }>`
@@ -450,6 +467,14 @@ const MobileOverlay = styled.div<{ $isVisible: boolean }>`
   transition: all 0.3s ease;
   
   @media (min-width: 1025px) {
+    display: none;
+  }
+  
+  @media (max-width: 1024px) and (min-width: 769px) {
+    display: block;
+  }
+  
+  @media (max-width: 768px) {
     display: none;
   }
 `;
@@ -514,10 +539,16 @@ const PageLayout = styled.div`
   width: 100%;
   max-width: 1400px;
   margin: calc(var(--topbar-height, 96px) + 1rem) auto 2rem auto;
-  padding: 0 2rem 200px 2rem;
+  padding: 0 2rem 100px 2rem;
   gap: 3rem;
   position: relative;
   overflow-x: hidden;
+  
+  @media (max-width: 768px) {
+    margin: calc(var(--topbar-height, 72px) + 6rem) auto 1.5rem auto;
+    padding: 0 1rem 0 1rem;
+    gap: 0;
+  }
   
   &::before {
     content: '';
@@ -546,6 +577,11 @@ const PageLayout = styled.div`
 const MainContent = styled.main<{ isExpanded: boolean }>`
   flex: ${({ isExpanded }) => (isExpanded ? '1' : '3')};
   transition: flex 0.3s ease-in-out;
+  
+  @media (max-width: 768px) {
+    flex: 1;
+    width: 100%;
+  }
 `;
 
 const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
@@ -568,8 +604,12 @@ const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     margin-right: 0;
-    min-width: 280px;
-    max-width: 320px;
+    min-width: 200px;
+    max-width: 220px;
+  }
+  
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -1191,6 +1231,17 @@ function AppContent() {
             {!['login', 'signup'].includes(currentStep) && (
               isFlowStep ? (
                 <PageLayout>
+                  {/* Mobile Tracker - Always visible on mobile */}
+                  <MobileTracker 
+                    steps={
+                      entryPoint === 'idea'
+                        ? steps
+                        : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                    }
+                    currentStepKey={currentStep}
+                    onStepClick={handleStepClick}
+                  />
+                  
                   <Sidebar $isCollapsed={isTrackerCollapsed}>
                         <ProgressTracker 
                           steps={
@@ -1938,6 +1989,17 @@ function AppContent() {
             {!['login', 'signup'].includes(currentStep) && (
               isFlowStep ? (
                 <PageLayout>
+                  {/* Mobile Tracker - Always visible on mobile */}
+                  <MobileTracker 
+                    steps={
+                      entryPoint === 'idea'
+                        ? steps
+                        : prematureIdeaFlowSteps.filter(s => !stepsToHidePremature.includes(s.key))
+                    }
+                    currentStepKey={currentStep}
+                    onStepClick={handleStepClick}
+                  />
+                  
                   <Sidebar $isCollapsed={isTrackerCollapsed}>
                         <ProgressTracker 
                           steps={
@@ -1948,6 +2010,7 @@ function AppContent() {
                           currentStepKey={currentStep}
                           onStepClick={handleStepClick}
                           isSubscribed={user?.isSubscribed}
+                          isPremature={entryPoint === 'customer'}
                         />
                     <SidebarToggle 
                       onClick={() => setAppState(prev => ({...prev, isTrackerCollapsed: !prev.isTrackerCollapsed}))}

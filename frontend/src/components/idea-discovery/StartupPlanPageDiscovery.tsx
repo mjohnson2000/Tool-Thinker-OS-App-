@@ -13,6 +13,10 @@ const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
 const FormCard = styled.div`
@@ -28,6 +32,12 @@ const FormCard = styled.div`
   position: relative;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -37,6 +47,10 @@ const FormCard = styled.div`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
     border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
   }
   
   &::after {
@@ -52,8 +66,9 @@ const FormCard = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -63,6 +78,12 @@ const Title = styled.h1`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
   
   &::after {
     content: '';
@@ -90,6 +111,12 @@ const Summary = styled.p`
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SectionCard = styled.div`
@@ -101,6 +128,12 @@ const SectionCard = styled.div`
   border: 1px solid rgba(24, 26, 27, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+  
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -109,14 +142,21 @@ const SectionCard = styled.div`
 `;
 
 const SectionTitle = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   letter-spacing: -0.02em;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const SectionContent = styled.p`
@@ -124,6 +164,10 @@ const SectionContent = styled.p`
   font-size: 1.2rem;
   margin: 0;
   line-height: 1.6;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const ListContent = styled.ul`
@@ -132,10 +176,19 @@ const ListContent = styled.ul`
   margin: 0;
   padding-left: 1.5rem;
   line-height: 1.6;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    padding-left: 1.2rem;
+  }
 `;
 
 const ListItem = styled.li`
   margin-bottom: 0.8rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 0.6rem;
+  }
 `;
 
 const Actions = styled.div`
@@ -144,6 +197,13 @@ const Actions = styled.div`
   margin-top: 2.5rem;
   flex-wrap: wrap;
   justify-content: center;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    margin-top: 2rem;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const ActionButton = styled.button`
@@ -162,6 +222,14 @@ const ActionButton = styled.button`
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   position: relative;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
   
   &::before {
     content: '';
@@ -203,6 +271,11 @@ const SignupPrompt = styled.div`
   margin: 2rem 0;
   text-align: center;
   border: 2px solid #e9ecef;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin: 1.5rem 0;
+  }
 `;
 
 const SignupTitle = styled.h3`
@@ -210,12 +283,22 @@ const SignupTitle = styled.h3`
   font-weight: 600;
   margin-bottom: 1rem;
   color: #212529;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const SignupText = styled.p`
   color: #6c757d;
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
 `;
 
 const ProgressBarContainer = styled.div`
@@ -226,6 +309,10 @@ const ProgressBarContainer = styled.div`
   border-radius: 4px;
   margin: 2rem auto 1.5rem auto;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    margin: 1.5rem auto 1rem auto;
+  }
 `;
 
 const ProgressBarFill = styled.div<{ percent: number }>`
@@ -241,6 +328,10 @@ const CongratsWrapper = styled.div`
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+  }
 `;
 
 const Congrats = styled.div`
@@ -254,6 +345,11 @@ const Congrats = styled.div`
   text-align: center;
   margin-bottom: 0.5rem;
   animation: pulsePop 1s cubic-bezier(0.23, 1, 0.32, 1) 0s 3;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+  }
+  
   @keyframes pulsePop {
     0% { opacity: 0; transform: scale(0.7); }
     20% { opacity: 1; transform: scale(1.1); }
@@ -267,6 +363,11 @@ const CenteredText = styled.p`
   text-align: center;
   width: 100%;
   margin-top: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const SkillGapSection = styled.div`
@@ -276,16 +377,28 @@ const SkillGapSection = styled.div`
   margin-top: 1.5rem;
   border-left: 4px solid #ccc;
   border-right: 4px solid #ccc;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 1rem;
+  }
 `;
 
 const SkillGapTitle = styled.div`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 1rem;
   font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const SkillGapList = styled.ul`
@@ -294,6 +407,10 @@ const SkillGapList = styled.ul`
   color: #333;
   font-size: 1.2rem;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const SkillGapListItem = styled.li`
@@ -306,6 +423,11 @@ const SkillGapListItem = styled.li`
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+  }
   
   &:hover {
     background: #f8f9fa;
@@ -320,16 +442,28 @@ const LearningPathSection = styled.div`
   margin-top: 1rem;
   border-left: 4px solid #ccc;
   border-right: 4px solid #ccc;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const LearningPathTitle = styled.div`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 1rem;
   font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const LearningPathList = styled.ul`
@@ -338,6 +472,10 @@ const LearningPathList = styled.ul`
   color: #333;
   font-size: 1.2rem;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const LearningPathListItem = styled.li`
@@ -350,6 +488,11 @@ const LearningPathListItem = styled.li`
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+  }
   
   &:hover {
     background: #f8f9fa;
@@ -364,24 +507,40 @@ const SkillsYouHaveSection = styled.div`
   margin-bottom: 1.5rem;
   border-left: 4px solid #ccc;
   border-right: 4px solid #ccc;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SkillsYouHaveTitle = styled.div`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 1rem;
   font-size: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const SkillsYouHaveList = styled.ul`
   margin: 0;
   padding-left: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 1.2rem;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const SkillsYouHaveListItem = styled.li`
@@ -394,6 +553,11 @@ const SkillsYouHaveListItem = styled.li`
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+  }
   
   &:hover {
     background: #f8f9fa;
@@ -409,6 +573,11 @@ const GapAnalysisSection = styled.div`
   margin-top: 1.5rem;
   border-left: 4px solid #ccc;
   border-right: 4px solid #ccc;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 1rem;
+  }
 `;
 
 const GapAnalysisSubsection = styled.div`
@@ -417,10 +586,19 @@ const GapAnalysisSubsection = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 `;
 
 const GapAnalysisSubtitle = styled.h4`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   font-size: 1rem;
   color: #181a1b;
   margin-bottom: 0.75rem;
@@ -430,9 +608,11 @@ const GapAnalysisSubtitle = styled.h4`
   cursor: pointer;
   user-select: none;
   transition: all 0.2s ease;
+  font-display: swap;
   
-  &:hover {
-    color: #333;
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
   }
 `;
 
@@ -448,18 +628,34 @@ const CollapsibleHeader = styled.div`
   margin-bottom: 1rem;
   transition: all 0.2s ease;
   
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
   &:hover {
     background: #f8f9fa;
   }
 `;
 
-const CollapsibleTitle = styled.div`
-  font-weight: 700;
-  font-size: 1.1rem;
+const CollapsibleTitle = styled.h4`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 1rem;
   color: #181a1b;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
 `;
 
 const CollapsibleIcon = styled.div<{ isOpen: boolean }>`
@@ -467,6 +663,10 @@ const CollapsibleIcon = styled.div<{ isOpen: boolean }>`
   color: #666;
   transition: transform 0.2s ease;
   transform: rotate(${props => props.isOpen ? '180deg' : '0deg'});
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const CollapsibleContent = styled.div<{ isOpen: boolean }>`
@@ -476,11 +676,19 @@ const CollapsibleContent = styled.div<{ isOpen: boolean }>`
   opacity: ${props => props.isOpen ? '1' : '0'};
   transform: translateY(${props => props.isOpen ? '0' : '-10px'});
   transition: all 0.3s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0 0.5rem;
+  }
 `;
 
 const GapAnalysisList = styled.ul`
   padding-left: 0;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    margin: 0;
+  }
 `;
 
 const GapAnalysisListItem = styled.li`
@@ -494,6 +702,12 @@ const GapAnalysisListItem = styled.li`
   gap: 0.5rem;
   transition: all 0.2s ease;
   
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+  
   &:hover {
     background: #f8f9fa;
     transform: translateX(4px);
@@ -504,6 +718,11 @@ const SkillGapWrapper = styled.div`
   padding: 1.5rem;
   margin-top: 1rem;
   background: #fafbfc;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const MarketResearchSection = styled.div`
@@ -513,6 +732,11 @@ const MarketResearchSection = styled.div`
   margin-top: 1rem;
   border-left: 4px solid #f0f0f0;
   border-right: 4px solid #f0f0f0;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const MarketResearchSubsection = styled.div`
@@ -520,29 +744,42 @@ const MarketResearchSubsection = styled.div`
   border-radius: 8px;
   padding: 1.2rem;
   margin-bottom: 1rem;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
   
-  &:hover {
-    background: #f8f9fa;
-    transform: translateX(2px);
+  @media (max-width: 768px) {
+    padding: 1rem 0.8rem;
+    margin-bottom: 0.8rem;
   }
 `;
 
-const MarketResearchTitle = styled.div`
-  font-weight: 700;
+const MarketResearchTitle = styled.h4`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 1rem;
   color: #181a1b;
-  margin-bottom: 0.8rem;
-  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
 `;
 
 const MarketResearchContent = styled.div`
   color: #333;
   font-size: 1rem;
   line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
 `;
 
 const MarketResearchList = styled.ul`
@@ -551,6 +788,10 @@ const MarketResearchList = styled.ul`
   color: #333;
   font-size: 1rem;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const MarketResearchListItem = styled.li`
@@ -563,6 +804,12 @@ const MarketResearchListItem = styled.li`
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+  }
   
   &:hover {
     background: #f0f0f0;
@@ -577,6 +824,11 @@ const TextSection = styled.div`
   margin-top: 1rem;
   border-left: 4px solid #f0f0f0;
   border-right: 4px solid #f0f0f0;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const TextContent = styled.div`
@@ -584,6 +836,12 @@ const TextContent = styled.div`
   font-size: 1.2rem;
   line-height: 1.6;
   text-align: justify;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: left;
+  }
 `;
 
 const ListSection = styled.div`
@@ -593,40 +851,65 @@ const ListSection = styled.div`
   margin-top: 1rem;
   border-left: 4px solid #f0f0f0;
   border-right: 4px solid #f0f0f0;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
 `;
 
-const ListSectionTitle = styled.div`
-  font-weight: 700;
+const ListSectionTitle = styled.h4`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 1rem;
   color: #181a1b;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
 `;
 
 const ListSectionList = styled.ul`
   margin: 0;
   padding-left: 0;
   color: #333;
-  font-size: 1.2rem;
+  font-size: 1rem;
   list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const ListSectionItem = styled.li`
   background: #fff;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.4rem;
   border: 1px solid #e9ecef;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
   
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+  }
+  
   &:hover {
     background: #f8f9fa;
-    transform: translateX(4px);
+    transform: translateX(2px);
   }
 `;
 
@@ -1048,6 +1331,9 @@ No extra text, just valid JSON.`;
             <SectionTitle>{section.title}</SectionTitle>
             {section.type === 'list' ? (
               <ListSection>
+                <ListSectionTitle>
+                  {section.title}
+                </ListSectionTitle>
                 <ListSectionList>
                   {Array.isArray(section.content) && section.content.map((item, i) => (
                     <ListSectionItem key={i}>

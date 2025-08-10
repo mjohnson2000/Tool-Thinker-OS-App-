@@ -53,8 +53,9 @@ const FormCard = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -64,6 +65,7 @@ const Title = styled.h2`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
   
   &::after {
     content: '';

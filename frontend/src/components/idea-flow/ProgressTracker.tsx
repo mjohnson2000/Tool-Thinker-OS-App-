@@ -18,6 +18,17 @@ const TrackerContainer = styled.div`
   position: relative;
   overflow: visible;
   
+  @media (max-width: 1024px) {
+    padding: 1.5rem 0.75rem;
+    min-width: 200px;
+    max-width: 220px;
+    border-radius: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -54,6 +65,16 @@ const StepItem = styled.button<{ $status: string; $isClickable: boolean; $isPrem
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  
+  @media (max-width: 1024px) {
+    margin-bottom: ${({ $isPremature }) => $isPremature ? '0.75rem' : '1rem'};
+    padding: 0.6rem;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: ${({ $isPremature }) => $isPremature ? '0.5rem' : '0.75rem'};
+    padding: 0.5rem;
+  }
   
   &:hover {
     background: ${({ $isClickable }) => $isClickable ? 'linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%)' : 'transparent'};
@@ -96,6 +117,24 @@ const StepCircle = styled.div<{ $status: string }>`
   position: relative;
   overflow: visible;
   
+  @media (max-width: 1024px) {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 1rem;
+    margin-right: 0.75rem;
+  }
+  
+  @media (max-width: 768px) {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+  }
+  
   /* Pulse animation for current step */
   ${({ $status }) => $status === 'current' && `
     &::after {
@@ -126,6 +165,26 @@ const StepCircle = styled.div<{ $status: string }>`
     max-height: 18px;
     font-size: 18px;
     display: block;
+    
+    @media (max-width: 1024px) {
+      width: 14px;
+      height: 14px;
+      min-width: 14px;
+      min-height: 14px;
+      max-width: 14px;
+      max-height: 14px;
+      font-size: 14px;
+    }
+    
+    @media (max-width: 768px) {
+      width: 12px;
+      height: 12px;
+      min-width: 12px;
+      min-height: 12px;
+      max-width: 12px;
+      max-height: 12px;
+      font-size: 12px;
+    }
   }
 `;
 
@@ -197,69 +256,30 @@ const Coin = styled.div<{ $animate: boolean }>`
 `;
 
 const StepLabel = styled.div<{ $status: string }>`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1rem;
-  font-weight: ${({ $status }) => ($status === 'current' ? '700' : '500')};
+  font-weight: ${({ $status }) => ($status === 'current' ? '400' : '400')};
   color: ${({ $status }) => ($status === 'current' ? '#181a1b' : '#6c757d')};
   display: flex;
   align-items: center;
   gap: 0.4rem;
   line-height: 1.2;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-display: swap;
+  
+  @media (max-width: 1024px) {
+    font-size: 0.9rem;
+    gap: 0.3rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    gap: 0.2rem;
+  }
   
   ${({ $status }) => $status === 'completed' && `
     color: #181a1b;
-    font-weight: 600;
   `}
-`;
-
-const Connector = styled.div<{ $active: boolean }>`
-  width: 3px;
-  height: 36px;
-  background: ${({ $active }) => ($active ? 'linear-gradient(180deg, #181a1b 0%, #444 100%)' : 'linear-gradient(180deg, #e9ecef 0%, #f1f3f4 100%)')};
-  margin: 0 16px;
-  align-self: center;
-  border-radius: 2px;
-  position: relative;
-  
-  ${({ $active }) => $active && `
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(180deg, #181a1b 0%, #444 100%);
-      border-radius: 2px;
-      animation: flow 2s ease-in-out infinite;
-    }
-    
-    @keyframes flow {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-  `}
-`;
-
-const PremiumBadge = styled.span`
-  background: linear-gradient(135deg, #181a1b 0%, #444 100%);
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-left: 0.3rem;
-  display: flex;
-  align-items: center;
-  height: 18px;
-`;
-
-const LockIcon = styled.span`
-  color: #181a1b;
-  font-size: 0.9rem;
-  margin-left: 0.3rem;
 `;
 
 interface ProgressTrackerProps {
@@ -306,43 +326,204 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
   }, [currentStepKey, steps]);
 
   return (
-    <TrackerContainer>
-      {steps.map((step, index) => {
-        const status = getStatus(index);
-        const isClickable = status === 'completed' && canAccessStep(step);
-        const isPremium = step.isPremium && !isSubscribed;
-        return (
-          <React.Fragment key={step.key}>
-            <StepItem
-              $status={status}
-              $isClickable={isClickable}
-              $isPremature={isPremature}
-              onClick={() => isClickable && onStepClick(step.key)}
-              aria-current={status === 'current' ? 'step' : undefined}
-              tabIndex={isClickable ? 0 : -1}
-            >
-              <StepCircle className="circle" $status={status}>
-                {status === 'completed' ? (
-                  <FaCheck color="#fff" size={18} style={{ display: 'block' }} />
-                ) : (
-                  index + 1
-                )}
-                {status === 'completed' && (
-                  <Coin $animate={animating.has(step.key)} />
-                )}
-              </StepCircle>
-              <StepLabel $status={status}>
-                {step.label.replace(/^[0-9]+\.\s*/, '')}
-                {/* Removed PremiumBadge and LockIcon */}
-              </StepLabel>
-            </StepItem>
-            {/* Remove the vertical connector lines */}
-            {/* {index < steps.length - 1 && (
-              <Connector $active={getStatus(index + 1) !== 'upcoming'} />
-            )} */}
-          </React.Fragment>
-        );
-      })}
-    </TrackerContainer>
+    <>
+      {/* Desktop/Tablet Sidebar */}
+      <TrackerContainer>
+        {steps.map((step, index) => {
+          const status = getStatus(index);
+          const isClickable = status === 'completed' && canAccessStep(step);
+          const isPremium = step.isPremium && !isSubscribed;
+          return (
+            <React.Fragment key={step.key}>
+              <StepItem 
+                key={step.key}
+                $status={status}
+                $isClickable={isClickable}
+                onClick={() => isClickable && onStepClick(step.key)}
+              >
+                <StepCircle $status={status}>
+                  {status === 'completed' ? (
+                    <Coin $animate={animating.has(step.key)} />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
+                </StepCircle>
+                <StepLabel $status={status}>
+                  {step.label.replace(/^[0-9]+\.\s*/, '')}
+                  {/* Removed PremiumBadge and LockIcon */}
+                </StepLabel>
+              </StepItem>
+            </React.Fragment>
+          );
+        })}
+      </TrackerContainer>
+    </>
   );
-} 
+}
+
+// Separate Mobile Tracker Component
+const MobileTrackerContainer = styled.div`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: calc(var(--topbar-height, 72px) + 2rem);
+    left: 1rem;
+    right: 1rem;
+    z-index: 1001;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 1rem;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+`;
+
+const MobileTrackerScroll = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: max-content;
+  padding: 0.2rem 0;
+`;
+
+const MobileStepItem = styled.div<{ $isCurrent: boolean; $isCompleted: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  background: ${({ $isCurrent, $isCompleted }) => 
+    $isCurrent ? 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)' :
+    $isCompleted ? 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)' :
+    'transparent'
+  };
+  color: ${({ $isCurrent, $isCompleted }) => 
+    $isCurrent ? '#ffffff' :
+    $isCompleted ? '#181a1b' :
+    '#6c757d'
+  };
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  
+  &:hover {
+    background: ${({ $isCurrent }) => 
+      $isCurrent ? 'linear-gradient(135deg, #000 0%, #181a1b 100%)' :
+      'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
+    };
+    transform: translateY(-1px);
+  }
+`;
+
+const MobileStepCircle = styled.div<{ $isCurrent: boolean; $isCompleted: boolean }>`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: ${({ $isCurrent, $isCompleted }) => 
+    $isCurrent ? '#ffffff' :
+    $isCompleted ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)' :
+    '#f8f9fa'
+  };
+  border: ${({ $isCurrent, $isCompleted }) => 
+    $isCurrent ? 'none' :
+    $isCompleted ? '1px solid #ffd700' :
+    '1px solid #e9ecef'
+  };
+  color: ${({ $isCurrent, $isCompleted }) => 
+    $isCurrent ? '#181a1b' :
+    $isCompleted ? '#8b6914' :
+    '#6c757d'
+  };
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const MobileStepLabel = styled.span`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-display: swap;
+`;
+
+const MobileStepDivider = styled.div`
+  width: 1px;
+  height: 16px;
+  background: #e9ecef;
+  flex-shrink: 0;
+`;
+
+export function MobileTracker({ steps, currentStepKey, onStepClick }: { 
+  steps: { key: string; label: string; isPremium?: boolean }[]; 
+  currentStepKey: string;
+  onStepClick?: (stepKey: string) => void;
+}) {
+  const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to current step on mount
+  React.useEffect(() => {
+    if (containerRef.current) {
+      const currentStepElement = containerRef.current.children[0]?.children[currentStepIndex] as HTMLElement;
+      if (currentStepElement) {
+        currentStepElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest', 
+          inline: 'center' 
+        });
+      }
+    }
+  }, [currentStepIndex]);
+  
+  const handleStepClick = (stepKey: string, stepIndex: number) => {
+    if (onStepClick && stepIndex <= currentStepIndex) {
+      onStepClick(stepKey);
+    }
+  };
+  
+  return (
+    <MobileTrackerContainer>
+      <MobileTrackerScroll ref={containerRef}>
+        {steps.map((step, index) => {
+          const isCurrent = step.key === currentStepKey;
+          const isCompleted = index < currentStepIndex;
+          const canClick = index <= currentStepIndex;
+          
+          return (
+            <React.Fragment key={step.key}>
+              <MobileStepItem 
+                $isCurrent={isCurrent} 
+                $isCompleted={isCompleted}
+                onClick={() => handleStepClick(step.key, index)}
+                style={{ cursor: canClick ? 'pointer' : 'default' }}
+              >
+                <MobileStepCircle $isCurrent={isCurrent} $isCompleted={isCompleted}>
+                  {isCompleted ? '$' : index + 1}
+                </MobileStepCircle>
+                <MobileStepLabel>
+                  {step.label.replace(/^[0-9]+\.\s*/, '')}
+                </MobileStepLabel>
+              </MobileStepItem>
+              {index < steps.length - 1 && <MobileStepDivider />}
+            </React.Fragment>
+          );
+        })}
+      </MobileTrackerScroll>
+    </MobileTrackerContainer>
+  );
+}

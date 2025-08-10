@@ -22,9 +22,13 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 700px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
 const FormCard = styled.div`
@@ -40,6 +44,12 @@ const FormCard = styled.div`
   position: relative;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -49,6 +59,10 @@ const FormCard = styled.div`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
     border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
   }
   
   &::after {
@@ -64,8 +78,9 @@ const FormCard = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -75,6 +90,12 @@ const Title = styled.h2`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
   
   &::after {
     content: '';
@@ -98,6 +119,12 @@ const Subtitle = styled.p`
   max-width: 550px;
   font-weight: 400;
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const TextArea = styled.textarea`
@@ -217,17 +244,24 @@ const Button = styled.button`
 
 const AreaGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   width: 100%;
   margin-top: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+    margin-top: 1rem;
+  }
 `;
 
 const AreaCard = styled.button<{ isSelected: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.8rem 1.5rem;
+  padding: 2rem 1.5rem;
   border: 2px solid ${props => props.isSelected ? '#181a1b' : '#E5E5E5'};
   border-radius: 16px;
   background: ${props => props.isSelected ? 'linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)'};
@@ -235,6 +269,25 @@ const AreaCard = styled.button<{ isSelected: boolean }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    min-height: 140px;
+    margin: 0 0.5rem;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => props.isSelected ? 'linear-gradient(90deg, #181a1b, #4a4a4a)' : 'transparent'};
+    border-radius: 16px 16px 0 0;
+  }
   
   &:hover {
     border-color: #181a1b;
@@ -245,15 +298,44 @@ const AreaCard = styled.button<{ isSelected: boolean }>`
 `;
 
 const Icon = styled.div`
-  font-size: 2rem;
+  font-size: 2.5rem;
   margin-bottom: 1rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+  border: 2px solid #f1f3f4;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  ${AreaCard}:hover & {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: #ced4da;
+  }
 `;
 
 const AreaTitle = styled.div`
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: 400;
+  margin-bottom: 0.6rem;
   color: #181a1b;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const AreaDescription = styled.div`
@@ -262,6 +344,10 @@ const AreaDescription = styled.div`
   line-height: 1.4;
   text-align: center;
   margin-top: 0.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+  }
 `;
 
 const ProgressBarContainer = styled.div`

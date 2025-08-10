@@ -35,8 +35,9 @@ const GlassCard = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 2.5rem;
   text-align: center;
@@ -46,6 +47,7 @@ const Title = styled.h1`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
   
   &::after {
     content: '';

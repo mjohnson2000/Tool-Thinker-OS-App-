@@ -12,10 +12,12 @@ const Container = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 1.5rem;
   text-align: center;
+  font-display: swap;
 `;
 
 const Form = styled.form`

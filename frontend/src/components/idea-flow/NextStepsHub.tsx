@@ -121,10 +121,12 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #222;
   margin-bottom: 0.5rem;
+  font-display: swap;
   
   @media (max-width: 768px) {
     font-size: 2rem;
@@ -179,13 +181,15 @@ const Card = styled.div`
 `;
 
 const CardTitle = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-display: swap;
   
   @media (max-width: 768px) {
     font-size: 1.3rem;
@@ -417,10 +421,12 @@ const HelpItemInfo = styled.div`
 `;
 
 const HelpItemTitle = styled.div`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 0.25rem;
+  font-display: swap;
 `;
 
 const HelpItemMeta = styled.div`
@@ -481,10 +487,12 @@ const ResourceIcon = styled.div`
 `;
 
 const ResourceTitle = styled.h4`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 0.5rem;
+  font-display: swap;
 `;
 
 const ResourceDescription = styled.p`
@@ -507,10 +515,12 @@ const MilestoneIcon = styled.div`
 `;
 
 const MilestoneTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #856404;
   margin-bottom: 0.5rem;
+  font-display: swap;
 `;
 
 const MilestoneDescription = styled.p`

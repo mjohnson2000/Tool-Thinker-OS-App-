@@ -24,6 +24,10 @@ const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
 const FormCard = styled.div`
@@ -39,6 +43,12 @@ const FormCard = styled.div`
   position: relative;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -48,6 +58,10 @@ const FormCard = styled.div`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
     border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
   }
   
   &::after {
@@ -63,8 +77,9 @@ const FormCard = styled.div`
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 1.2rem;
   text-align: center;
   color: var(--text-primary);
@@ -74,6 +89,12 @@ const Title = styled.h2`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
   
   &::after {
     content: '';
@@ -97,6 +118,12 @@ const Subtitle = styled.p`
   max-width: 550px;
   font-weight: 400;
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const SkillsGrid = styled.div`
@@ -106,6 +133,14 @@ const SkillsGrid = styled.div`
   width: 100%;
   margin-bottom: 2rem;
   margin-top: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SkillCard = styled.button<{ category: string; importance: string; isSelected: boolean }>`
@@ -126,6 +161,12 @@ const SkillCard = styled.button<{ category: string; importance: string; isSelect
   width: 100%;
   text-align: left;
   outline: none;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    min-height: 140px;
+    margin: 0 0.5rem;
+  }
   
   &::before {
     content: '';
@@ -190,12 +231,18 @@ const Checkbox = styled.input`
 `;
 
 const SkillTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 0.5rem;
   color: #181a1b;
   flex: 1;
-  margin-right: 1rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const SkillDescription = styled.p`

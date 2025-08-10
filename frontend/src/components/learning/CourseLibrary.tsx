@@ -156,11 +156,13 @@ const CourseHeader = styled.div`
 `;
 
 const CourseTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 0.5rem;
   line-height: 1.3;
+  font-display: swap;
 `;
 
 const CourseInstructor = styled.div`

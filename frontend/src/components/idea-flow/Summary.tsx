@@ -56,8 +56,9 @@ const Container = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2.4rem;
-  font-weight: 800;
+  font-weight: 400;
   text-align: center;
   margin-bottom: 1.2rem;
   color: var(--text-primary);
@@ -67,6 +68,7 @@ const Title = styled.h1`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  font-display: swap;
   
   &::after {
     content: '';

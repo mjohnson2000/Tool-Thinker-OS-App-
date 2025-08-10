@@ -17,13 +17,24 @@ const Container = styled.div`
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 1rem;
   text-align: center;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -32,6 +43,12 @@ const Subtitle = styled.p`
   text-align: center;
   font-size: 1.1rem;
   line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const Grid = styled.div`
@@ -39,6 +56,13 @@ const Grid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+    margin-top: 1rem;
+  }
 `;
 
 const Card = styled.button<{ isSelected: boolean }>`
@@ -56,6 +80,12 @@ const Card = styled.button<{ isSelected: boolean }>`
   text-align: left;
   position: relative;
   transform: translateY(0);
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    min-height: 140px;
+    margin: 0 0.5rem;
+  }
   
   &:hover, &:focus {
     border: 2px solid #181a1b;
@@ -95,6 +125,13 @@ const Icon = styled.div`
   transition: all 0.2s ease;
   align-self: center;
   
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  
   ${Card}:hover & {
     transform: scale(1.05);
     background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
@@ -103,11 +140,18 @@ const Icon = styled.div`
 `;
 
 const CardTitle = styled.h3`
-  font-weight: 700;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   font-size: 1.2rem;
   margin-bottom: 0.6rem;
   color: var(--text-primary);
   letter-spacing: -0.01em;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const CardDescription = styled.p`

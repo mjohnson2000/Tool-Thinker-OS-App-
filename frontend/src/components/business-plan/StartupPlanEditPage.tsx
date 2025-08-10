@@ -16,10 +16,12 @@ const Container = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 2rem;
+  font-display: swap;
 `;
 
 const Section = styled.div`
@@ -27,10 +29,12 @@ const Section = styled.div`
 `;
 
 const SectionLabel = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #181a1b;
   margin-bottom: 0.5rem;
+  font-display: swap;
 `;
 
 const TextArea = styled.textarea`

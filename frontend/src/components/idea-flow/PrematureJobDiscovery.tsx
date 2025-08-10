@@ -18,17 +18,34 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    padding: 0 0.5rem;
+  }
 `;
 
 const Title = styled.h2`
+  font-family: 'Audiowide', 'Courier New', monospace;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 1.5rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const Subtitle = styled.p`
   color: var(--text-secondary);
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const JobGrid = styled.div`
@@ -37,6 +54,13 @@ const JobGrid = styled.div`
   gap: 1.5rem;
   width: 100%;
   max-width: 700px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+    margin-top: 1rem;
+  }
 `;
 
 const OptionCard = styled.button<{ isSelected: boolean }>`
@@ -51,6 +75,13 @@ const OptionCard = styled.button<{ isSelected: boolean }>`
   cursor: pointer;
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    min-height: 140px;
+    margin: 0 0.5rem;
+  }
+  
   &:hover, &:focus {
     border: 2px solid #181a1b;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
@@ -60,12 +91,24 @@ const OptionCard = styled.button<{ isSelected: boolean }>`
 const Icon = styled.div`
   font-size: 2.5rem;
   margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const JobTitle = styled.div`
-  font-weight: 600;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const JobDescription = styled.div`

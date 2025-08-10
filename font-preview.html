@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Thinker OS - Font Preview</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Albert+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Space+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #f5f5f7;
+            color: #1a1a1a;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .font-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        
+        .font-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #181a1b;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 0.5rem;
+        }
+        
+        .example-card {
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.15rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .body-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .code-example {
+            background: #f8f9fa;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #333;
+            margin: 1rem 0;
+        }
+        
+        /* Font Classes */
+        .font-inter { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .font-outfit { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .font-albert { font-family: 'Albert Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .font-space-grotesk { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .font-dm-sans { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        .font-jetbrains { font-family: 'JetBrains Mono', 'Monaco', 'Menlo', monospace; }
+        .font-ibm-plex { font-family: 'IBM Plex Mono', 'Monaco', 'Menlo', monospace; }
+        
+        .current-font {
+            background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 3rem; color: #181a1b; font-size: 3rem;">Tool Thinker OS - Font Preview</h1>
+        
+        <!-- Current Font -->
+        <div class="font-section">
+            <div class="font-name">Current Font (System Default)</div>
+            <div class="current-font">Currently Used</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 1: Inter + JetBrains Mono -->
+        <div class="font-section font-inter">
+            <div class="font-name">Option 1: Inter + JetBrains Mono</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+                <div class="code-example font-jetbrains">
+// Example code block
+function generateBusinessPlan(idea, customer, market) {
+    return {
+        summary: "AI-generated business plan",
+        sections: {
+            market: "Market analysis...",
+            financial: "Financial projections..."
+        }
+    };
+}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 2: Outfit -->
+        <div class="font-section font-outfit">
+            <div class="font-name">Option 2: Outfit</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 3: Albert Sans + IBM Plex Mono -->
+        <div class="font-section font-albert">
+            <div class="font-name">Option 3: Albert Sans + IBM Plex Mono</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+                <div class="code-example font-ibm-plex">
+// Example code block
+function generateBusinessPlan(idea, customer, market) {
+    return {
+        summary: "AI-generated business plan",
+        sections: {
+            market: "Market analysis...",
+            financial: "Financial projections..."
+        }
+    };
+}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 4: Space Grotesk + JetBrains Mono -->
+        <div class="font-section font-space-grotesk">
+            <div class="font-name">Option 4: Space Grotesk + JetBrains Mono</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+                <div class="code-example font-jetbrains">
+// Example code block
+function generateBusinessPlan(idea, customer, market) {
+    return {
+        summary: "AI-generated business plan",
+        sections: {
+            market: "Market analysis...",
+            financial: "Financial projections..."
+        }
+    };
+}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 5: DM Sans + Fira Code -->
+        <div class="font-section font-dm-sans">
+            <div class="font-name">Option 5: DM Sans</div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <h2 style="color: #181a1b; margin-bottom: 1rem;">Which font feels right for Tool Thinker OS?</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Consider how each font reflects the brand personality you want to convey.</p>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Inter + JetBrains</strong><br>
+                    <small>Professional & Modern</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Outfit</strong><br>
+                    <small>Clean & Contemporary</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Albert Sans</strong><br>
+                    <small>Premium & Trustworthy</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Space Grotesk</strong><br>
+                    <small>Tech & Innovation</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>DM Sans</strong><br>
+                    <small>Readable & Professional</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

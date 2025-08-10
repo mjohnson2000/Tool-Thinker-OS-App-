@@ -577,7 +577,7 @@ const steps = [
   { key: 'ideaType', label: 'Type' },
   { key: 'location', label: 'Location' },
   { key: 'idea', label: 'Interest' },
-      { key: 'scheduleGoals', label: 'Scope' },
+  { key: 'scheduleGoals', label: 'Scope' },
   { key: 'customer', label: 'Customer' },
   { key: 'job', label: 'Problem' },
   { key: 'solution', label: 'Solution' },
@@ -590,7 +590,7 @@ const steps = [
 const prematureIdeaFlowSteps = [
   { key: 'prematureIdeaType', label: '1. Business Type' },
   { key: 'prematureLocation', label: '2. Location' },
-      { key: 'prematureScheduleGoals', label: '3. Scope' },
+  { key: 'prematureScheduleGoals', label: '3. Scope' },
   { key: 'existingIdea', label: '4. Your Idea' },
   { key: 'describeCustomer', label: '5. Customer' },
   { key: 'describeProblem', label: '6. Problem' },
@@ -794,7 +794,7 @@ function AppContent() {
       businessPlan: 'Business Plan',
       prematureJobDiscovery: 'Premature Job Discovery',
       marketEvaluation: 'Market Evaluation',
-      evaluationScore: 'Evaluation Score',
+      evaluationScore: 'Validation Score',
       nextStepsHub: 'Next Steps Hub',
       startupPlan: 'Startup Plan',
       launch: 'Launch Preparation',
@@ -854,8 +854,6 @@ function AppContent() {
   function handleIdeaSelect(selectedIdea: { interests: string; area: BusinessArea }) {
     setAppState(prev => ({ ...prev, idea: selectedIdea, currentStep: 'scheduleGoals' }));
   }
-
-
 
   function handleLocationSelect(location: { city: string; region: string; country: string }) {
     setAppState(prev => ({ ...prev, location, currentStep: 'idea' }));
@@ -1053,8 +1051,6 @@ function AppContent() {
     setAppState(prev => ({ ...prev, prematureSkillAssessment: assessment, currentStep: 'businessPlan' }));
   }
 
-
-
   const PLAN_DISPLAY_NAMES: Record<string, string> = {
     free: 'Free',
     basic: 'Basic',
@@ -1072,6 +1068,18 @@ function AppContent() {
     console.log('Rendering CustomerSelection with idea.area:', idea.area);
   }
 
+  // Reusable logo click handler to landing
+  function handleLogoToLanding() {
+    setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
+    navigate('/');
+  }
+  function handleLogoKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleLogoToLanding();
+    }
+  }
+
   return (
     <>
       {/* Always render the Profile modal/page when currentStep === 'profile' */}
@@ -1086,10 +1094,15 @@ function AppContent() {
         <Route path="/" element={<WebLandingPage />} />
         <Route path="/app" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1378,7 +1391,6 @@ function AppContent() {
                           onClear={handleClearStep}
                         />
                       )}
-
                       {currentStep === 'prematureSkillAssessment' && (
                         <PrematureSkillAssessment 
                           onComplete={handlePrematureSkillAssessmentComplete}
@@ -1389,7 +1401,6 @@ function AppContent() {
                           onClear={handleClearStep}
                         />
                       )}
-
                     </>
                   </MainContent>
                 </PageLayout>
@@ -1412,10 +1423,15 @@ function AppContent() {
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
         <Route path="/next-steps-hub/:planId" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1439,7 +1455,7 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                         <AvatarButton onClick={() => {
+                     <AvatarButton onClick={() => {
                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'nextStepsHub' as Step, currentStep: 'profile' }));
                      }} aria-label="Profile">
                       {user && user.profilePic ? (
@@ -1474,10 +1490,15 @@ function AppContent() {
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1501,7 +1522,7 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                         <AvatarButton onClick={() => {
+                     <AvatarButton onClick={() => {
                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
                      }} aria-label="Profile">
                       {user && user.profilePic ? (
@@ -1535,10 +1556,15 @@ function AppContent() {
         } />
         <Route path="/courses" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1562,7 +1588,7 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                         <AvatarButton onClick={() => {
+                     <AvatarButton onClick={() => {
                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
                      }} aria-label="Profile">
                       {user && user.profilePic ? (
@@ -1596,10 +1622,15 @@ function AppContent() {
         } />
         <Route path="/plans" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1623,7 +1654,7 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                         <AvatarButton onClick={() => {
+                     <AvatarButton onClick={() => {
                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
                      }} aria-label="Profile">
                       {user && user.profilePic ? (
@@ -1657,10 +1688,15 @@ function AppContent() {
         } />
         <Route path="/startup-plan/:id/edit" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1684,7 +1720,7 @@ function AppContent() {
                     My Business Ideas
                   </NavButton>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                         <AvatarButton onClick={() => {
+                     <AvatarButton onClick={() => {
                        setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
                      }} aria-label="Profile">
                       {user && user.profilePic ? (
@@ -1719,10 +1755,15 @@ function AppContent() {
         <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
         <Route path="/launch" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>
@@ -1799,10 +1840,15 @@ function AppContent() {
         <Route path="/automated-discovery/:id" element={<AutomatedDiscoveryPage />} />
         <Route path="*" element={
           <AppContainer>
-            <Logo src={logo} alt="ToolThinker Logo" onClick={() => {
-              setAppState(prev => ({ ...initialAppState, isTrackerCollapsed: prev.isTrackerCollapsed }));
-              navigate('/app');
-            }} />
+            <Logo
+              src={logo}
+              alt="ToolThinker Logo"
+              onClick={handleLogoToLanding}
+              onKeyDown={handleLogoKeyDown}
+              role="link"
+              aria-label="Go to landing page"
+              tabIndex={0}
+            />
             <TopBar ref={topBarRef}>
               {!isAuthenticated ? (
                 <>

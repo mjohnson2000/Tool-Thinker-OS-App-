@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Thinker OS - Ultra Eccentric Font Preview</title>
+    
+    <!-- Ultra Eccentric Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Righteous&family=Fredoka+One&family=Concert+One&family=Black+Ops+One&family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&family=Major+Mono+Display&family=Space+Mono:wght@400;700&family=Syncopate:wght@400;700&family=Chakra+Petch:wght@300;400;500;600;700&family=Audiowide&family=Russo+One&family=Exo+2:wght@300;400;500;600;700;800;900&family=Oxanium:wght@200;300;400;500;600;700;800&family=Blinker:wght@200;300;400;600;700;800;900&family=Lexend:wght@100;200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #f5f5f7;
+            color: #1a1a1a;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .font-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        
+        .font-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #181a1b;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 0.5rem;
+        }
+        
+        .example-card {
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.15rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .body-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        /* Ultra Eccentric Font Classes */
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-righteous { font-family: 'Righteous', cursive; }
+        .font-fredoka { font-family: 'Fredoka One', cursive; }
+        .font-concert { font-family: 'Concert One', cursive; }
+        .font-blackops { font-family: 'Black Ops One', cursive; }
+        .font-pressstart { font-family: 'Press Start 2P', cursive; }
+        .font-vt323 { font-family: 'VT323', monospace; }
+        .font-sharetech { font-family: 'Share Tech Mono', monospace; }
+        .font-majormono { font-family: 'Major Mono Display', monospace; }
+        .font-spacemono { font-family: 'Space Mono', monospace; }
+        .font-syncopate { font-family: 'Syncopate', sans-serif; }
+        .font-chakra { font-family: 'Chakra Petch', sans-serif; }
+        .font-audiowide { font-family: 'Audiowide', cursive; }
+        .font-russo { font-family: 'Russo One', sans-serif; }
+        .font-exo2 { font-family: 'Exo 2', sans-serif; }
+        .font-oxanium { font-family: 'Oxanium', cursive; }
+        .font-blinker { font-family: 'Blinker', sans-serif; }
+        .font-lexend { font-family: 'Lexend', sans-serif; }
+        .font-jetbrains { font-family: 'JetBrains Mono', monospace; }
+        
+        .personality-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+        
+        .warning {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 3rem; color: #181a1b; font-size: 3rem;">Tool Thinker OS - Ultra Eccentric Font Preview</h1>
+        
+        <div class="warning">
+            ⚠️ WARNING: These fonts are EXTREMELY distinctive! They will make Tool Thinker OS unforgettable but may be polarizing.
+        </div>
+        
+        <!-- Option 1: Orbitron -->
+        <div class="font-section font-orbitron">
+            <div class="font-name">Option 1: Orbitron <span class="personality-tag">Futuristic & Tech</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 2: Righteous -->
+        <div class="font-section font-righteous">
+            <div class="font-name">Option 2: Righteous <span class="personality-tag">Bold & Confident</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 3: Fredoka One -->
+        <div class="font-section font-fredoka">
+            <div class="font-name">Option 3: Fredoka One <span class="personality-tag">Friendly & Bold</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 4: Concert One -->
+        <div class="font-section font-concert">
+            <div class="font-name">Option 4: Concert One <span class="personality-tag">Playful & Unique</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 5: Black Ops One -->
+        <div class="font-section font-blackops">
+            <div class="font-name">Option 5: Black Ops One <span class="personality-tag">Military & Strong</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 6: Press Start 2P -->
+        <div class="font-section font-pressstart">
+            <div class="font-name">Option 6: Press Start 2P <span class="personality-tag">Retro Gaming</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 7: VT323 -->
+        <div class="font-section font-vt323">
+            <div class="font-name">Option 7: VT323 <span class="personality-tag">Terminal & Retro</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 8: Share Tech Mono -->
+        <div class="font-section font-sharetech">
+            <div class="font-name">Option 8: Share Tech Mono <span class="personality-tag">Tech & Monospace</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 9: Major Mono Display -->
+        <div class="font-section font-majormono">
+            <div class="font-name">Option 9: Major Mono Display <span class="personality-tag">Minimal & Tech</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 10: Space Mono -->
+        <div class="font-section font-spacemono">
+            <div class="font-name">Option 10: Space Mono <span class="personality-tag">Space & Tech</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 11: Syncopate -->
+        <div class="font-section font-syncopate">
+            <div class="font-name">Option 11: Syncopate <span class="personality-tag">Geometric & Bold</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 12: Chakra Petch -->
+        <div class="font-section font-chakra">
+            <div class="font-name">Option 12: Chakra Petch <span class="personality-tag">Futuristic & Clean</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 13: Audiowide -->
+        <div class="font-section font-audiowide">
+            <div class="font-name">Option 13: Audiowide <span class="personality-tag">Bold & Impactful</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 14: Russo One -->
+        <div class="font-section font-russo">
+            <div class="font-name">Option 14: Russo One <span class="personality-tag">Strong & Modern</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 15: Exo 2 -->
+        <div class="font-section font-exo2">
+            <div class="font-name">Option 15: Exo 2 <span class="personality-tag">Modern & Geometric</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 16: Oxanium -->
+        <div class="font-section font-oxanium">
+            <div class="font-name">Option 16: Oxanium <span class="personality-tag">Futuristic & Clean</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 17: Blinker -->
+        <div class="font-section font-blinker">
+            <div class="font-name">Option 17: Blinker <span class="personality-tag">Modern & Distinctive</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <!-- Option 18: Lexend -->
+        <div class="font-section font-lexend">
+            <div class="font-name">Option 18: Lexend <span class="personality-tag">Optimized for Reading</span></div>
+            <div class="example-card">
+                <div class="title">Your Business Idea</div>
+                <div class="subtitle">Transform your ideas into profitable businesses with AI-powered guidance</div>
+                <div class="body-text">
+                    Discover the perfect business opportunity that matches your skills, interests, and market demand. 
+                    Our AI analyzes thousands of successful business models to find the right fit for you.
+                </div>
+                <button class="button">Start Your Journey</button>
+                <button class="button">Learn More</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <h2 style="color: #181a1b; margin-bottom: 1rem;">Which Ultra Eccentric Font Will Make Tool Thinker OS Unforgettable?</h2>
+            <p style="color: #666; margin-bottom: 2rem;">These fonts are EXTREMELY distinctive and will make your brand stand out dramatically.</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 2rem;">
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Orbitron</strong><br>
+                    <small>Futuristic & Tech</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Righteous</strong><br>
+                    <small>Bold & Confident</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Fredoka One</strong><br>
+                    <small>Friendly & Bold</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Concert One</strong><br>
+                    <small>Playful & Unique</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Black Ops One</strong><br>
+                    <small>Military & Strong</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Press Start 2P</strong><br>
+                    <small>Retro Gaming</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>VT323</strong><br>
+                    <small>Terminal & Retro</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Share Tech Mono</strong><br>
+                    <small>Tech & Monospace</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Major Mono Display</strong><br>
+                    <small>Minimal & Tech</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Space Mono</strong><br>
+                    <small>Space & Tech</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Syncopate</strong><br>
+                    <small>Geometric & Bold</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Chakra Petch</strong><br>
+                    <small>Futuristic & Clean</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Audiowide</strong><br>
+                    <small>Bold & Impactful</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Russo One</strong><br>
+                    <small>Strong & Modern</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Exo 2</strong><br>
+                    <small>Modern & Geometric</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Oxanium</strong><br>
+                    <small>Futuristic & Clean</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Blinker</strong><br>
+                    <small>Modern & Distinctive</small>
+                </div>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; text-align: center;">
+                    <strong>Lexend</strong><br>
+                    <small>Optimized for Reading</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

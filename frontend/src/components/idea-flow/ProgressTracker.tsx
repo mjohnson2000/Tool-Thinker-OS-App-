@@ -16,7 +16,7 @@ const TrackerContainer = styled.div`
     0 1px 3px rgba(0,0,0,0.1);
   border: 1px solid rgba(255,255,255,0.8);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   
   &::before {
     content: '';
@@ -94,6 +94,7 @@ const StepCircle = styled.div<{ $status: string }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-right: 1rem;
   position: relative;
+  overflow: visible;
   
   /* Pulse animation for current step */
   ${({ $status }) => $status === 'current' && `
@@ -125,6 +126,73 @@ const StepCircle = styled.div<{ $status: string }>`
     max-height: 18px;
     font-size: 18px;
     display: block;
+  }
+`;
+
+/* Coin animation component */
+const Coin = styled.div<{ $animate: boolean }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: 2;
+  background: radial-gradient(circle at 30% 30%, #ffd700 0%, #ffed4e 22%, #ffd700 45%, #b8860b 68%, #ffd700 85%, #ffed4e 100%);
+  box-shadow:
+    0 1px 4px rgba(255, 215, 0, 0.45),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 2px rgba(139, 105, 20, 0.35);
+  border: 2px solid #b8860b;
+  will-change: transform, opacity, filter;
+  animation: ${({ $animate }) => ($animate ? 'coinFlip 1.1s ease-in-out' : 'shine 2.8s ease-in-out infinite')};
+
+  &::before {
+    content: '$';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: #8b6914;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    font-size: 0.95rem;
+  }
+
+  @keyframes coinFlip {
+    0% {
+      transform: translate(-50%, -50%) rotateY(0deg) scale(0.8);
+      opacity: 0;
+    }
+    20% {
+      transform: translate(-50%, -50%) rotateY(0deg) scale(1.2);
+      opacity: 1;
+    }
+    40% {
+      transform: translate(-50%, -50%) rotateY(180deg) scale(1.1);
+    }
+    60% {
+      transform: translate(-50%, -50%) rotateY(360deg) scale(1.2);
+    }
+    80% {
+      transform: translate(-50%, -50%) rotateY(540deg) scale(1.1);
+    }
+    100% {
+      transform: translate(-50%, -50%) rotateY(720deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes shine {
+    0%, 100% {
+      filter: brightness(1) saturate(1);
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      filter: brightness(1.2) saturate(1.3);
+      transform: translate(-50%, -50%) scale(1.05);
+    }
   }
 `;
 
@@ -204,6 +272,7 @@ interface ProgressTrackerProps {
 
 export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscribed = false, isPremature = false }: ProgressTrackerProps) {
   const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
+  const [animating, setAnimating] = React.useState<Set<string>>(new Set());
 
   const getStatus = (stepIndex: number) => {
     if (currentStepIndex === -1) return 'upcoming';
@@ -216,6 +285,25 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
     if (!step.isPremium) return true;
     return isSubscribed;
   };
+
+  // Trigger coin animation when step becomes completed
+  React.useEffect(() => {
+    steps.forEach((step, index) => {
+      const status = getStatus(index);
+      if (status === 'completed' && !animating.has(step.key)) {
+        setAnimating(prev => new Set(prev).add(step.key));
+        
+        // Remove animation flag after animation completes
+        setTimeout(() => {
+          setAnimating(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(step.key);
+            return newSet;
+          });
+        }, 3000);
+      }
+    });
+  }, [currentStepKey, steps]);
 
   return (
     <TrackerContainer>
@@ -238,6 +326,9 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
                   <FaCheck color="#fff" size={18} style={{ display: 'block' }} />
                 ) : (
                   index + 1
+                )}
+                {status === 'completed' && (
+                  <Coin $animate={animating.has(step.key)} />
                 )}
               </StepCircle>
               <StepLabel $status={status}>

@@ -362,11 +362,10 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
 }
 
 // Separate Mobile Tracker Component
-const MobileTrackerContainer = styled.div`
+const MobileTrackerContainer = styled.div<{ $isCollapsed: boolean }>`
   display: none;
-  
   @media (max-width: 768px) {
-    display: block;
+    display: ${({ $isCollapsed }) => $isCollapsed ? 'none' : 'block'};
     position: fixed;
     top: calc(var(--topbar-height, 72px) + 2rem);
     left: 1rem;
@@ -378,16 +377,59 @@ const MobileTrackerContainer = styled.div`
     padding: 0.6rem 1rem;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.8);
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
     margin-bottom: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 120px;
     
-    &::-webkit-scrollbar {
-      display: none;
+    &::-webkit-scrollbar { 
+      display: none; 
     }
   }
+`;
+
+const MobileTrackerToggle = styled.button<{ $isCollapsed: boolean }>`
+  display: none;
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: calc(var(--topbar-height, 72px) + 2rem);
+    left: 0.5rem;
+    z-index: 1002;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    color: #181a1b;
+    font-family: 'Audiowide', 'Courier New', monospace;
+    font-size: 0.8rem;
+    font-weight: 400;
+    font-display: swap;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.05);
+    }
+    
+    &:focus {
+      outline: none;
+    }
+  }
+`;
+
+const MobileTrackerToggleIcon = styled.div<{ $isCollapsed: boolean }>`
+  font-size: 1rem;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(${({ $isCollapsed }) => $isCollapsed ? '0deg' : '180deg'});
 `;
 
 const MobileTrackerScroll = styled.div`
@@ -396,6 +438,14 @@ const MobileTrackerScroll = styled.div`
   gap: 0.75rem;
   min-width: max-content;
   padding: 0.2rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar { 
+    display: none; 
+  }
 `;
 
 const MobileStepItem = styled.div<{ $isCurrent: boolean; $isCompleted: boolean }>`
@@ -475,11 +525,12 @@ export function MobileTracker({ steps, currentStepKey, onStepClick }: {
 }) {
   const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isCollapsed, setIsCollapsed] = React.useState(true); // Start collapsed
   
   // Auto-scroll to current step on mount
   React.useEffect(() => {
-    if (containerRef.current) {
-      const currentStepElement = containerRef.current.children[0]?.children[currentStepIndex] as HTMLElement;
+    if (containerRef.current && !isCollapsed) {
+      const currentStepElement = containerRef.current.children[currentStepIndex] as HTMLElement;
       if (currentStepElement) {
         currentStepElement.scrollIntoView({ 
           behavior: 'smooth', 
@@ -488,42 +539,59 @@ export function MobileTracker({ steps, currentStepKey, onStepClick }: {
         });
       }
     }
-  }, [currentStepIndex]);
+  }, [currentStepIndex, isCollapsed]);
   
   const handleStepClick = (stepKey: string, stepIndex: number) => {
     if (onStepClick && stepIndex <= currentStepIndex) {
       onStepClick(stepKey);
     }
   };
+
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const currentStep = steps[currentStepIndex];
+  const completedSteps = steps.filter((_, index) => index < currentStepIndex).length;
   
   return (
-    <MobileTrackerContainer>
-      <MobileTrackerScroll ref={containerRef}>
-        {steps.map((step, index) => {
-          const isCurrent = step.key === currentStepKey;
-          const isCompleted = index < currentStepIndex;
-          const canClick = index <= currentStepIndex;
-          
-          return (
-            <React.Fragment key={step.key}>
-              <MobileStepItem 
-                $isCurrent={isCurrent} 
-                $isCompleted={isCompleted}
-                onClick={() => handleStepClick(step.key, index)}
-                style={{ cursor: canClick ? 'pointer' : 'default' }}
-              >
-                <MobileStepCircle $isCurrent={isCurrent} $isCompleted={isCompleted}>
-                  {isCompleted ? '$' : index + 1}
-                </MobileStepCircle>
-                <MobileStepLabel>
-                  {step.label.replace(/^[0-9]+\.\s*/, '')}
-                </MobileStepLabel>
-              </MobileStepItem>
-              {index < steps.length - 1 && <MobileStepDivider />}
-            </React.Fragment>
-          );
-        })}
-      </MobileTrackerScroll>
-    </MobileTrackerContainer>
+    <>
+      <MobileTrackerToggle onClick={handleToggle} $isCollapsed={isCollapsed}>
+        <MobileTrackerToggleIcon $isCollapsed={isCollapsed}>
+          {isCollapsed ? '▶' : '◀'}
+        </MobileTrackerToggleIcon>
+      </MobileTrackerToggle>
+      
+      {!isCollapsed && (
+        <MobileTrackerContainer $isCollapsed={isCollapsed}>
+          <MobileTrackerScroll ref={containerRef}>
+            {steps.map((step, index) => {
+              const isCurrent = step.key === currentStepKey;
+              const isCompleted = index < currentStepIndex;
+              const canClick = index <= currentStepIndex;
+              
+              return (
+                <React.Fragment key={step.key}>
+                  <MobileStepItem 
+                    $isCurrent={isCurrent} 
+                    $isCompleted={isCompleted}
+                    onClick={() => handleStepClick(step.key, index)}
+                    style={{ cursor: canClick ? 'pointer' : 'default' }}
+                  >
+                    <MobileStepCircle $isCurrent={isCurrent} $isCompleted={isCompleted}>
+                      {isCompleted ? '$' : index + 1}
+                    </MobileStepCircle>
+                    <MobileStepLabel>
+                      {step.label.replace(/^[0-9]+\.\s*/, '')}
+                    </MobileStepLabel>
+                  </MobileStepItem>
+                  {index < steps.length - 1 && <MobileStepDivider />}
+                </React.Fragment>
+              );
+            })}
+          </MobileTrackerScroll>
+        </MobileTrackerContainer>
+      )}
+    </>
   );
 }

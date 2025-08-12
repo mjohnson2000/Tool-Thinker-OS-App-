@@ -607,6 +607,7 @@ const BulletList = styled.ul`
 
 interface StartupPlan {
   _id: string;
+  title: string;
   businessIdeaSummary: string;
   customerProfile: { description: string };
   customerStruggle: string[];
@@ -655,6 +656,7 @@ function mapPlanToView(plan: any): StartupPlan {
 
   const mappedPlan = {
     _id: plan._id,
+    title: plan.title || 'Untitled Plan',
     businessIdeaSummary: plan.businessIdeaSummary || plan.summary || getSectionContent('Business Idea Summary', ''),
     customerProfile: {
       description: plan.customerProfile?.description || 
@@ -721,6 +723,7 @@ export default function StartupPlanViewPage() {
   const [editMode, setEditMode] = useState(false);
   const [editPlan, setEditPlan] = useState<StartupPlan>({
     _id: '',
+    title: '',
     businessIdeaSummary: '',
     customerProfile: { description: '' },
     customerStruggle: [],
@@ -815,6 +818,7 @@ export default function StartupPlanViewPage() {
       console.log('Setting up editPlan with plan data:', plan);
       const editPlanData = {
         _id: plan._id,
+        title: plan.title || '',
         businessIdeaSummary: plan.businessIdeaSummary || '',
         customerProfile: { description: plan.customerProfile?.description || '' },
         customerStruggle: plan.customerStruggle || [],
@@ -1272,10 +1276,10 @@ export default function StartupPlanViewPage() {
         </>
       ) : (
         <>
-          <Title title={plan.businessIdeaSummary}>
-            {plan.businessIdeaSummary.length > 80
-              ? plan.businessIdeaSummary.slice(0, 80) + '…'
-              : plan.businessIdeaSummary}
+          <Title title={plan.title}>
+            {plan.title.length > 80
+              ? plan.title.slice(0, 80) + '…'
+              : plan.title}
           </Title>
           <Meta>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>

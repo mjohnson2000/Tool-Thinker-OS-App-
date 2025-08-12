@@ -761,27 +761,6 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                   
                   <PlanSummary>{plan.summary}</PlanSummary>
                   
-                  {/* Validation Method Indicator */}
-                  {plan.status === 'validated' && (
-                    <div 
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        marginBottom: '0.5rem',
-                        fontSize: '0.9rem',
-                        color: '#007aff',
-                        fontWeight: 600,
-                        cursor: 'help',
-                      }}
-                      title="This idea was validated using our AI-powered automated discovery process, which analyzes problem identification, customer profiles, market validation, and business model viability."
-                    >
-                      <FaCheckCircle style={{ fontSize: '0.8rem' }} />
-                      Automated Discovery Completed
-                      <FaInfoCircle style={{ fontSize: '0.7rem', opacity: 0.7 }} />
-                    </div>
-                  )}
-                  
                   {/* In Progress Indicator */}
                   {plan.status === 'active' && plan.progress && (
                     <div 

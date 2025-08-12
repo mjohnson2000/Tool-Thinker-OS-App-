@@ -288,6 +288,20 @@ businessPlanRouter.put(
       if (solution) businessPlan.progress.solutionDesign = true;
       if (marketEvaluation) businessPlan.progress.marketEvaluation = true;
 
+      // Increment version number for edits
+      console.log('Before edit - Version:', businessPlan.version);
+      businessPlan.version = businessPlan.version + 1;
+      console.log('After edit - Version:', businessPlan.version);
+
+      // Add to change log
+      businessPlan.changeLog.push({
+        version: businessPlan.version,
+        date: new Date(),
+        changes: ['Business plan content updated', 'Manual edits applied'],
+        reason: 'User edited business plan content'
+      });
+      console.log('Added to change log - Version:', businessPlan.version);
+
       await businessPlan.save();
       res.json(businessPlan);
     } catch (error: any) {
@@ -534,13 +548,36 @@ businessPlanRouter.post(
       if (!apiKey)
         return res.status(500).json({ error: "OpenAI API key not configured" });
 
-      const prompt = `Improve this business plan section (${sectionKey}):\n${currentText}`;
+      const prompt = `Improve this business plan section (${sectionKey}). Make it more professional, clear, and well-structured. Use proper paragraph breaks and formatting. 
+
+IMPORTANT REQUIREMENTS:
+- Keep the response to EXACTLY 100 words maximum
+- Return ONLY plain text format with NO markdown formatting:
+  - NO ### headers
+  - NO **bold** text
+  - NO *italic* text  
+  - NO numbered lists (1. 2. 3.)
+  - Use simple headings in Title Case
+  - Use bullet points with dashes (-) and proper spacing between items
+  - NO markdown symbols of any kind
+- Write in professional business language
+- Be concise, clear, and impactful
+- Focus on essential strategic points only
+- Ensure proper sentence structure and flow
+- Complete all sentences properly
+- Use clear, short sentences for better readability
+- DO NOT repeat the section title at the beginning of the content
+- Start directly with the content, not with the section name
+
+Return only the improved text without any additional commentary:
+
+${currentText}`;
       const response = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
           model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
-          max_tokens: 400,
+          max_tokens: 300,
           temperature: 0.7,
         },
         {
@@ -723,6 +760,114 @@ businessPlanRouter.post('/:id/pitch-deck', async (req, res) => {
   } catch (err) {
     console.error('Pitch deck generation error:', err);
     res.status(500).json({ error: 'Failed to generate pitch deck' });
+  }
+});
+
+// PATCH /api/business-plans/:id/validate - Update plan status to validated and enhance content
+businessPlanRouter.patch("/:id/validate", auth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const { 
+      status, 
+      marketEvaluation, 
+      businessIdeaSummary,
+      customerProfile,
+      customerStruggle,
+      valueProposition,
+      marketInformation,
+      financialSummary
+    } = req.body;
+
+    const plan = await BusinessPlan.findOne({
+      _id: id,
+      userId: req.user!.id,
+    });
+
+    if (!plan) {
+      return res.status(404).json({ error: "Business plan not found" });
+    }
+
+    // Update plan status and market evaluation
+    if (status) {
+      plan.status = status;
+    }
+    
+    if (marketEvaluation) {
+      plan.marketEvaluation = {
+        ...plan.marketEvaluation,
+        ...marketEvaluation,
+      };
+    }
+
+    // Update enhanced content from validation
+    if (businessIdeaSummary) {
+      plan.businessIdeaSummary = businessIdeaSummary;
+    }
+    
+    if (customerProfile) {
+      plan.customerProfile = {
+        ...plan.customerProfile,
+        ...customerProfile,
+      };
+    }
+    
+    if (customerStruggle) {
+      plan.customerStruggle = customerStruggle;
+    }
+    
+    if (valueProposition) {
+      plan.valueProposition = valueProposition;
+    }
+    
+    if (marketInformation) {
+      plan.marketInformation = {
+        ...plan.marketInformation,
+        ...marketInformation,
+      };
+    }
+    
+    if (financialSummary) {
+      plan.financialSummary = financialSummary;
+    }
+
+    // Increment version number for validation
+    plan.version = plan.version + 1;
+
+    // Add to change log
+    plan.changeLog.push({
+      version: plan.version,
+      date: new Date(),
+      changes: ['Business plan validated by Side Hustle Coach', 'Enhanced content with coach insights', 'Updated market evaluation score'],
+      reason: 'Automated validation process with AI coach analysis'
+    });
+
+    // Update progress to mark validation as complete
+    plan.progress.marketEvaluation = true;
+    plan.progress.nextSteps = true;
+
+    await plan.save();
+
+    console.log(`Plan ${id} validated and enhanced with improved content`);
+
+    res.json({ 
+      success: true, 
+      message: "Plan validated and enhanced with improved content", 
+      plan: {
+        _id: plan._id,
+        status: plan.status,
+        marketEvaluation: plan.marketEvaluation,
+        businessIdeaSummary: plan.businessIdeaSummary,
+        customerProfile: plan.customerProfile,
+        customerStruggle: plan.customerStruggle,
+        valueProposition: plan.valueProposition,
+        marketInformation: plan.marketInformation,
+        financialSummary: plan.financialSummary
+      }
+    });
+  } catch (error: any) {
+    console.error("Plan validation update error:", error);
+    res.status(500).json({ error: "Failed to update plan validation status" });
   }
 });
 

@@ -1106,20 +1106,80 @@ No extra text, just valid JSON.`;
       };
       setNewPlan(mappedPlan);
 
-      // Save plan to backend if authenticated
-      if (user && user.email && !hasSaved.current) {
-        hasSaved.current = true; // Prevent duplicate saves
-        try {
-          // Generate a short title from the first 6 to 8 words of the summary
-          function generateShortTitle(summary: string): string {
-            if (!summary) return 'Untitled Business Plan';
-            const words = summary.split(/\s+/).filter(Boolean);
-            const shortTitle = words.slice(0, 8).join(' ');
-            return shortTitle + (words.length > 8 ? '…' : '');
-          }
-          const shortTitle = generateShortTitle(mappedPlan.businessIdeaSummary);
-          // Compose the correct payload for the backend
-          const payload = {
+                // Save plan to backend if authenticated
+          if (user && user.email && !hasSaved.current) {
+            hasSaved.current = true; // Prevent duplicate saves
+            try {
+              // Generate gap analysis for saving
+              const gapAnalysis = context.skillAssessment ? generateGapAnalysis(context.skillAssessment, mappedPlan) : null;
+              
+              // Generate a more engaging title from the business idea summary
+              function generateShortTitle(summary: string): string {
+                if (!summary) return 'Untitled Business Plan';
+                
+                // Remove common repetitive prefixes
+                let cleanSummary = summary
+                  .replace(/^(the\s+business\s+(idea\s+)?|our\s+business\s+(idea\s+)?|this\s+business\s+(idea\s+)?)/i, '')
+                  .replace(/^(we\s+are\s+developing\s+an?\s+|we\s+are\s+creating\s+an?\s+|we\s+are\s+building\s+an?\s+)/i, '')
+                  .replace(/^(our\s+platform\s+provides\s+|our\s+service\s+offers\s+|our\s+solution\s+delivers\s+)/i, '')
+                  .trim();
+                
+                // If the summary is too short after cleaning, use the original
+                if (cleanSummary.length < 20) {
+                  cleanSummary = summary;
+                }
+                
+                            // Extract key concepts and create a professional business title
+            const words = cleanSummary.split(/\s+/).filter(Boolean);
+            
+            // Look for key business terms to create a professional title
+            const keyTerms = ['virtual', 'online', 'digital', 'mobile', 'app', 'platform', 'service', 'coaching', 'fitness', 'health', 'education', 'technology', 'software', 'marketplace', 'community', 'network', 'solution', 'tool', 'system', 'hub', 'studio', 'academy', 'center'];
+            
+            // Find the most relevant key terms in the summary
+            const foundKeyTerms = keyTerms.filter(term => 
+              cleanSummary.toLowerCase().includes(term.toLowerCase())
+            );
+            
+            // Extract the main concept (usually the first meaningful phrase)
+            let mainConcept = '';
+            if (words.length >= 3) {
+              // Look for the core business concept (usually 3-5 words)
+              mainConcept = words.slice(0, 4).join(' ');
+            } else {
+              mainConcept = words.join(' ');
+            }
+            
+            // Create a professional title format
+            let title = '';
+            
+            if (foundKeyTerms.length > 0) {
+              // Use format: "Main Concept + Key Term"
+              const keyTerm = foundKeyTerms[0];
+              title = `${mainConcept} ${keyTerm}`;
+            } else {
+              // Use format: "Main Concept + Platform/Service"
+              title = `${mainConcept} Platform`;
+            }
+            
+            // Clean up the title
+            title = title
+              .replace(/\s+/g, ' ') // Remove extra spaces
+              .trim();
+            
+            // Capitalize properly (Title Case)
+            title = title.replace(/\b\w/g, l => l.toUpperCase());
+            
+            // Ensure it's not too long (max ~8 words)
+            const titleWords = title.split(' ');
+            if (titleWords.length > 8) {
+              title = titleWords.slice(0, 8).join(' ');
+            }
+            
+            return title;
+              }
+              const shortTitle = generateShortTitle(mappedPlan.businessIdeaSummary);
+              // Compose the correct payload for the backend
+              const payload = {
             title: shortTitle,
             summary: mappedPlan.businessIdeaSummary,
             sections: {
@@ -1159,7 +1219,8 @@ No extra text, just valid JSON.`;
               description: mappedPlan.valueProposition || 'No solution description provided.',
               keyFeatures: [mappedPlan.valueProposition || 'Key feature'],
               uniqueValue: mappedPlan.valueProposition || 'Unique value'
-            }
+            },
+            gapAnalysis: gapAnalysis
           };
           await fetch(`${API_URL}/business-plan`, {
             method: 'POST',

@@ -1,65 +1,70 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useAuth } from './contexts/AuthContext';
+import { trackPageView } from './utils/analytics';
+import logo from './assets/logo.png';
+import defaultAvatar from './assets/money-woman.jpg';
+import './index.css';
+import { AuthProvider } from './contexts/AuthContext';
+import { FaUserCircle } from 'react-icons/fa';
+import { ErrorNotification } from './components/common/ErrorNotification';
+import { FeedbackWidget } from './components/common/FeedbackWidget';
+import { trackEvent } from './utils/analytics';
+import AdminLogsPage from './components/business-plan/AdminLogsPage';
+import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
+
+// Landing and Auth Components
+import WebLandingPage from './components/WebLandingPage';
+import { Login } from './components/auth/Login';
+import { Signup } from './components/auth/Signup';
+import { Profile } from './components/auth/Profile';
+import { ResetPassword } from './components/auth/ResetPassword';
+import { SubscriptionPage } from './components/auth/SubscriptionPage';
+
+// Business Plan Components
+import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
+import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
+import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage';
+import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
+import { AutomatedValidationPage } from './components/business-plan/AutomatedValidationPage';
+
+// Idea Flow Components
 import { Landing } from './components/idea-flow/Landing';
+import { IdeaTypeSelection } from './components/idea-flow/IdeaTypeSelection';
+import { LocationSelection } from './components/idea-flow/LocationSelection';
+import { SkillAssessment } from './components/idea-flow/SkillAssessment';
+import { ScheduleGoalsSelection } from './components/idea-flow/ScheduleGoalsSelection';
 import { IdeaSelection } from './components/idea-flow/IdeaSelection';
 import { CustomerSelection } from './components/idea-flow/CustomerSelection';
 import { JobSelection } from './components/idea-flow/JobSelection';
-import { LocationSelection } from './components/idea-flow/LocationSelection';
-import { ScheduleGoalsSelection } from './components/idea-flow/ScheduleGoalsSelection';
+import { SolutionSelectionPage } from './components/idea-flow/SolutionSelectionPage';
 import { Summary } from './components/idea-flow/Summary';
 import { ExistingIdea } from './components/idea-flow/ExistingIdea';
-import './index.css';
-import logo from './assets/logo.png';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Signup } from './components/auth/Signup';
-import { Login } from './components/auth/Login';
-import { Profile } from './components/auth/Profile';
-import { FaUserCircle } from 'react-icons/fa';
-import { ResetPassword } from './components/auth/ResetPassword';
-import { Routes, Route, useParams, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { DescribeCustomer } from './components/idea-flow/DescribeCustomer';
 import { DescribeProblem } from './components/idea-flow/DescribeProblem';
 import { DescribeSolution } from './components/idea-flow/DescribeSolution';
 import { DescribeCompetition } from './components/idea-flow/DescribeCompetition';
-import { Guidance } from './components/idea-flow/Guidance';
-import { ProgressTracker } from './components/idea-flow/ProgressTracker';
-import { MobileTracker } from './components/idea-flow/ProgressTracker';
-import type { BusinessArea } from './components/idea-flow/IdeaSelection';
-import type { CustomerOption } from './components/idea-flow/CustomerSelection';
-import type { JobOption } from './components/idea-flow/JobSelection';
-import { NextStepsHub } from './components/idea-flow/NextStepsHub';
-import { SubscriptionPage } from './components/auth/SubscriptionPage';
-import { CoachMarketplace } from './components/learning/CoachMarketplace';
-import { CourseLibrary } from './components/learning/CourseLibrary';
-
-import WebLandingPage from './components/WebLandingPage';
-import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
-import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage';
-import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
-import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
-import { LaunchPreparationPage } from './components/idea-flow/LaunchPreparationPage';
-import { SolutionSelectionPage } from './components/idea-flow/SolutionSelectionPage';
-import type { SolutionOption } from './components/idea-flow/SolutionSelectionPage';
-import { IdeaTypeSelection } from './components/idea-flow/IdeaTypeSelection';
-import { SkillAssessment } from './components/idea-flow/SkillAssessment';
-import type { SkillAssessmentResult } from './components/idea-flow/SkillAssessment';
-
-import { MvpBuilderPage } from './components/idea-flow/MvpBuilderPage';
-import { ValidateAssumptionsPage } from './components/idea-flow/ValidateAssumptionsPage';
-import { ExploreOpportunitiesPage } from './components/idea-flow/ExploreOpportunitiesPage';
-import { CustomerValidationPage } from './components/idea-flow/CustomerValidationPage';
-import { IterateOrLaunchPage } from './components/idea-flow/IterateOrLaunchPage';
-import AdminLogsPage from './components/business-plan/AdminLogsPage';
-import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
-import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
 import { PrematureIdeaTypeSelection } from './components/idea-flow/PrematureIdeaTypeSelection';
 import { PrematureLocationSelection } from './components/idea-flow/PrematureLocationSelection';
 import { PrematureScheduleGoalsSelection } from './components/idea-flow/PrematureScheduleGoalsSelection';
 import { PrematureSkillAssessment } from './components/idea-flow/PrematureSkillAssessment';
+import { PrematureJobDiscovery } from './components/idea-flow/PrematureJobDiscovery';
+import { PrematureJobSelection } from './components/idea-flow/PrematureJobSelection';
 
-import { trackPageView, trackEvent } from './utils/analytics';
-import { ErrorNotification } from './components/common/ErrorNotification';
-import { FeedbackWidget } from './components/common/FeedbackWidget';
+// Learning Components
+import { CourseLibrary } from './components/learning/CourseLibrary';
+import { CoachMarketplace } from './components/learning/CoachMarketplace';
+
+// Progress Tracker
+import { ProgressTracker, MobileTracker } from './components/idea-flow/ProgressTracker';
+
+// Type imports
+import type { BusinessArea } from './components/idea-flow/IdeaSelection';
+import type { CustomerOption } from './components/idea-flow/CustomerSelection';
+import type { JobOption } from './components/idea-flow/JobSelection';
+import type { SolutionOption } from './components/idea-flow/SolutionSelectionPage';
+import type { SkillAssessmentResult } from './components/idea-flow/SkillAssessment';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -528,9 +533,7 @@ const PlanBadge = styled.div`
   }
 `;
 
-const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&color=fff&size=128';
-
-type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'customerGuidance' | 'problemGuidance' | 'competitionGuidance' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'nextStepsHub' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment';
+type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -808,7 +811,7 @@ function AppContent() {
 
   // Track page views when currentStep changes
   useEffect(() => {
-    const flowStepKeys: Step[] = ['landing', 'idea', 'ideaType', 'location', 'skillAssessment', 'scheduleGoals', 'customer', 'job', 'summary', 'app', 'existingIdea', 'describeCustomer', 'describeProblem', 'describeSolution', 'describeCompetition', 'customerGuidance', 'problemGuidance', 'competitionGuidance', 'businessPlan', 'prematureJobDiscovery', 'marketEvaluation', 'evaluationScore', 'nextStepsHub', 'startupPlan', 'launch', 'solution', 'prematureIdeaType', 'prematureLocation', 'prematureScheduleGoals', 'prematureSkillAssessment'];
+    const flowStepKeys: Step[] = ['landing', 'idea', 'ideaType', 'location', 'skillAssessment', 'scheduleGoals', 'customer', 'job', 'summary', 'app', 'existingIdea', 'describeCustomer', 'describeProblem', 'describeSolution', 'describeCompetition', 'businessPlan', 'prematureJobDiscovery', 'marketEvaluation', 'evaluationScore', 'startupPlan', 'launch', 'solution', 'prematureIdeaType', 'prematureLocation', 'prematureScheduleGoals', 'prematureSkillAssessment'];
     const pageTitles: Record<Step, string> = {
       landing: 'Landing Page',
       idea: 'Idea Selection',
@@ -828,14 +831,10 @@ function AppContent() {
       describeProblem: 'Describe Problem',
       describeSolution: 'Describe Solution',
       describeCompetition: 'Describe Competition',
-      customerGuidance: 'Customer Guidance',
-      problemGuidance: 'Problem Guidance',
-      competitionGuidance: 'Competition Guidance',
       businessPlan: 'Business Plan',
       prematureJobDiscovery: 'Premature Job Discovery',
       marketEvaluation: 'Market Evaluation',
       evaluationScore: 'Validation Score',
-      nextStepsHub: 'Next Steps Hub',
       startupPlan: 'Startup Plan',
       launch: 'Launch Preparation',
       solution: 'Solution Selection',
@@ -1472,72 +1471,7 @@ function AppContent() {
           </AppContainer>
         } />
         <Route path="/reset-password/:token" element={<ResetPasswordRoute />} />
-        <Route path="/next-steps-hub/:planId" element={
-          <AppContainer>
-            <Logo
-              src={logo}
-              alt="ToolThinker Logo"
-              onClick={handleLogoToLanding}
-              onKeyDown={handleLogoKeyDown}
-              role="link"
-              aria-label="Go to landing page"
-              tabIndex={0}
-            />
-            <TopBar ref={topBarRef}>
-              {!isAuthenticated ? (
-                <>
-                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
-                    Log in
-                  </LoginButton>
-                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
-                    Sign up for free
-                  </SignupFreeButton>
-                </>
-              ) : (
-                <TopBarRight>
-                  <NavButton 
-                    onClick={() => window.location.href = '/plans'} 
-                    style={{
-                      background: '#000',
-                      color: '#fff',
-                      border: 'none',
-                      fontWeight: 600
-                    }}>
-                    My Business Ideas
-                  </NavButton>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                     <AvatarButton onClick={() => {
-                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'nextStepsHub' as Step, currentStep: 'profile' }));
-                     }} aria-label="Profile">
-                      {user && user.profilePic ? (
-                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-                      ) : user && user.email ? (
-                        <TopBarAvatar>
-                          {user.email
-                            .split('@')[0]
-                            .split(/[._-]/)
-                            .map(part => part[0]?.toUpperCase())
-                            .join('')
-                            .slice(0, 2) || 'U'}
-                        </TopBarAvatar>
-                      ) : (
-                        <AvatarImg src={defaultAvatar} alt="Avatar" />
-                      )}
-                    </AvatarButton>
-                    {user && (
-                      <PlanBadge>
-                        {!user?.isSubscribed
-                          ? PLAN_DISPLAY_NAMES['free']
-                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                      </PlanBadge>
-                    )}
-                  </div>
-                </TopBarRight>
-              )}
-            </TopBar>
-            <NextStepsHub setAppState={setAppState} currentStep={currentStep} />
-          </AppContainer>
-        } />
+
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/coaches" element={
           <AppContainer>
@@ -1804,89 +1738,9 @@ function AppContent() {
           </AppContainer>
         } />
         <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
-        <Route path="/launch" element={
-          <AppContainer>
-            <Logo
-              src={logo}
-              alt="ToolThinker Logo"
-              onClick={handleLogoToLanding}
-              onKeyDown={handleLogoKeyDown}
-              role="link"
-              aria-label="Go to landing page"
-              tabIndex={0}
-            />
-            <TopBar ref={topBarRef}>
-              {!isAuthenticated ? (
-                <>
-                  <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
-                    Log in
-                  </LoginButton>
-                  <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
-                    Sign up for free
-                  </SignupFreeButton>
-                </>
-              ) : (
-                <TopBarRight>
-                  <NavButton 
-                    onClick={() => window.location.href = '/plans'} 
-                    style={{
-                      background: '#000',
-                      color: '#fff',
-                      border: 'none',
-                      fontWeight: 600
-                    }}>
-                    My Business Ideas
-                  </NavButton>
-                  <AvatarButton onClick={() => {
-                    setAppState(prev => ({ ...prev, stepBeforeAuth: 'launch', currentStep: 'profile' }));
-                  }} aria-label="Profile" style={{ background: '#fff', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                      {user && user.profilePic ? (
-                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-                      ) : user && user.email ? (
-                        <TopBarAvatar>
-                          {user.email
-                            .split('@')[0]
-                            .split(/[._-]/)
-                            .map(part => part[0]?.toUpperCase())
-                            .join('')
-                            .slice(0, 2) || 'U'}
-                        </TopBarAvatar>
-                      ) : (
-                        <AvatarImg src={defaultAvatar} alt="Avatar" />
-                      )}
-                      {user && (
-                        <PlanBadge>
-                          {!user?.isSubscribed
-                            ? PLAN_DISPLAY_NAMES['free']
-                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                        </PlanBadge>
-                      )}
-                    </div>
-                  </AvatarButton>
-                </TopBarRight>
-              )}
-            </TopBar>
-            <PageLayout>
-              <Sidebar $isCollapsed={false}>
-                <ProgressTracker 
-                  steps={steps} 
-                  currentStepKey={'launch'}
-                  onStepClick={handleStepClick}
-                  isSubscribed={user?.isSubscribed}
-                />
-              </Sidebar>
-              <MainContent isExpanded={false}>
-                <LaunchPreparationPage />
-              </MainContent>
-            </PageLayout>
-          </AppContainer>
-        } />
-        <Route path="/mvp/:planId" element={<MvpBuilderPage />} />
-        <Route path="/validate-assumptions/:planId" element={<ValidateAssumptionsPage />} />
-        <Route path="/explore-opportunities/:planId" element={<ExploreOpportunitiesPage />} />
-        <Route path="/customer-validation/:planId" element={<CustomerValidationPage />} />
-        <Route path="/iterate-or-launch/:planId" element={<IterateOrLaunchPage />} />
+        <Route path="/validate/:planId" element={<AutomatedValidationPage />} />
+
+
         <Route path="/admin/logs" element={<AdminLogsPage />} />
         <Route path="/automated-discovery/:id" element={<AutomatedDiscoveryPage />} />
         <Route path="*" element={

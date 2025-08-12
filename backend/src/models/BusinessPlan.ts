@@ -12,6 +12,20 @@ export interface IBusinessPlan extends Document {
     [key: string]: string;
   };
   
+  // Enhanced Business Plan Fields
+  businessIdeaSummary?: string;
+  customerProfile?: {
+    description: string;
+  };
+  customerStruggle?: string[];
+  valueProposition?: string;
+  marketInformation?: {
+    marketSize: string;
+    trends: string[];
+    competitors: string[];
+  };
+  financialSummary?: string;
+  
   // Idea Discovery Data
   idea: {
     interests: string[];
@@ -89,6 +103,26 @@ export interface IBusinessPlan extends Document {
         feedback: string;
         completedAt?: Date;
       };
+    };
+  };
+  
+  // Gap Analysis Data
+  gapAnalysis?: {
+    skills: {
+      selectedSkills: string[];
+      missingSkills: string[];
+      recommendations: string[];
+      learningPath: string[];
+    };
+    resources: {
+      financial: string[];
+      human: string[];
+      physical: string[];
+    };
+    operations: {
+      processes: string[];
+      systems: string[];
+      infrastructure: string[];
     };
   };
   

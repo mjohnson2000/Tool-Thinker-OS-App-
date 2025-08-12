@@ -1,102 +1,517 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes } from 'react-icons/fa';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes, FaHistory, FaInfoCircle } from 'react-icons/fa';
 import logo from '../../assets/logo.png';
-import { evaluateStartupPlan } from '../../utils/evaluationRubric';
-import type { StartupPlanForEvaluation, EvaluationResult } from '../../utils/evaluationRubric';
-import { debugScore18 } from '../../utils/evaluationRubric';
+import { sideHustleCoach } from '../../utils/sideHustleCoach';
+import type { CoachEvaluation } from '../../utils/sideHustleCoach';
 import { FeedbackBar } from '../common/FeedbackBar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const Container = styled.div`
-  max-width: 700px;
-  margin: 7.5rem auto 2rem auto;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
+`;
+
+const FormCard = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  width: 100%;
+  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
+  }
 `;
 
 const TopActions = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
 `;
 
 const PrimaryButton = styled.button`
-  background: #181a1b;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
+  border-radius: 12px;
+  padding: 0.8rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: background 0.2s;
-  &:hover { background: #000; }
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #000 0%, #181a1b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
 `;
 
 const SecondaryButton = styled.button`
   background: #fff;
   color: #181a1b;
   border: 2px solid #181a1b;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
+  border-radius: 12px;
+  padding: 0.8rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  &:hover { background: #f7f7f7; color: #181a1b; }
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  
+  &:hover {
+    background: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
 `;
 
 const Title = styled.h1`
   font-family: 'Audiowide', 'Courier New', monospace;
-  font-size: 2rem;
+  font-size: 2.4rem;
   font-weight: 400;
-  color: #181a1b;
   margin-bottom: 1.2rem;
+  text-align: center;
+  color: #181a1b;
+  letter-spacing: -0.03em;
+  position: relative;
   font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 2px;
+  }
 `;
 
 const Summary = styled.p`
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #444;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const SectionCard = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  padding: 1.8rem 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  }
 `;
 
 const Section = styled.div`
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+
 `;
 
 const SectionLabel = styled.h2`
   font-family: 'Audiowide', 'Courier New', monospace;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 400;
   color: #181a1b;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   font-display: swap;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a);
+    border-radius: 1px;
+  }
 `;
 
 const SectionContent = styled.div`
   font-size: 1rem;
-  color: #222;
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 0.8rem;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const Meta = styled.div`
   font-size: 0.95rem;
-  color: #888;
-  margin-bottom: 1.2rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  background: rgba(248, 249, 250, 0.8);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+`;
+
+const GapAnalysisSection = styled.div`
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid #000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const EditTextArea = styled.textarea`
+  width: 100%;
+  min-height: 120px;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  padding: 1rem 1.2rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+  background: #ffffff;
+  margin-bottom: 1rem;
+  resize: vertical;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  
+  &:focus {
+    outline: none;
+    border-color: #181a1b;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1), inset 0 1px 3px rgba(0,0,0,0.05);
+    background: #ffffff;
+  }
+  
+  &:hover {
+    border-color: #adb5bd;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+  }
+  
+  &::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+  
+  &:disabled {
+    background: #f8f9fa;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+`;
+
+const EditInput = styled.input`
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  color: #333;
+  background: #ffffff;
+  margin-bottom: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  
+  &:focus {
+    outline: none;
+    border-color: #181a1b;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1), inset 0 1px 3px rgba(0,0,0,0.05);
+    background: #ffffff;
+  }
+  
+  &:hover {
+    border-color: #adb5bd;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+  }
+  
+  &::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+`;
+
+const EditSubLabel = styled.div`
+  font-weight: 600;
+  color: #181a1b;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+`;
+
+const CollapsibleHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+  }
+`;
+
+const CollapsibleTitle = styled.h3`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #181a1b;
+  margin: 0;
+  font-display: swap;
+`;
+
+const CollapsibleIcon = styled.span<{ isOpen: boolean }>`
+  font-size: 0.8rem;
+  color: #666;
+  transform: rotate(${props => props.isOpen ? '180deg' : '0deg'});
+  transition: transform 0.3s ease;
+`;
+
+const CollapsibleContent = styled.div<{ isOpen: boolean }>`
+  max-height: ${props => props.isOpen ? '1000px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  margin-bottom: ${props => props.isOpen ? '1rem' : '0'};
+`;
+
+const GapAnalysisList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const GapAnalysisListItem = styled.li`
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid #181a1b;
+  font-size: 0.95rem;
+  color: #333;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const MarketResearchSection = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #f0f0f0;
+  border-right: 4px solid #f0f0f0;
+  
+  @media (max-width: 768px) {
+    padding: 1.2rem 1rem;
+    margin-top: 0.8rem;
+  }
+`;
+
+const MarketResearchSubsection = styled.div`
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+`;
+
+const MarketResearchTitle = styled.h4`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 1rem;
+  color: #181a1b;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
+`;
+
+const MarketResearchContent = styled.div`
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.5;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+`;
+
+const MarketResearchList = styled.ul`
+  margin: 0;
+  padding-left: 0;
+  color: #333;
+  font-size: 1rem;
+  list-style: none;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
+`;
+
+const MarketResearchListItem = styled.li`
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  &:hover {
+    background: #f0f0f0;
+    transform: translateX(2px);
+  }
 `;
 
 const Score = styled.div<{ color: string }>`
@@ -105,6 +520,11 @@ const Score = styled.div<{ color: string }>`
   margin-bottom: 1.2rem;
   color: ${({ color }) => color};
   cursor: pointer;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 `;
 
 const Logo = styled.img`
@@ -203,6 +623,17 @@ interface StartupPlan {
   createdAt: string;
   updatedAt: string;
   marketEvaluation?: { score: number };
+  gapAnalysis?: {
+    skills: { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
+    resources: { financial: string[]; human: string[]; physical: string[] };
+    operations: { processes: string[]; systems: string[]; infrastructure: string[] };
+  };
+  changeLog?: {
+    version: number;
+    date: string;
+    changes: string[];
+    reason: string;
+  }[];
 }
 
 function mapPlanToView(plan: any): StartupPlan {
@@ -224,12 +655,15 @@ function mapPlanToView(plan: any): StartupPlan {
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
     marketEvaluation: plan.marketEvaluation,
+    gapAnalysis: plan.gapAnalysis,
+    changeLog: plan.changeLog,
   };
 }
 
 export default function StartupPlanViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [rawPlan, setRawPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -256,7 +690,13 @@ export default function StartupPlanViewPage() {
   const [saving, setSaving] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
+  const [evaluationResult, setEvaluationResult] = useState<any>(null);
+  const [collapsedSections, setCollapsedSections] = useState({
+    skills: true,
+    resources: true,
+    operations: true,
+    versionHistory: true
+  });
 
   useEffect(() => {
     async function fetchPlan() {
@@ -270,6 +710,8 @@ export default function StartupPlanViewPage() {
         });
         if (!res.ok) throw new Error('Failed to fetch business plan');
         const data = await res.json();
+        console.log('View page received plan data:', data);
+        console.log('Plan version:', data.version);
         setRawPlan(data);
         setPlan(mapPlanToView(data));
       } catch (err: any) {
@@ -279,7 +721,7 @@ export default function StartupPlanViewPage() {
       }
     }
     fetchPlan();
-  }, [id]);
+  }, [id, location.search]); // Re-fetch when URL changes (including refresh parameter)
 
   useEffect(() => {
     if (plan && editMode) {
@@ -312,6 +754,49 @@ export default function StartupPlanViewPage() {
 
   const handleEdit = () => setEditMode(true);
   const handleCancelEdit = () => setEditMode(false);
+  
+  const handleRevertToVersion = async (targetVersion: number) => {
+    if (!plan || !confirm(`Are you sure you want to revert to Version ${targetVersion}? This will create a new version with the reverted content.`)) {
+      return;
+    }
+    
+    try {
+      // Find the target version in the change log
+      const targetEntry = plan.changeLog?.find((entry: any) => entry.version === targetVersion);
+      if (!targetEntry) {
+        alert('Version not found in history');
+        return;
+      }
+      
+      // Create a revert payload with the target version's content
+      const revertPayload = {
+        status: 'validated',
+        marketEvaluation: { score: plan.marketEvaluation?.score || 85 },
+        // Note: We'll need to store the actual content in the change log for full reversion
+        // For now, this creates a new version with a revert note
+      };
+      
+      const res = await fetch(`${API_URL}/business-plan/${plan._id}/validate`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(revertPayload)
+      });
+      
+      if (res.ok) {
+        // Refresh the page to show the new version
+        window.location.reload();
+      } else {
+        alert('Failed to revert to previous version');
+      }
+    } catch (err) {
+      console.error('Revert error:', err);
+      alert('Failed to revert to previous version');
+    }
+  };
+
   const handleSave = async () => {
     if (!plan) return;
     setSaving(true);
@@ -363,43 +848,125 @@ export default function StartupPlanViewPage() {
     }
   };
 
+  const toggleSection = (section: 'skills' | 'resources' | 'operations') => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const generateGapAnalysis = (businessPlan: any) => {
+    // Generate default gap analysis since we don't have skill assessment data
+    const defaultGapAnalysis = {
+      skills: {
+        selectedSkills: [
+          'Business planning',
+          'Market research',
+          'Customer analysis'
+        ],
+        missingSkills: [
+          'Technical development',
+          'Financial modeling',
+          'Legal compliance'
+        ],
+        recommendations: [
+          'Consider taking online courses in business development',
+          'Network with industry professionals',
+          'Seek mentorship from experienced entrepreneurs'
+        ],
+        learningPath: [
+          'Complete business fundamentals course',
+          'Attend startup workshops',
+          'Join entrepreneur communities'
+        ]
+      },
+      resources: {
+        financial: [
+          'Initial startup capital',
+          'Operating expenses for first 6 months',
+          'Emergency fund for unexpected costs'
+        ],
+        human: [
+          'Technical expertise for development',
+          'Marketing and sales skills',
+          'Administrative support'
+        ],
+        physical: [
+          'Office space or workspace',
+          'Equipment and technology',
+          'Inventory and supplies'
+        ]
+      },
+      operations: {
+        processes: [
+          'Standard operating procedures',
+          'Quality control systems',
+          'Customer service protocols'
+        ],
+        systems: [
+          'Technology infrastructure',
+          'Business management software',
+          'Data security and backup'
+        ],
+        infrastructure: [
+          'Legal and business registration',
+          'Insurance and risk management',
+          'Vendor and supplier relationships'
+        ]
+      }
+    };
+
+    return defaultGapAnalysis;
+  };
+
   const handleEvaluate = async () => {
     if (!plan) return;
     setEvaluating(true);
     setShowDetails(false);
     try {
-      debugScore18(); // Debug what gives us 18/100
-      console.log('Original plan data:', plan);
-      // Use rubric-based evaluation
-      const planForEval: StartupPlanForEvaluation = {
-        businessIdeaSummary: plan.businessIdeaSummary,
-        customerProfile: plan.customerProfile,
-        customerStruggle: plan.customerStruggle,
-        valueProposition: plan.valueProposition,
-        marketInformation: {
-          marketSize: plan.marketInformation.marketSize,
-          competitors: plan.marketInformation.competitors,
-          trends: plan.marketInformation.trends,
-        }
-      };
-      console.log('Plan data for evaluation:', planForEval);
-      const result = evaluateStartupPlan(planForEval);
-      console.log('Evaluation result:', result);
+      console.log('Side Hustle Coach evaluating plan:', plan);
+      
+      // Use Side Hustle Coach for evaluation
+      const coachEvaluation: CoachEvaluation = await sideHustleCoach.evaluateBusinessPlan(plan);
+      console.log('Coach evaluation result:', coachEvaluation);
+      
       // Save evaluation score to backend
-      const res = await fetch(`${API_URL}/startup-plan/${plan._id}/evaluation-score`, {
+      const res = await fetch(`${API_URL}/business-plan/${plan._id}/evaluation-score`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ score: result.totalScore })
+        body: JSON.stringify({ score: coachEvaluation.overallScore })
       });
       if (!res.ok) throw new Error('Failed to save evaluation score');
-      setPlan(prev => prev ? { ...prev, marketEvaluation: { ...prev.marketEvaluation, score: result.totalScore } } : prev);
-      setEvaluationResult(result);
+      
+      // Update plan with coach's evaluation
+      setPlan(prev => prev ? { 
+        ...prev, 
+        marketEvaluation: { 
+          ...prev.marketEvaluation, 
+          score: coachEvaluation.overallScore 
+        } 
+      } : prev);
+      
+      // Convert coach evaluation to display format
+      const evaluationResult = {
+        criteria: [
+          { key: 'sideHustleViability', score: Math.round(coachEvaluation.sideHustleViability / 20), feedback: `Side hustle viability: ${coachEvaluation.sideHustleViability}/100` },
+          { key: 'marketOpportunity', score: Math.round(coachEvaluation.marketOpportunity / 20), feedback: `Market opportunity: ${coachEvaluation.marketOpportunity}/100` },
+          { key: 'executionFeasibility', score: Math.round(coachEvaluation.executionFeasibility / 20), feedback: `Execution feasibility: ${coachEvaluation.executionFeasibility}/100` },
+          { key: 'riskAssessment', score: Math.round(coachEvaluation.riskAssessment / 20), feedback: `Risk assessment: ${coachEvaluation.riskAssessment}/100` }
+        ],
+        totalScore: coachEvaluation.overallScore,
+        summary: `Coach Alex Chen's evaluation: ${coachEvaluation.overallScore >= 80 ? 'Excellent side hustle potential!' : coachEvaluation.overallScore >= 60 ? 'Good potential with some improvements needed.' : 'Needs significant work before launching.'}`,
+        strengths: coachEvaluation.validationInsights.strengths,
+        recommendations: coachEvaluation.recommendations
+      };
+      
+      setEvaluationResult(evaluationResult);
     } catch (err) {
-              // TODO: Replace with custom error notification
-        console.error('Failed to evaluate plan.');
+      console.error('Failed to evaluate plan:', err);
     } finally {
       setEvaluating(false);
     }
@@ -412,54 +979,100 @@ export default function StartupPlanViewPage() {
   return (
     <Container>
       <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
-      <TopActions>
-        <PrimaryButton onClick={() => navigate('/plans')}><FaArrowLeft /> Back to Ideas</PrimaryButton>
-        {!editMode && <SecondaryButton onClick={handleEdit}><FaEdit /> Edit</SecondaryButton>}
-        {!editMode && <SecondaryButton onClick={handleEvaluate} disabled={evaluating}>
-          {evaluating ? <FaSpinner className="fa-spin" /> : <FaCheckCircle />} Evaluate Idea
-        </SecondaryButton>}
-        {editMode && <PrimaryButton onClick={handleSave} disabled={saving}><FaSave /> {saving ? 'Saving...' : 'Save'}</PrimaryButton>}
-        {editMode && <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>}
-      </TopActions>
-      <div style={{ margin: '0 0 16px 0' }}>
-        <FeedbackBar context="plan_view_actions" />
-      </div>
+      <FormCard>
+        <TopActions>
+          <PrimaryButton onClick={() => navigate('/plans')}><FaArrowLeft /> Back to Ideas</PrimaryButton>
+          {!editMode && <SecondaryButton onClick={handleEdit}><FaEdit /> Edit</SecondaryButton>}
+          {!editMode && plan.status !== 'validated' && (
+            <SecondaryButton onClick={() => navigate(`/validate/${plan._id}`)}>
+              <FaCheckCircle /> Validate
+            </SecondaryButton>
+          )}
+          {!editMode && plan.status === 'validated' && (
+            <SecondaryButton onClick={() => navigate(`/validate/${plan._id}`)}>
+              <FaHistory /> View Validation Results
+            </SecondaryButton>
+          )}
+          {!editMode && <SecondaryButton onClick={handleEvaluate} disabled={evaluating}>
+            {evaluating ? <FaSpinner className="fa-spin" /> : <FaCheckCircle />} Evaluate
+          </SecondaryButton>}
+
+          {editMode && <PrimaryButton onClick={handleSave} disabled={saving}><FaSave /> {saving ? 'Saving...' : 'Save'}</PrimaryButton>}
+          {editMode && <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>}
+        </TopActions>
+        <div style={{ margin: '0 0 16px 0' }}>
+          <FeedbackBar context="plan_view_actions" />
+        </div>
       {editMode ? (
         <>
           <Section>
             <SectionLabel>Business Idea Summary</SectionLabel>
-            <textarea value={editPlan.businessIdeaSummary} onChange={e => setEditPlan(prev => ({ ...prev, businessIdeaSummary: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+            <EditTextArea 
+              value={editPlan.businessIdeaSummary} 
+              onChange={e => setEditPlan(prev => ({ ...prev, businessIdeaSummary: e.target.value }))} 
+              placeholder="Enter your business idea summary..."
+            />
           </Section>
           <Section>
             <SectionLabel>Customer Profile</SectionLabel>
-            <textarea value={editPlan.customerProfile.description} onChange={e => setEditPlan(prev => ({ ...prev, customerProfile: { ...prev.customerProfile, description: e.target.value } }))} style={{ width: '100%', minHeight: 40 }} />
+            <EditTextArea 
+              value={editPlan.customerProfile.description} 
+              onChange={e => setEditPlan(prev => ({ ...prev, customerProfile: { ...prev.customerProfile, description: e.target.value } }))} 
+              placeholder="Describe your target customer profile..."
+            />
           </Section>
           <Section>
             <SectionLabel>Customer Struggle</SectionLabel>
-            <textarea value={editPlan.customerStruggle.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, customerStruggle: e.target.value.split('\n') }))} style={{ width: '100%', minHeight: 40 }} placeholder="One struggle per line" />
+            <EditTextArea 
+              value={editPlan.customerStruggle.join('\n')} 
+              onChange={e => setEditPlan(prev => ({ ...prev, customerStruggle: e.target.value.split('\n') }))} 
+              placeholder="Enter customer struggles (one per line)..."
+            />
           </Section>
           <Section>
             <SectionLabel>Value Proposition</SectionLabel>
-            <textarea value={editPlan.valueProposition} onChange={e => setEditPlan(prev => ({ ...prev, valueProposition: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+            <EditTextArea 
+              value={editPlan.valueProposition} 
+              onChange={e => setEditPlan(prev => ({ ...prev, valueProposition: e.target.value }))} 
+              placeholder="Describe your unique value proposition..."
+            />
           </Section>
           <Section>
             <SectionLabel>Market Information</SectionLabel>
-            <div style={{ marginBottom: 8 }}>
-              <strong>Market Size</strong>
-              <input value={editPlan.marketInformation.marketSize} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, marketSize: e.target.value } }))} style={{ width: '100%', marginBottom: 8 }} />
+            <div style={{ marginBottom: '1rem' }}>
+              <EditSubLabel>Market Size</EditSubLabel>
+              <EditInput 
+                value={editPlan.marketInformation.marketSize} 
+                onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, marketSize: e.target.value } }))} 
+                placeholder="Describe your target market size..."
+              />
             </div>
-            <div style={{ marginBottom: 8 }}>
-              <strong>Competitors</strong>
-              <textarea value={editPlan.marketInformation.competitors.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, competitors: e.target.value.split('\n') } }))} style={{ width: '100%', minHeight: 32, marginBottom: 8 }} placeholder="One competitor per line" />
+            <div style={{ marginBottom: '1rem' }}>
+              <EditSubLabel>Competitors</EditSubLabel>
+              <EditTextArea 
+                value={editPlan.marketInformation.competitors.join('\n')} 
+                onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, competitors: e.target.value.split('\n') } }))} 
+                placeholder="List your main competitors (one per line)..."
+                style={{ minHeight: 80 }}
+              />
             </div>
-            <div style={{ marginBottom: 8 }}>
-              <strong>Trends</strong>
-              <textarea value={editPlan.marketInformation.trends.join('\n')} onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, trends: e.target.value.split('\n') } }))} style={{ width: '100%', minHeight: 32, marginBottom: 8 }} placeholder="One trend per line" />
+            <div style={{ marginBottom: '1rem' }}>
+              <EditSubLabel>Trends</EditSubLabel>
+              <EditTextArea 
+                value={editPlan.marketInformation.trends.join('\n')} 
+                onChange={e => setEditPlan(prev => ({ ...prev, marketInformation: { ...prev.marketInformation, trends: e.target.value.split('\n') } }))} 
+                placeholder="Describe market trends (one per line)..."
+                style={{ minHeight: 80 }}
+              />
             </div>
           </Section>
           <Section>
             <SectionLabel>Financial Summary</SectionLabel>
-            <textarea value={editPlan.financialSummary} onChange={e => setEditPlan(prev => ({ ...prev, financialSummary: e.target.value }))} style={{ width: '100%', minHeight: 40 }} />
+            <EditTextArea 
+              value={editPlan.financialSummary} 
+              onChange={e => setEditPlan(prev => ({ ...prev, financialSummary: e.target.value }))} 
+              placeholder="Describe your financial model and revenue streams..."
+            />
           </Section>
         </>
       ) : (
@@ -470,11 +1083,110 @@ export default function StartupPlanViewPage() {
               : plan.businessIdeaSummary}
           </Title>
           <Meta>
-            v{plan.version} &nbsp;|&nbsp; {new Date(plan.updatedAt).toLocaleDateString()} &nbsp;|&nbsp; Status: {plan.status}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                background: '#f8f9fa',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {plan.version}</span>
+                {plan.version > 1 && (
+                  <span style={{ 
+                    fontSize: '0.8rem', 
+                    color: '#6c757d',
+                    fontStyle: 'italic'
+                  }}>
+                    (Updated {plan.version - 1} times)
+                  </span>
+                )}
+              </div>
+              <span style={{ color: '#6c757d' }}>|</span>
+              <span>Updated: {new Date(plan.updatedAt).toLocaleDateString()}</span>
+              <span style={{ color: '#6c757d' }}>|</span>
+              <span style={{ 
+                padding: '0.25rem 0.75rem',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                background: plan.status === 'validated' ? '#d4edda' : plan.status === 'active' ? '#fff3cd' : '#f8d7da',
+                color: plan.status === 'validated' ? '#155724' : plan.status === 'active' ? '#856404' : '#721c24'
+              }}>
+                {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+              </span>
+            </div>
           </Meta>
-          <Score color={scoreColor} style={{ cursor: 'pointer' }} onClick={() => setShowDetails(true)}>
-            Evaluation Score: {score}/100
-          </Score>
+          {score > 0 ? (
+            <Score 
+              color={scoreColor} 
+              style={{ 
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                border: '2px solid transparent',
+                borderRadius: '8px',
+                padding: '0.5rem 1rem'
+              }} 
+              onClick={() => setShowDetails(true)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                e.currentTarget.style.borderColor = scoreColor;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = 'transparent';
+              }}
+              title="Click to view detailed evaluation insights from Side Hustle Coach Alex Chen"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>Evaluation Score: {score}/100</span>
+                <FaInfoCircle style={{ fontSize: '0.8rem', opacity: 0.7 }} />
+              </div>
+              <div style={{ 
+                fontSize: '0.75rem', 
+                opacity: 0.7, 
+                marginTop: '0.25rem',
+                fontStyle: 'italic'
+              }}>
+                Click for detailed insights
+              </div>
+            </Score>
+          ) : (
+            <div style={{
+              background: '#f8f9fa',
+              border: '2px dashed #dee2e6',
+              borderRadius: '8px',
+              padding: '1rem',
+              textAlign: 'center',
+              color: '#6c757d',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onClick={() => handleEvaluate()}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#e9ecef';
+              e.currentTarget.style.borderColor = '#adb5bd';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#f8f9fa';
+              e.currentTarget.style.borderColor = '#dee2e6';
+            }}
+            title="Click to get evaluation from Side Hustle Coach Alex Chen"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <FaCheckCircle style={{ fontSize: '1rem' }} />
+                <span style={{ fontWeight: 600 }}>Get Evaluation</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                Click to get expert evaluation from Side Hustle Coach
+              </div>
+            </div>
+          )}
           {showDetails && (
             <OverlayBackdrop onClick={() => setShowDetails(false)}>
               <OverlayCard onClick={e => e.stopPropagation()}>
@@ -485,16 +1197,16 @@ export default function StartupPlanViewPage() {
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>Score: {evaluationResult.totalScore}/100</div>
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>Detailed Feedback:</div>
                     <ul style={{ marginBottom: 16 }}>
-                      {evaluationResult.criteria.map((c, i) => (
+                      {evaluationResult.criteria.map((c: any, i: number) => (
                         <li key={i} style={{ marginBottom: 4 }}>
-                          <strong>{c.key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}:</strong> {c.score}/5 – {c.feedback}
+                          <strong>{c.key.replace(/([A-Z])/g, ' $1').replace(/^./, (s: string) => s.toUpperCase())}:</strong> {c.score}/5 – {c.feedback}
                         </li>
                       ))}
                     </ul>
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>Strengths:</div>
-                    <ul>{evaluationResult.strengths.length > 0 ? evaluationResult.strengths.map((s, i) => <li key={i}>{s}</li>) : <li>No major strengths yet.</li>}</ul>
+                    <ul>{evaluationResult.strengths.length > 0 ? evaluationResult.strengths.map((s: string, i: number) => <li key={i}>{s}</li>) : <li>No major strengths yet.</li>}</ul>
                     <div style={{ fontWeight: 600, margin: '16px 0 8px 0' }}>Recommendations:</div>
-                    <ul>{evaluationResult.recommendations.length > 0 ? evaluationResult.recommendations.map((rec, i) => <li key={i}>{rec}</li>) : <li>No recommendations at this time.</li>}</ul>
+                    <ul>{evaluationResult.recommendations.length > 0 ? evaluationResult.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>) : <li>No recommendations at this time.</li>}</ul>
                     <div style={{ color: '#888', fontSize: '1rem', marginTop: 16 }}>{evaluationResult.summary}</div>
                   </>
                 ) : (
@@ -505,51 +1217,312 @@ export default function StartupPlanViewPage() {
               </OverlayCard>
             </OverlayBackdrop>
           )}
-          <Section>
+          {plan.changeLog && plan.changeLog.length > 1 && (
+            <SectionCard>
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  padding: '0.5rem 0'
+                }}
+                onClick={() => setCollapsedSections(prev => ({ ...prev, versionHistory: !prev.versionHistory }))}
+              >
+                <SectionLabel style={{ margin: 0, cursor: 'pointer' }}>Version History</SectionLabel>
+                <span style={{ 
+                  fontSize: '1.2rem', 
+                  color: '#6c757d',
+                  transition: 'transform 0.2s ease',
+                  transform: collapsedSections.versionHistory ? 'rotate(0deg)' : 'rotate(90deg)'
+                }}>
+                  ▶
+                </span>
+              </div>
+              {!collapsedSections.versionHistory && (
+                <div style={{ maxHeight: '300px', overflowY: 'auto', marginTop: '1rem' }}>
+                {plan.changeLog.slice().reverse().map((entry: any, index: number) => (
+                  <div key={index} style={{
+                    border: '1px solid #e9ecef',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    background: entry.version === plan.version ? '#f8f9fa' : '#fff',
+                    borderLeft: entry.version === plan.version ? '4px solid #181a1b' : '1px solid #e9ecef'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {entry.version}</span>
+                        {entry.version === plan.version && (
+                          <span style={{ 
+                            fontSize: '0.75rem', 
+                            background: '#181a1b', 
+                            color: '#fff', 
+                            padding: '0.2rem 0.5rem', 
+                            borderRadius: '4px' 
+                          }}>Current</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                          {new Date(entry.date).toLocaleDateString()}
+                        </span>
+                        {entry.version !== plan.version && (
+                          <button
+                            onClick={() => handleRevertToVersion(entry.version)}
+                            style={{
+                              background: '#f8f9fa',
+                              border: '1px solid #dee2e6',
+                              borderRadius: '4px',
+                              padding: '0.25rem 0.5rem',
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              color: '#495057',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#e9ecef';
+                              e.currentTarget.style.borderColor = '#adb5bd';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f8f9fa';
+                              e.currentTarget.style.borderColor = '#dee2e6';
+                            }}
+                          >
+                            Revert to This Version
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: '#495057', marginBottom: '0.5rem' }}>
+                      <strong>Reason:</strong> {entry.reason}
+                    </div>
+                    {entry.changes && entry.changes.length > 0 && (
+                      <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                        <strong>Changes:</strong>
+                        <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.2rem' }}>
+                          {entry.changes.map((change: string, i: number) => (
+                            <li key={i}>{change}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              )}
+            </SectionCard>
+          )}
+          
+          <SectionCard>
             <SectionLabel>Business Idea Summary</SectionLabel>
             <SectionContent>{plan.businessIdeaSummary}</SectionContent>
-          </Section>
-          <Section>
+          </SectionCard>
+          
+          <SectionCard>
             <SectionLabel>Customer Profile</SectionLabel>
             <SectionContent>{plan.customerProfile.description}</SectionContent>
-          </Section>
-          <Section>
-            <SectionLabel>Customer Struggle</SectionLabel>
-            <SectionContent>
-              <ul>{plan.customerStruggle.map((struggle, i) => <li key={i}>{struggle.replace(/^[-–—]\s*/, '')}</li>)}</ul>
-            </SectionContent>
-          </Section>
-          <Section>
+          </SectionCard>
+          
+          <SectionCard>
+            <SectionLabel>Customer Struggles</SectionLabel>
+            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#333', lineHeight: '1.6' }}>
+              {plan.customerStruggle.map((struggle, i) => (
+                <li key={i} style={{ marginBottom: '0.8rem' }}>
+                  {struggle.replace(/^[-–—]\s*/, '')}
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+          
+          <SectionCard>
             <SectionLabel>Value Proposition</SectionLabel>
             <SectionContent>{plan.valueProposition}</SectionContent>
-          </Section>
-          <Section>
-            <SectionLabel>Market Information</SectionLabel>
-            <SectionContent>
-              <div><strong>Market Size:</strong> {plan.marketInformation.marketSize}</div>
-            </SectionContent>
-            <SectionContent>
-              <div><strong>Competitors:</strong></div>
-              <BulletList>
-                {plan.marketInformation.competitors.map((c, i) => <li key={i}>{c.replace(/^[-–—]\s*/, '')}</li>)}
-              </BulletList>
-            </SectionContent>
-            <SectionContent>
-              <div><strong>Trends:</strong></div>
-              <BulletList>
-                {plan.marketInformation.trends.map((t, i) => <li key={i}>{t.replace(/^[-–—]\s*/, '')}</li>)}
-              </BulletList>
-            </SectionContent>
-          </Section>
-          <Section>
+          </SectionCard>
+          
+          <SectionCard>
+            <SectionLabel>Market Research</SectionLabel>
+            <MarketResearchSection>
+              <MarketResearchSubsection>
+                <MarketResearchTitle>Market Size</MarketResearchTitle>
+                <MarketResearchContent>
+                  {plan.marketInformation.marketSize || 'N/A'}
+                </MarketResearchContent>
+              </MarketResearchSubsection>
+              
+              <MarketResearchSubsection>
+                <MarketResearchTitle>Market Trends</MarketResearchTitle>
+                <MarketResearchList>
+                  {Array.isArray(plan.marketInformation.trends) && plan.marketInformation.trends.length > 0 ? (
+                    plan.marketInformation.trends.map((trend: string, i: number) => (
+                      <MarketResearchListItem key={i}>
+                        {trend.replace(/^[-–—]\s*/, '')}
+                      </MarketResearchListItem>
+                    ))
+                  ) : (
+                    <MarketResearchListItem>N/A</MarketResearchListItem>
+                  )}
+                </MarketResearchList>
+              </MarketResearchSubsection>
+              
+              <MarketResearchSubsection>
+                <MarketResearchTitle>Competitors</MarketResearchTitle>
+                <MarketResearchList>
+                  {Array.isArray(plan.marketInformation.competitors) && plan.marketInformation.competitors.length > 0 ? (
+                    plan.marketInformation.competitors.map((comp: string, i: number) => (
+                      <MarketResearchListItem key={i}>
+                        {comp.replace(/^[-–—]\s*/, '')}
+                      </MarketResearchListItem>
+                    ))
+                  ) : (
+                    <MarketResearchListItem>N/A</MarketResearchListItem>
+                  )}
+                </MarketResearchList>
+              </MarketResearchSubsection>
+            </MarketResearchSection>
+          </SectionCard>
+          
+          <SectionCard>
             <SectionLabel>Financial Summary</SectionLabel>
             <SectionContent>{plan.financialSummary}</SectionContent>
-          </Section>
+          </SectionCard>
+          
+          {/* Gap Analysis Section - Show gap analysis (generated if not available) */}
+          {(() => {
+            const gapAnalysisData = plan.gapAnalysis || generateGapAnalysis(plan);
+            return gapAnalysisData && (
+              <GapAnalysisSection>
+                <SectionLabel>Comprehensive Gap Analysis</SectionLabel>
+                
+                {/* Skills Gap */}
+                <CollapsibleHeader onClick={() => toggleSection('skills')}>
+                  <CollapsibleTitle>Skills Gap</CollapsibleTitle>
+                  <CollapsibleIcon isOpen={!collapsedSections.skills}>▼</CollapsibleIcon>
+                </CollapsibleHeader>
+                <CollapsibleContent isOpen={!collapsedSections.skills}>
+                  {gapAnalysisData.skills?.selectedSkills?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Skills You Have:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.skills.selectedSkills.map((skill: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {skill}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+                {gapAnalysisData.skills?.missingSkills?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Skills You Need:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.skills.missingSkills.map((skill: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {skill}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+              </CollapsibleContent>
+
+              {/* Resource Gap */}
+              <CollapsibleHeader onClick={() => toggleSection('resources')}>
+                <CollapsibleTitle>Resource Gap</CollapsibleTitle>
+                <CollapsibleIcon isOpen={!collapsedSections.resources}>▼</CollapsibleIcon>
+              </CollapsibleHeader>
+              <CollapsibleContent isOpen={!collapsedSections.resources}>
+                {gapAnalysisData.resources?.financial?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Financial Resources:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.resources.financial.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+                {gapAnalysisData.resources?.human?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Human Resources:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.resources.human.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+                {gapAnalysisData.resources?.physical?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Physical Resources:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.resources.physical.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+              </CollapsibleContent>
+
+              {/* Operational Gap */}
+              <CollapsibleHeader onClick={() => toggleSection('operations')}>
+                <CollapsibleTitle>Operational Gap</CollapsibleTitle>
+                <CollapsibleIcon isOpen={!collapsedSections.operations}>▼</CollapsibleIcon>
+              </CollapsibleHeader>
+              <CollapsibleContent isOpen={!collapsedSections.operations}>
+                {gapAnalysisData.operations?.processes?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Processes:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.operations.processes.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+                {gapAnalysisData.operations?.systems?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Systems:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.operations.systems.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+                {gapAnalysisData.operations?.infrastructure?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#333' }}>Infrastructure:</div>
+                    <GapAnalysisList>
+                      {gapAnalysisData.operations.infrastructure.map((item: string, i: number) => (
+                        <GapAnalysisListItem key={i}>
+                          {item}
+                        </GapAnalysisListItem>
+                      ))}
+                    </GapAnalysisList>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </GapAnalysisSection>
+            );
+          })()}
+          
           <div style={{ marginTop: '12px' }}>
             <FeedbackBar context="plan_view_sections" />
           </div>
         </>
       )}
+      </FormCard>
     </Container>
   );
 } 

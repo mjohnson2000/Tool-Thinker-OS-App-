@@ -33,11 +33,39 @@ You are a business strategist AI. Given:
 - Customer Persona: ${customer.title} (${customer.description})
 - Customer Job: ${job.title} (${job.description})
 
-Generate a concise business plan with:
-- A 2-3 sentence summary
-- 3-5 sections: Market, Customer Job, Product, Go-to-Market, and one more relevant section.
-- Each section should be 2-3 sentences, clear and actionable.
-Return as JSON: { summary: string, sections: { [section: string]: string } }
+Generate a comprehensive Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
+
+- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
+- Customer Profile: 1-2 sentences describing the target customer.
+- Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
+- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
+- Market Size: 1-2 sentences estimating the size or opportunity of the target market.
+- Competitors: 2-3 bullet points listing main competitors or alternatives. MUST include actual competitor names or types.
+- Market Trends: 2-3 bullet points describing relevant trends in the market. MUST include actual industry trends, not generic statements.
+- Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
+- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this business idea.
+
+CRITICAL REQUIREMENTS:
+- Every section must contain specific, actionable content
+- Market Trends must include actual industry trends, not "trends to be analyzed"
+- Competitors must include actual competitor names or types, not "competitors to be identified"
+- Use bullet points (•) for lists
+- Make content specific to the business idea
+
+Return as JSON:
+{
+  summary: string,
+  sections: {
+    Customer: string,
+    Struggles: string, // bullet points separated by newlines
+    Value: string,
+    MarketSize: string,
+    Competitors: string, // bullet points separated by newlines
+    Trends: string, // bullet points separated by newlines
+    Validation: string,
+    Financial: string
+  }
+}
 No extra text, just valid JSON.
   `.trim();
 
@@ -70,6 +98,8 @@ No extra text, just valid JSON.
     try {
       console.log("Prompt:", prompt);
       console.log("OpenAI raw response:", content);
+      console.log("Custom prompt provided:", !!customPrompt);
+      console.log("Using custom prompt:", customPrompt?.substring(0, 100) + "...");
       
       // Strip markdown code blocks if present
       let jsonContent = content;
@@ -80,6 +110,9 @@ No extra text, just valid JSON.
       }
       
       plan = JSON.parse(jsonContent);
+      console.log("Parsed plan sections:", plan.sections);
+      console.log("Trends section:", plan.sections?.Trends);
+      console.log("Competitors section:", plan.sections?.Competitors);
     } catch (err) {
       console.error("Failed to parse AI response as JSON:", content, err);
       return res
@@ -123,14 +156,14 @@ businessPlanRouter.post("/", auth, async (req: AuthRequest, res: Response) => {
 
     const businessPlan = new BusinessPlan({
       userId: req.user!.id,
-      title,
+      title: idea?.title || "Untitled Business Plan",
       summary,
       sections,
-      idea: idea || {},
-      customer: customer || {},
-      job: job || {},
-      problem: problem || {},
-      solution: solution || {},
+      idea,
+      customer,
+      job,
+      problem,
+      solution,
       tags,
       category,
       progress: {
@@ -142,9 +175,30 @@ businessPlanRouter.post("/", auth, async (req: AuthRequest, res: Response) => {
         marketEvaluation: false,
         nextSteps: false,
       },
+      changeLog: [{
+        version: 1,
+        date: new Date(),
+        changes: ['Initial business plan created'],
+        reason: 'Original Business Plan'
+      }],
     });
 
     await businessPlan.save();
+    
+    // Update the change log with content after the plan is saved
+    const content = {
+      businessIdeaSummary: businessPlan.businessIdeaSummary,
+      customerProfile: businessPlan.customerProfile,
+      customerStruggle: businessPlan.customerStruggle,
+      valueProposition: businessPlan.valueProposition,
+      marketInformation: businessPlan.marketInformation,
+      financialSummary: businessPlan.financialSummary,
+      sections: businessPlan.sections
+    };
+    
+    businessPlan.changeLog[0].content = content;
+    await businessPlan.save();
+    
     res.status(201).json(businessPlan);
   } catch (error: any) {
     console.error("Create business plan error:", error);
@@ -222,6 +276,17 @@ businessPlanRouter.get(
         await businessPlan.save();
       }
 
+      console.log('GET business plan response:', {
+        id: businessPlan._id,
+        sections: businessPlan.sections,
+        businessIdeaSummary: businessPlan.businessIdeaSummary,
+        customerProfile: businessPlan.customerProfile,
+        customerStruggle: businessPlan.customerStruggle,
+        valueProposition: businessPlan.valueProposition,
+        marketInformation: businessPlan.marketInformation,
+        financialSummary: businessPlan.financialSummary
+      });
+
       res.json(businessPlan);
     } catch (error: any) {
       console.error("Get business plan error:", error);
@@ -258,6 +323,13 @@ businessPlanRouter.put(
         tags,
         category,
         status,
+        // Enhanced fields
+        businessIdeaSummary,
+        customerProfile,
+        customerStruggle,
+        valueProposition,
+        marketInformation,
+        financialSummary,
       } = req.body;
 
       // Update fields
@@ -280,6 +352,14 @@ businessPlanRouter.put(
       if (tags) businessPlan.tags = tags;
       if (category) businessPlan.category = category;
       if (status) businessPlan.status = status;
+      
+      // Update enhanced fields
+      if (businessIdeaSummary !== undefined) businessPlan.businessIdeaSummary = businessIdeaSummary;
+      if (customerProfile !== undefined) businessPlan.customerProfile = customerProfile;
+      if (customerStruggle !== undefined) businessPlan.customerStruggle = customerStruggle;
+      if (valueProposition !== undefined) businessPlan.valueProposition = valueProposition;
+      if (marketInformation !== undefined) businessPlan.marketInformation = marketInformation;
+      if (financialSummary !== undefined) businessPlan.financialSummary = financialSummary;
 
       // Update progress based on what's being updated
       if (idea) businessPlan.progress.ideaDiscovery = true;
@@ -293,16 +373,38 @@ businessPlanRouter.put(
       businessPlan.version = businessPlan.version + 1;
       console.log('After edit - Version:', businessPlan.version);
 
-      // Add to change log
+      // Store current content before making changes
+      const currentContent = {
+        businessIdeaSummary: businessPlan.businessIdeaSummary,
+        customerProfile: businessPlan.customerProfile,
+        customerStruggle: businessPlan.customerStruggle,
+        valueProposition: businessPlan.valueProposition,
+        marketInformation: businessPlan.marketInformation,
+        financialSummary: businessPlan.financialSummary,
+        sections: businessPlan.sections
+      };
+
+      // Add to change log with content
       businessPlan.changeLog.push({
         version: businessPlan.version,
         date: new Date(),
         changes: ['Business plan content updated', 'Manual edits applied'],
-        reason: 'User edited business plan content'
+        reason: 'User edited business plan content',
+        content: currentContent
       });
       console.log('Added to change log - Version:', businessPlan.version);
 
       await businessPlan.save();
+      console.log('Saved business plan:', {
+        id: businessPlan._id,
+        businessIdeaSummary: businessPlan.businessIdeaSummary,
+        customerProfile: businessPlan.customerProfile,
+        customerStruggle: businessPlan.customerStruggle,
+        valueProposition: businessPlan.valueProposition,
+        marketInformation: businessPlan.marketInformation,
+        financialSummary: businessPlan.financialSummary,
+        sections: businessPlan.sections
+      });
       res.json(businessPlan);
     } catch (error: any) {
       console.error("Update business plan error:", error);
@@ -763,6 +865,149 @@ businessPlanRouter.post('/:id/pitch-deck', async (req, res) => {
   }
 });
 
+// PATCH /api/business-plan/:id/revert - Revert to a specific version
+businessPlanRouter.patch("/:id/revert", auth, async (req: AuthRequest, res: Response) => {
+  console.log('=== REVERT ENDPOINT CALLED ===');
+  console.log('Request params:', req.params);
+  console.log('Request body:', req.body);
+  
+  try {
+    const { id } = req.params;
+    const { targetVersion } = req.body;
+
+    console.log('Revert request:', { id, targetVersion });
+
+    if (!targetVersion) {
+      return res.status(400).json({ error: "Missing targetVersion" });
+    }
+
+    const plan = await BusinessPlan.findOne({
+      _id: id,
+      userId: req.user!.id,
+    });
+
+    if (!plan) {
+      return res.status(404).json({ error: "Business plan not found" });
+    }
+
+    console.log('Current plan version:', plan.version);
+    console.log('Current plan content:', {
+      businessIdeaSummary: plan.businessIdeaSummary,
+      customerProfile: plan.customerProfile,
+      customerStruggle: plan.customerStruggle,
+      valueProposition: plan.valueProposition,
+      marketInformation: plan.marketInformation,
+      financialSummary: plan.financialSummary
+    });
+    console.log('Change log entries:', plan.changeLog.map(entry => ({
+      version: entry.version,
+      reason: entry.reason,
+      hasContent: !!entry.content && Object.keys(entry.content).length > 0
+    })));
+
+    // Find the target version in the change log
+    const targetEntry = plan.changeLog.find(entry => entry.version === targetVersion);
+    if (!targetEntry) {
+      return res.status(404).json({ error: "Target version not found" });
+    }
+
+    console.log('Target entry found:', targetEntry);
+    console.log('Target entry content:', targetEntry.content);
+
+    // Store current version content before reverting
+    const currentContent = {
+      businessIdeaSummary: plan.businessIdeaSummary,
+      customerProfile: plan.customerProfile,
+      customerStruggle: plan.customerStruggle,
+      valueProposition: plan.valueProposition,
+      marketInformation: plan.marketInformation,
+      financialSummary: plan.financialSummary,
+      sections: plan.sections
+    };
+
+    console.log('Current content to save:', currentContent);
+
+    // Add current version to change log before reverting
+    plan.changeLog.push({
+      version: plan.version,
+      date: new Date(),
+      changes: ['Content saved before revert'],
+      reason: `Content before reverting to version ${targetVersion}`,
+      content: currentContent
+    });
+
+    // Restore content from target version
+    console.log('Target entry content keys:', Object.keys(targetEntry.content || {}));
+    console.log('Target entry content length:', Object.keys(targetEntry.content || {}).length);
+    
+    if (targetEntry.content && Object.keys(targetEntry.content).length > 0) {
+      console.log('Restoring content from target version...');
+      // Replace content completely, don't use fallbacks
+      if (targetEntry.content.businessIdeaSummary !== undefined) {
+        console.log('Restoring businessIdeaSummary from:', targetEntry.content.businessIdeaSummary);
+        plan.businessIdeaSummary = targetEntry.content.businessIdeaSummary;
+      }
+      if (targetEntry.content.customerProfile !== undefined) {
+        console.log('Restoring customerProfile from:', targetEntry.content.customerProfile);
+        plan.customerProfile = targetEntry.content.customerProfile;
+      }
+      if (targetEntry.content.customerStruggle !== undefined) {
+        console.log('Restoring customerStruggle from:', targetEntry.content.customerStruggle);
+        plan.customerStruggle = targetEntry.content.customerStruggle;
+      }
+      if (targetEntry.content.valueProposition !== undefined) {
+        console.log('Restoring valueProposition from:', targetEntry.content.valueProposition);
+        plan.valueProposition = targetEntry.content.valueProposition;
+      }
+      if (targetEntry.content.marketInformation !== undefined) {
+        console.log('Restoring marketInformation from:', targetEntry.content.marketInformation);
+        plan.marketInformation = targetEntry.content.marketInformation;
+      }
+      if (targetEntry.content.financialSummary !== undefined) {
+        console.log('Restoring financialSummary from:', targetEntry.content.financialSummary);
+        plan.financialSummary = targetEntry.content.financialSummary;
+      }
+      if (targetEntry.content.sections !== undefined) {
+        console.log('Restoring sections from:', targetEntry.content.sections);
+        plan.sections = targetEntry.content.sections;
+      }
+      
+      console.log('Content after restoration:', {
+        businessIdeaSummary: plan.businessIdeaSummary,
+        customerProfile: plan.customerProfile,
+        customerStruggle: plan.customerStruggle,
+        valueProposition: plan.valueProposition,
+        marketInformation: plan.marketInformation,
+        financialSummary: plan.financialSummary
+      });
+    } else {
+      console.log('No content found in target entry, skipping restoration');
+      console.log('Target entry content is:', targetEntry.content);
+      // If no content is stored for this version, we can't restore it
+      return res.status(400).json({ 
+        error: `Version ${targetVersion} does not have content stored. Only versions created after the content storage feature was added can be reverted. Please try reverting to a more recent version.` 
+      });
+    }
+
+    // Increment version and add revert entry
+    plan.version = plan.version + 1;
+    plan.changeLog.push({
+      version: plan.version,
+      date: new Date(),
+      changes: [`Reverted to version ${targetVersion}`, 'Content restored from previous version'],
+      reason: `User reverted to version ${targetVersion}`,
+      content: targetEntry.content || {}
+    });
+
+    await plan.save();
+    console.log('Plan saved successfully with new version:', plan.version);
+    res.json(plan);
+  } catch (error: any) {
+    console.error("Revert error:", error);
+    res.status(500).json({ error: "Failed to revert to previous version" });
+  }
+});
+
 // PATCH /api/business-plans/:id/validate - Update plan status to validated and enhance content
 businessPlanRouter.patch("/:id/validate", auth, async (req: AuthRequest, res: Response) => {
   try {
@@ -834,12 +1079,24 @@ businessPlanRouter.patch("/:id/validate", auth, async (req: AuthRequest, res: Re
     // Increment version number for validation
     plan.version = plan.version + 1;
 
-    // Add to change log
+    // Store current content before validation changes
+    const currentContent = {
+      businessIdeaSummary: plan.businessIdeaSummary,
+      customerProfile: plan.customerProfile,
+      customerStruggle: plan.customerStruggle,
+      valueProposition: plan.valueProposition,
+      marketInformation: plan.marketInformation,
+      financialSummary: plan.financialSummary,
+      sections: plan.sections
+    };
+
+    // Add to change log with content
     plan.changeLog.push({
       version: plan.version,
       date: new Date(),
       changes: ['Business plan validated by Side Hustle Coach', 'Enhanced content with coach insights', 'Updated market evaluation score'],
-      reason: 'Automated validation process with AI coach analysis'
+      reason: 'Automated validation process with AI coach analysis',
+      content: currentContent
     });
 
     // Update progress to mark validation as complete

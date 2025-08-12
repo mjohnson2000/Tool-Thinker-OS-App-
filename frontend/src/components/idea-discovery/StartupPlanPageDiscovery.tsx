@@ -1047,14 +1047,15 @@ You are a startup strategist AI. Given the following user input:
 ${context.location ? `- Location: ${context.location.city}, ${context.location.region}, ${context.location.country}` : ''}
 ${context.scheduleGoals ? `- Availability: ${context.scheduleGoals.hoursPerWeek} hours/week, Income Target: $${context.scheduleGoals.incomeTarget}/month` : ''}
 
-      Generate a concise Business Plan with the following sections:
+      Generate a comprehensive Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
+
 - Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job. ${context.location ? `Make it specific to ${context.location.city}, ${context.location.region}.` : ''}
 - Customer Profile: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
 - Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
 - Market Size: 1-2 sentences estimating the size or opportunity of the target market.
-- Competitors: 2-3 bullet points listing main competitors or alternatives.
-- Market Trends: 2-3 bullet points describing relevant trends in the market.
+- Competitors: 2-3 bullet points listing main competitors or alternatives. MUST include actual competitor names or types.
+- Market Trends: 2-3 bullet points describing relevant trends in the market. MUST include actual industry trends, not generic statements.
 - Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
 - Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this business idea.
 
@@ -1083,6 +1084,9 @@ No extra text, just valid JSON.`;
       if (!res.ok) throw new Error('Failed to generate business plan');
       const data = await res.json();
       console.log('API response', data);
+      console.log('API response sections:', data.sections);
+      console.log('Trends section:', data.sections?.Trends);
+      console.log('Competitors section:', data.sections?.Competitors);
       setPlan(data);
       setProgress(100);
 
@@ -1095,12 +1099,17 @@ No extra text, just valid JSON.`;
           || (context.customer?.painPoints ? context.customer.painPoints : []),
         valueProposition: data.sections?.Value || context.idea?.valueProposition || '',
         marketInformation: {
-          marketSize: data.sections?.MarketSize || context.idea?.marketSize || '',
+          marketSize: data.sections?.MarketSize || data.sections?.['Market Size'] || context.idea?.marketSize || '',
           competitors: (data.sections?.Competitors && data.sections.Competitors.split('\n').filter(Boolean))
+            || (data.sections?.['Competitor Analysis'] && data.sections['Competitor Analysis'].split('\n').filter(Boolean))
             || (context.idea && context.idea.competitors ? context.idea.competitors.split('\n').filter(Boolean) : [])
-            || (context.customer?.competitors ? context.customer.competitors : ['No competitors specified.']),
-          trends: data.sections?.Trends ? data.sections.Trends.split('\n').filter(Boolean) : (context.idea?.trends ? context.idea.trends.split('\n').filter(Boolean) : []),
-          validation: data.sections?.Validation || context.idea?.validation || '',
+            || (context.customer?.competitors ? context.customer.competitors : [])
+            || generateDefaultCompetitors(context.idea?.interests || '', context.customer?.description || ''),
+          trends: (data.sections?.Trends && data.sections.Trends.split('\n').filter(Boolean))
+            || (data.sections?.['Market Trends'] && data.sections['Market Trends'].split('\n').filter(Boolean))
+            || (context.idea?.trends ? context.idea.trends.split('\n').filter(Boolean) : [])
+            || generateDefaultTrends(context.idea?.interests || '', context.customer?.description || ''),
+          validation: data.sections?.Validation || data.sections?.['Market Validation'] || context.idea?.validation || '',
         },
         financialSummary: data.sections?.Financial || '',
       };
@@ -1265,6 +1274,74 @@ No extra text, just valid JSON.`;
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  // Generate default market trends based on business interests
+  const generateDefaultTrends = (interests: string, customerDescription: string): string[] => {
+    const interestsLower = interests.toLowerCase();
+    const customerLower = customerDescription.toLowerCase();
+    
+    // Common market trends based on business categories
+    const trends: string[] = [];
+    
+    if (interestsLower.includes('tech') || interestsLower.includes('app') || interestsLower.includes('software')) {
+      trends.push('• Growing demand for digital solutions and mobile applications');
+      trends.push('• Increasing adoption of cloud-based services and SaaS models');
+      trends.push('• Rise of AI and automation in business processes');
+    } else if (interestsLower.includes('health') || interestsLower.includes('fitness') || interestsLower.includes('wellness')) {
+      trends.push('• Growing health consciousness and demand for wellness solutions');
+      trends.push('• Increasing adoption of digital health and fitness tracking');
+      trends.push('• Rise of personalized health and nutrition services');
+    } else if (interestsLower.includes('education') || interestsLower.includes('learning') || interestsLower.includes('training')) {
+      trends.push('• Growing demand for online and personalized learning solutions');
+      trends.push('• Increasing adoption of micro-learning and skill-based education');
+      trends.push('• Rise of lifelong learning and professional development');
+    } else if (interestsLower.includes('food') || interestsLower.includes('restaurant') || interestsLower.includes('catering')) {
+      trends.push('• Growing demand for convenient and healthy food options');
+      trends.push('• Increasing adoption of food delivery and meal prep services');
+      trends.push('• Rise of sustainable and locally-sourced food preferences');
+    } else {
+      // Generic business trends
+      trends.push('• Growing demand for personalized and customized solutions');
+      trends.push('• Increasing adoption of digital and online services');
+      trends.push('• Rise of sustainable and environmentally-conscious business practices');
+    }
+    
+    return trends;
+  };
+
+  // Generate default competitors based on business interests
+  const generateDefaultCompetitors = (interests: string, customerDescription: string): string[] => {
+    const interestsLower = interests.toLowerCase();
+    const customerLower = customerDescription.toLowerCase();
+    
+    // Common competitors based on business categories
+    const competitors: string[] = [];
+    
+    if (interestsLower.includes('tech') || interestsLower.includes('app') || interestsLower.includes('software')) {
+      competitors.push('• Established software companies in the same space');
+      competitors.push('• Freelance developers and small development teams');
+      competitors.push('• Open-source alternatives and free tools');
+    } else if (interestsLower.includes('health') || interestsLower.includes('fitness') || interestsLower.includes('wellness')) {
+      competitors.push('• Traditional gyms and fitness centers');
+      competitors.push('• Established health and wellness apps');
+      competitors.push('• Personal trainers and wellness coaches');
+    } else if (interestsLower.includes('education') || interestsLower.includes('learning') || interestsLower.includes('training')) {
+      competitors.push('• Traditional educational institutions');
+      competitors.push('• Established online learning platforms');
+      competitors.push('• Individual tutors and trainers');
+    } else if (interestsLower.includes('food') || interestsLower.includes('restaurant') || interestsLower.includes('catering')) {
+      competitors.push('• Traditional restaurants and food establishments');
+      competitors.push('• Established food delivery services');
+      competitors.push('• Local food vendors and caterers');
+    } else {
+      // Generic competitors
+      competitors.push('• Established companies in the same industry');
+      competitors.push('• Local businesses offering similar services');
+      competitors.push('• Online alternatives and digital solutions');
+    }
+    
+    return competitors;
   };
 
   const generateGapAnalysis = (skillAssessment: { skills: any[]; selectedSkills: string[]; recommendations: string[]; learningPath: string[] }, businessPlan: any) => {

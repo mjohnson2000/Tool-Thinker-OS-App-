@@ -637,19 +637,66 @@ interface StartupPlan {
 }
 
 function mapPlanToView(plan: any): StartupPlan {
-  return {
+  console.log('Mapping plan to view:', plan);
+  
+  // Helper function to safely split and filter strings
+  const safeSplit = (str: string | undefined, separator: string = '\n') => {
+    if (!str || typeof str !== 'string') return [];
+    console.log('SafeSplit input:', str);
+    const result = str.split(separator).filter(Boolean);
+    console.log('SafeSplit result:', result);
+    return result;
+  };
+
+  // Helper function to get section content with fallbacks
+  const getSectionContent = (sectionName: string, fallback: string = '') => {
+    return plan.sections?.[sectionName] || fallback;
+  };
+
+  const mappedPlan = {
     _id: plan._id,
-    businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
-    customerProfile: plan.customerProfile || { description: plan.sections?.['Customer Profile'] || plan.sections?.['Customer Persona'] || '' },
-    customerStruggle: plan.customerStruggle || (plan.sections?.['Customer Struggles'] ? plan.sections['Customer Struggles'].split('\n').filter(Boolean) : []),
-    valueProposition: plan.valueProposition || plan.sections?.['Value Proposition'] || '',
-    marketInformation: {
-      marketSize: plan.marketInformation?.marketSize || plan.sections?.['Market Size'] || '',
-      competitors: plan.marketInformation?.competitors || (plan.sections?.['Competitors'] ? plan.sections['Competitors'].split('\n').filter(Boolean) : []),
-      trends: plan.marketInformation?.trends || (plan.sections?.['Market Trends'] ? plan.sections['Market Trends'].split('\n').filter(Boolean) : []),
-      validation: plan.marketInformation?.validation || plan.sections?.['Market Validation'] || '',
+    businessIdeaSummary: plan.businessIdeaSummary || plan.summary || getSectionContent('Business Idea Summary', ''),
+    customerProfile: {
+      description: plan.customerProfile?.description || 
+                  getSectionContent('Customer Profile') || 
+                  getSectionContent('Customer Persona', '')
     },
-    financialSummary: plan.financialSummary || plan.sections?.['Financial Summary'] || '',
+    customerStruggle: (() => {
+      const enhanced = plan.customerStruggle;
+      const sectionStruggles = safeSplit(getSectionContent('Customer Struggles'));
+      const sectionStruggle = safeSplit(getSectionContent('Customer Struggle'));
+      
+              console.log('Customer Struggle mapping:', {
+          enhanced,
+          sectionStruggles,
+          sectionStruggle,
+          final: enhanced || sectionStruggles || sectionStruggle || []
+        });
+        console.log('Raw Customer Struggles section:', plan.sections?.['Customer Struggles']);
+        console.log('SafeSplit result:', safeSplit(plan.sections?.['Customer Struggles']));
+      
+      return enhanced.length > 0 ? enhanced : (sectionStruggles.length > 0 ? sectionStruggles : (sectionStruggle.length > 0 ? sectionStruggle : []));
+    })(),
+    valueProposition: plan.valueProposition || getSectionContent('Value Proposition', ''),
+    marketInformation: {
+      marketSize: plan.marketInformation?.marketSize || getSectionContent('Market Size', ''),
+      competitors: (() => {
+        const enhanced = plan.marketInformation?.competitors || [];
+        const sectionCompetitors = safeSplit(getSectionContent('Competitors'));
+        const sectionCompetitorAnalysis = safeSplit(getSectionContent('Competitor Analysis'));
+        
+        return enhanced.length > 0 ? enhanced : (sectionCompetitors.length > 0 ? sectionCompetitors : (sectionCompetitorAnalysis.length > 0 ? sectionCompetitorAnalysis : []));
+      })(),
+      trends: (() => {
+        const enhanced = plan.marketInformation?.trends || [];
+        const sectionMarketTrends = safeSplit(getSectionContent('Market Trends'));
+        const sectionTrends = safeSplit(getSectionContent('Trends'));
+        
+        return enhanced.length > 0 ? enhanced : (sectionMarketTrends.length > 0 ? sectionMarketTrends : (sectionTrends.length > 0 ? sectionTrends : []));
+      })(),
+      validation: plan.marketInformation?.validation || getSectionContent('Market Validation', ''),
+    },
+    financialSummary: plan.financialSummary || getSectionContent('Financial Summary', ''),
     status: plan.status || 'draft',
     version: plan.version || 1,
     createdAt: plan.createdAt,
@@ -658,6 +705,9 @@ function mapPlanToView(plan: any): StartupPlan {
     gapAnalysis: plan.gapAnalysis,
     changeLog: plan.changeLog,
   };
+
+  console.log('Mapped plan result:', mappedPlan);
+  return mappedPlan;
 }
 
 export default function StartupPlanViewPage() {
@@ -697,6 +747,10 @@ export default function StartupPlanViewPage() {
     operations: true,
     versionHistory: true
   });
+  const [showRevertModal, setShowRevertModal] = useState(false);
+  const [revertTargetVersion, setRevertTargetVersion] = useState<number | null>(null);
+  const [reverting, setReverting] = useState(false);
+  const [revertSuccess, setRevertSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPlan() {
@@ -712,8 +766,31 @@ export default function StartupPlanViewPage() {
         const data = await res.json();
         console.log('View page received plan data:', data);
         console.log('Plan version:', data.version);
-        setRawPlan(data);
-        setPlan(mapPlanToView(data));
+        console.log('Plan sections:', data.sections);
+        console.log('Customer Struggles section:', data.sections?.['Customer Struggles']);
+        console.log('Customer Struggle section:', data.sections?.['Customer Struggle']);
+        console.log('Market Trends section:', data.sections?.['Market Trends']);
+        console.log('Competitors section:', data.sections?.['Competitors']);
+        console.log('Plan enhanced fields:', {
+          businessIdeaSummary: data.businessIdeaSummary,
+          customerProfile: data.customerProfile,
+          customerStruggle: data.customerStruggle,
+          valueProposition: data.valueProposition,
+          marketInformation: data.marketInformation,
+          financialSummary: data.financialSummary
+        });
+        console.log('Plan changeLog:', data.changeLog);
+        console.log('Plan version:', data.version);
+        
+        // Fix missing version 1 if needed
+        const fixedData = fixMissingVersion1(data);
+        console.log('Fixed plan changeLog:', fixedData.changeLog);
+        
+        setRawPlan(fixedData);
+        const mappedPlan = mapPlanToView(fixedData);
+        console.log('Mapped plan data:', mappedPlan);
+        setPlan(mappedPlan);
+        setLoading(false);
       } catch (err: any) {
         setError(err.message || 'Unknown error');
       } finally {
@@ -723,26 +800,39 @@ export default function StartupPlanViewPage() {
     fetchPlan();
   }, [id, location.search]); // Re-fetch when URL changes (including refresh parameter)
 
+  // Clear success message after 3 seconds
+  useEffect(() => {
+    if (revertSuccess) {
+      const timer = setTimeout(() => {
+        setRevertSuccess(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [revertSuccess]);
+
   useEffect(() => {
     if (plan && editMode) {
-      setEditPlan({
+      console.log('Setting up editPlan with plan data:', plan);
+      const editPlanData = {
         _id: plan._id,
-        businessIdeaSummary: plan.businessIdeaSummary,
-        customerProfile: { description: plan.customerProfile.description },
-        customerStruggle: plan.customerStruggle,
-        valueProposition: plan.valueProposition,
+        businessIdeaSummary: plan.businessIdeaSummary || '',
+        customerProfile: { description: plan.customerProfile?.description || '' },
+        customerStruggle: plan.customerStruggle || [],
+        valueProposition: plan.valueProposition || '',
         marketInformation: {
-          marketSize: plan.marketInformation.marketSize,
-          competitors: plan.marketInformation.competitors,
-          trends: plan.marketInformation.trends,
-          validation: plan.marketInformation.validation,
+          marketSize: plan.marketInformation?.marketSize || '',
+          competitors: plan.marketInformation?.competitors || [],
+          trends: plan.marketInformation?.trends || [],
+          validation: plan.marketInformation?.validation || '',
         },
-        financialSummary: plan.financialSummary,
+        financialSummary: plan.financialSummary || '',
         status: plan.status,
         version: plan.version,
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt,
-      });
+      };
+      console.log('Setting editPlan to:', editPlanData);
+      setEditPlan(editPlanData);
     }
   }, [plan, editMode]);
 
@@ -755,78 +845,154 @@ export default function StartupPlanViewPage() {
   const handleEdit = () => setEditMode(true);
   const handleCancelEdit = () => setEditMode(false);
   
-  const handleRevertToVersion = async (targetVersion: number) => {
-    if (!plan || !confirm(`Are you sure you want to revert to Version ${targetVersion}? This will create a new version with the reverted content.`)) {
-      return;
+  // Function to fix missing version 1 in changeLog
+  const fixMissingVersion1 = (plan: any) => {
+    if (!plan.changeLog || plan.changeLog.length === 0) {
+      return plan;
     }
     
+    // Check if version 1 exists
+    const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
+    
+    if (!hasVersion1) {
+      // Add version 1 entry at the beginning
+      plan.changeLog.unshift({
+        version: 1,
+        date: plan.createdAt || new Date(),
+        changes: ['Initial business plan created'],
+        reason: 'Original Business Plan'
+      });
+    }
+    
+    return plan;
+  };
+
+  const handleRevertToVersion = async (targetVersion: number) => {
+    // Show confirmation modal instead of browser confirm
+    setRevertTargetVersion(targetVersion);
+    setShowRevertModal(true);
+  };
+
+  const confirmRevert = async () => {
+    if (!plan || !revertTargetVersion) return;
+    
+    setReverting(true);
     try {
       // Find the target version in the change log
-      const targetEntry = plan.changeLog?.find((entry: any) => entry.version === targetVersion);
+      const targetEntry = plan.changeLog?.find((entry: any) => entry.version === revertTargetVersion);
       if (!targetEntry) {
-        alert('Version not found in history');
+        setError('Version not found in history');
+        setShowRevertModal(false);
+        setReverting(false);
         return;
       }
       
-      // Create a revert payload with the target version's content
-      const revertPayload = {
-        status: 'validated',
-        marketEvaluation: { score: plan.marketEvaluation?.score || 85 },
-        // Note: We'll need to store the actual content in the change log for full reversion
-        // For now, this creates a new version with a revert note
-      };
+      const revertUrl = `${API_URL}/business-plan/${plan._id}/revert`;
+      console.log('Calling revert URL:', revertUrl);
+      console.log('API_URL:', API_URL);
+      console.log('Plan ID:', plan._id);
       
-      const res = await fetch(`${API_URL}/business-plan/${plan._id}/validate`, {
+      const res = await fetch(revertUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(revertPayload)
+        body: JSON.stringify({ targetVersion: revertTargetVersion })
       });
       
+      console.log('Revert response status:', res.status);
+      console.log('Revert response headers:', res.headers);
+      
       if (res.ok) {
-        // Refresh the page to show the new version
-        window.location.reload();
+        const updatedPlan = await res.json();
+        setPlan(mapPlanToView(updatedPlan));
+        setRawPlan(updatedPlan);
+        setShowRevertModal(false);
+        setRevertTargetVersion(null);
+        setRevertSuccess('Reverted to Version ' + revertTargetVersion + ' successfully!');
+        // Show success message (you can add a toast notification here)
       } else {
-        alert('Failed to revert to previous version');
+        const error = await res.json();
+        console.log('Revert error response:', error);
+        setError(`Failed to revert: ${error.error}`);
+        setShowRevertModal(false);
       }
     } catch (err) {
       console.error('Revert error:', err);
-      alert('Failed to revert to previous version');
+      setError('Failed to revert to previous version');
+      setShowRevertModal(false);
+    } finally {
+      setReverting(false);
     }
+  };
+
+  const cancelRevert = () => {
+    setShowRevertModal(false);
+    setRevertTargetVersion(null);
+    setReverting(false);
   };
 
   const handleSave = async () => {
     if (!plan) return;
     setSaving(true);
     try {
-      // Compose a complete payload with all required fields
+      // Transform the edit data to match the backend's expected format
       const payload = {
-        ...editPlan,
+        // Map the view format to the backend format
+        summary: editPlan.businessIdeaSummary || '',
+        sections: {
+          'Business Idea Summary': editPlan.businessIdeaSummary || '',
+          'Customer Profile': editPlan.customerProfile?.description || '',
+          'Customer Struggles': editPlan.customerStruggle?.length > 0 ? editPlan.customerStruggle.join('\n') : '',
+          'Value Proposition': editPlan.valueProposition || '',
+          'Market Size': editPlan.marketInformation?.marketSize || '',
+          'Competitors': editPlan.marketInformation?.competitors?.length > 0 ? editPlan.marketInformation.competitors.join('\n') : '',
+          'Market Trends': editPlan.marketInformation?.trends?.length > 0 ? editPlan.marketInformation.trends.join('\n') : '',
+          'Financial Summary': editPlan.financialSummary || '',
+        },
+        // Keep existing objects from rawPlan
         idea: rawPlan?.idea || {
           title: 'Untitled Idea',
           description: ''
         },
-        customer: rawPlan?.customer || {
-          title: 'Customer',
-          description: ''
+        customer: {
+          ...rawPlan?.customer,
+          description: editPlan.customerProfile?.description || ''
         },
         job: rawPlan?.job || {
           title: 'Customer Job',
           description: ''
         },
-        problem: rawPlan?.problem || {
-          description: editPlan.customerStruggle[0] || 'No problem description provided.',
+        problem: {
+          ...rawPlan?.problem,
+          description: editPlan.customerStruggle?.length > 0 ? editPlan.customerStruggle[0] : 'No problem description provided.',
           impact: 'High',
           urgency: 'medium'
         },
-        solution: rawPlan?.solution || {
+        solution: {
+          ...rawPlan?.solution,
           description: editPlan.valueProposition || 'No solution description provided.',
-          keyFeatures: [editPlan.valueProposition || 'Key feature'],
+          keyFeatures: editPlan.valueProposition ? [editPlan.valueProposition] : ['Key feature'],
           uniqueValue: editPlan.valueProposition || 'Unique value'
-        }
+        },
+        // Add enhanced fields that the backend expects
+        businessIdeaSummary: editPlan.businessIdeaSummary || '',
+        customerProfile: {
+          description: editPlan.customerProfile?.description || ''
+        },
+        customerStruggle: editPlan.customerStruggle || [],
+        valueProposition: editPlan.valueProposition || '',
+        marketInformation: {
+          marketSize: editPlan.marketInformation?.marketSize || '',
+          trends: editPlan.marketInformation?.trends || [],
+          competitors: editPlan.marketInformation?.competitors || []
+        },
+        financialSummary: editPlan.financialSummary || '',
       };
+      
+      console.log('Sending payload to backend:', payload);
+      
       const res = await fetch(`${API_URL}/startup-plan/${plan._id}`, {
         method: 'PUT',
         headers: {
@@ -835,14 +1001,22 @@ export default function StartupPlanViewPage() {
         },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error('Failed to save changes');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save changes');
+      }
+      
       const updated = await res.json();
+      console.log('Backend response:', updated);
+      console.log('Mapped plan data:', mapPlanToView(updated));
+      
       setPlan(mapPlanToView(updated));
       setRawPlan(updated);
       setEditMode(false);
-    } catch (err) {
-              // TODO: Replace with custom error notification
-        console.error('Failed to save changes.');
+    } catch (err: any) {
+      console.error('Failed to save changes:', err);
+      alert(`Failed to save changes: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -1000,6 +1174,27 @@ export default function StartupPlanViewPage() {
           {editMode && <PrimaryButton onClick={handleSave} disabled={saving}><FaSave /> {saving ? 'Saving...' : 'Save'}</PrimaryButton>}
           {editMode && <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>}
         </TopActions>
+        
+        {/* Success Notification */}
+        {revertSuccess && (
+          <div style={{
+            background: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+            border: '1px solid #c3e6cb',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            color: '#155724',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <FaCheckCircle style={{ color: '#28a745' }} />
+            {revertSuccess}
+          </div>
+        )}
+        
         <div style={{ margin: '0 0 16px 0' }}>
           <FeedbackBar context="plan_view_actions" />
         </div>
@@ -1217,7 +1412,7 @@ export default function StartupPlanViewPage() {
               </OverlayCard>
             </OverlayBackdrop>
           )}
-          {plan.changeLog && plan.changeLog.length > 1 && (
+          {plan.changeLog && plan.changeLog.length > 0 && (
             <SectionCard>
               <div 
                 style={{ 
@@ -1241,74 +1436,85 @@ export default function StartupPlanViewPage() {
               </div>
               {!collapsedSections.versionHistory && (
                 <div style={{ maxHeight: '300px', overflowY: 'auto', marginTop: '1rem' }}>
-                {plan.changeLog.slice().reverse().map((entry: any, index: number) => (
-                  <div key={index} style={{
-                    border: '1px solid #e9ecef',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    marginBottom: '1rem',
-                    background: entry.version === plan.version ? '#f8f9fa' : '#fff',
-                    borderLeft: entry.version === plan.version ? '4px solid #181a1b' : '1px solid #e9ecef'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {entry.version}</span>
-                        {entry.version === plan.version && (
-                          <span style={{ 
-                            fontSize: '0.75rem', 
-                            background: '#181a1b', 
-                            color: '#fff', 
-                            padding: '0.2rem 0.5rem', 
-                            borderRadius: '4px' 
-                          }}>Current</span>
-                        )}
+                {(() => {
+                  console.log('Rendering version history:', {
+                    changeLog: plan.changeLog,
+                    changeLogLength: plan.changeLog?.length,
+                    reversed: plan.changeLog?.slice().reverse(),
+                    currentVersion: plan.version,
+                    changeLogEntries: plan.changeLog?.map(entry => ({ version: entry.version, reason: entry.reason })),
+                    firstEntry: plan.changeLog?.[0],
+                    allEntries: plan.changeLog
+                  });
+                  return plan.changeLog?.slice().reverse().map((entry: any, index: number) => (
+                    <div key={index} style={{
+                      border: '1px solid #e9ecef',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginBottom: '1rem',
+                      background: entry.version === plan.version ? '#f8f9fa' : '#fff',
+                      borderLeft: entry.version === plan.version ? '4px solid #181a1b' : '1px solid #e9ecef'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {entry.version}</span>
+                          {entry.version === plan.version && (
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              background: '#181a1b', 
+                              color: '#fff', 
+                              padding: '0.2rem 0.5rem', 
+                              borderRadius: '4px' 
+                            }}>Current</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                            {new Date(entry.date).toLocaleDateString()}
+                          </span>
+                          {entry.version !== plan.version && (
+                            <button
+                              onClick={() => handleRevertToVersion(entry.version)}
+                              style={{
+                                background: '#f8f9fa',
+                                border: '1px solid #dee2e6',
+                                borderRadius: '4px',
+                                padding: '0.25rem 0.5rem',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                color: '#495057',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#e9ecef';
+                                e.currentTarget.style.borderColor = '#adb5bd';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8f9fa';
+                                e.currentTarget.style.borderColor = '#dee2e6';
+                              }}
+                            >
+                              Revert to This Version
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
-                          {new Date(entry.date).toLocaleDateString()}
-                        </span>
-                        {entry.version !== plan.version && (
-                          <button
-                            onClick={() => handleRevertToVersion(entry.version)}
-                            style={{
-                              background: '#f8f9fa',
-                              border: '1px solid #dee2e6',
-                              borderRadius: '4px',
-                              padding: '0.25rem 0.5rem',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                              color: '#495057',
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#e9ecef';
-                              e.currentTarget.style.borderColor = '#adb5bd';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = '#f8f9fa';
-                              e.currentTarget.style.borderColor = '#dee2e6';
-                            }}
-                          >
-                            Revert to This Version
-                          </button>
-                        )}
+                      <div style={{ fontSize: '0.9rem', color: '#495057', marginBottom: '0.5rem' }}>
+                        <strong>Reason:</strong> {entry.reason}
                       </div>
+                      {entry.changes && entry.changes.length > 0 && (
+                        <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                          <strong>Changes:</strong>
+                          <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.2rem' }}>
+                            {entry.changes.map((change: string, i: number) => (
+                              <li key={i}>{change}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: '#495057', marginBottom: '0.5rem' }}>
-                      <strong>Reason:</strong> {entry.reason}
-                    </div>
-                    {entry.changes && entry.changes.length > 0 && (
-                      <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>
-                        <strong>Changes:</strong>
-                        <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.2rem' }}>
-                          {entry.changes.map((change: string, i: number) => (
-                            <li key={i}>{change}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )) || [];
+                })()}
               </div>
               )}
             </SectionCard>
@@ -1326,13 +1532,19 @@ export default function StartupPlanViewPage() {
           
           <SectionCard>
             <SectionLabel>Customer Struggles</SectionLabel>
-            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#333', lineHeight: '1.6' }}>
-              {plan.customerStruggle.map((struggle, i) => (
-                <li key={i} style={{ marginBottom: '0.8rem' }}>
-                  {struggle.replace(/^[-–—]\s*/, '')}
-                </li>
-              ))}
-            </ul>
+            {plan.customerStruggle && plan.customerStruggle.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#333', lineHeight: '1.6' }}>
+                {plan.customerStruggle.map((struggle, i) => (
+                  <li key={i} style={{ marginBottom: '0.8rem' }}>
+                    {struggle.replace(/^[-–—]\s*/, '')}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <SectionContent style={{ color: '#666', fontStyle: 'italic' }}>
+                No customer struggles identified yet. Click "Edit" to add customer struggles.
+              </SectionContent>
+            )}
           </SectionCard>
           
           <SectionCard>
@@ -1360,7 +1572,9 @@ export default function StartupPlanViewPage() {
                       </MarketResearchListItem>
                     ))
                   ) : (
-                    <MarketResearchListItem>N/A</MarketResearchListItem>
+                    <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
+                      Market trends not yet analyzed. Click "Edit" to add market trends.
+                    </MarketResearchListItem>
                   )}
                 </MarketResearchList>
               </MarketResearchSubsection>
@@ -1375,7 +1589,9 @@ export default function StartupPlanViewPage() {
                       </MarketResearchListItem>
                     ))
                   ) : (
-                    <MarketResearchListItem>N/A</MarketResearchListItem>
+                    <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
+                      Competitor analysis not yet completed. Click "Edit" to add competitors.
+                    </MarketResearchListItem>
                   )}
                 </MarketResearchList>
               </MarketResearchSubsection>
@@ -1523,6 +1739,21 @@ export default function StartupPlanViewPage() {
         </>
       )}
       </FormCard>
+      {showRevertModal && (
+        <OverlayBackdrop onClick={cancelRevert}>
+          <OverlayCard onClick={e => e.stopPropagation()}>
+            <OverlayClose onClick={cancelRevert} aria-label="Close"><FaTimes /></OverlayClose>
+            <div style={{ fontWeight: 700, fontSize: '1.2rem', marginBottom: 16 }}>Confirm Revert</div>
+            <p>Are you sure you want to revert to Version {revertTargetVersion}? This will create a new version with the reverted content.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <SecondaryButton onClick={cancelRevert} disabled={reverting}>Cancel</SecondaryButton>
+              <PrimaryButton onClick={confirmRevert} disabled={reverting}>
+                {reverting ? <FaSpinner className="fa-spin" /> : 'Confirm Revert'}
+              </PrimaryButton>
+            </div>
+          </OverlayCard>
+        </OverlayBackdrop>
+      )}
     </Container>
   );
 } 

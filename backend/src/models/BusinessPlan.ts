@@ -139,6 +139,23 @@ export interface IBusinessPlan extends Document {
     date: Date;
     changes: string[];
     reason: string;
+    content?: {
+      businessIdeaSummary?: string;
+      customerProfile?: {
+        description: string;
+      };
+      customerStruggle?: string[];
+      valueProposition?: string;
+      marketInformation?: {
+        marketSize: string;
+        trends: string[];
+        competitors: string[];
+      };
+      financialSummary?: string;
+      sections?: {
+        [key: string]: string;
+      };
+    };
   }[];
   
   // Collaboration
@@ -191,6 +208,44 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
   sections: {
     type: Schema.Types.Mixed,
     required: true
+  },
+  
+  // Enhanced Business Plan Fields
+  businessIdeaSummary: {
+    type: String,
+    maxlength: 2000
+  },
+  customerProfile: {
+    description: {
+      type: String,
+      maxlength: 1000
+    }
+  },
+  customerStruggle: [{
+    type: String,
+    maxlength: 1000
+  }],
+  valueProposition: {
+    type: String,
+    maxlength: 1000
+  },
+  marketInformation: {
+    marketSize: {
+      type: String,
+      maxlength: 1000
+    },
+    trends: [{
+      type: String,
+      maxlength: 1000
+    }],
+    competitors: [{
+      type: String,
+      maxlength: 1000
+    }]
+  },
+  financialSummary: {
+    type: String,
+    maxlength: 2000
   },
   
   // Idea Discovery Data
@@ -251,7 +306,7 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
     },
     impact: {
       type: String,
-      maxlength: 500
+      maxlength: 1000
     },
     urgency: {
       type: String,
@@ -269,7 +324,7 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
     keyFeatures: [String],
     uniqueValue: {
       type: String,
-      maxlength: 500
+      maxlength: 2000
     }
   },
   
@@ -374,6 +429,10 @@ const businessPlanSchema = new Schema<IBusinessPlan>({
     reason: {
       type: String,
       required: true
+    },
+    content: {
+      type: Schema.Types.Mixed,
+      default: {}
     }
   }],
   

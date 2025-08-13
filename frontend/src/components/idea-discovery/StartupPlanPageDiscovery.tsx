@@ -1452,7 +1452,7 @@ No extra text, just valid JSON.`;
     if (gapAnalysis) {
       sections.push({
         title: 'Comprehensive Gap Analysis',
-        content: gapAnalysis,
+        content: gapAnalysis as any, // Type assertion to handle complex object
         type: 'gapAnalysis'
       });
     }
@@ -1532,7 +1532,7 @@ No extra text, just valid JSON.`;
               })()
             ) : section.type === 'gapAnalysis' ? (
               (() => {
-                const content = section.content as {
+                const content = section.content as unknown as {
                   skills: { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
                   resources: { financial: string[]; human: string[]; physical: string[] };
                   operations: { processes: string[]; systems: string[]; infrastructure: string[] };

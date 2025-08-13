@@ -533,7 +533,7 @@ const PlanBadge = styled.div`
   }
 `;
 
-type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment';
+type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment' | 'customerGuidance' | 'problemGuidance';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -615,6 +615,70 @@ const Sidebar = styled.aside<{ $isCollapsed: boolean }>`
     display: none;
   }
 `;
+
+// Guidance Component
+interface GuidanceProps {
+  message: string;
+  buttonText: string;
+  onContinue: () => void;
+}
+
+const GuidanceContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  margin: 0 auto;
+`;
+
+const GuidanceMessage = styled.p`
+  font-size: 1.2rem;
+  color: #181a1b;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  font-weight: 500;
+`;
+
+const GuidanceButton = styled.button`
+  background: linear-gradient(135deg, #007aff 0%, #0056cc 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+  }
+`;
+
+function Guidance({ message, buttonText, onContinue }: GuidanceProps) {
+  return (
+    <GuidanceContainer>
+      <GuidanceMessage>{message}</GuidanceMessage>
+      <GuidanceButton onClick={onContinue}>
+        {buttonText}
+      </GuidanceButton>
+    </GuidanceContainer>
+  );
+}
 
 const steps = [
   { key: 'ideaType', label: 'Type' },
@@ -841,7 +905,9 @@ function AppContent() {
       prematureIdeaType: 'Business Type Selection',
       prematureLocation: 'Location Selection',
       prematureScheduleGoals: 'Scope',
-      prematureSkillAssessment: 'Skill Assessment'
+      prematureSkillAssessment: 'Skill Assessment',
+      customerGuidance: 'Customer Guidance',
+      problemGuidance: 'Problem Guidance'
     };
 
     const pageTitle = pageTitles[appState.currentStep] || 'Unknown Page';
@@ -988,6 +1054,7 @@ function AppContent() {
       describeSolution: 'describeProblem',
       describeCompetition: 'describeSolution',
       customerGuidance: 'describeCustomer',
+      problemGuidance: 'prematureJobDiscovery',
       businessPlan: 'skillAssessment',
     };
 

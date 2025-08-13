@@ -1060,8 +1060,8 @@ export default function StartupPlanViewPage() {
       setRawPlan(updated);
       setEditMode(false);
       
-      // Force a page refresh to ensure changes are visible
-      window.location.reload();
+      // Show success message instead of page refresh
+      alert('Changes saved successfully! Version updated to ' + updated.version);
     } catch (err: any) {
       console.error('Failed to save changes:', err);
       alert(`Failed to save changes: ${err.message}`);

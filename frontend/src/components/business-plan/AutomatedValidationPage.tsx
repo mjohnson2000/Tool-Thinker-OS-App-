@@ -409,7 +409,7 @@ export function AutomatedValidationPage() {
 
       // Update plan with enhanced content
       try {
-        console.log('Sending validation request to:', `${API_URL}/business-plan/${planId}/validate`);
+        console.log('Sending validation request to:', `${API_URL}/startup-plan/${planId}/validate`);
         console.log('Validation payload:', {
           status: 'validated',
           marketEvaluation: { score: overallScore },
@@ -421,7 +421,7 @@ export function AutomatedValidationPage() {
           financialSummary: enhancedPlan.financialSummary
         });
         
-        const response = await fetch(`${API_URL}/business-plan/${planId}/validate`, {
+        const response = await fetch(`${API_URL}/startup-plan/${planId}/validate`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

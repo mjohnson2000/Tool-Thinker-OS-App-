@@ -851,13 +851,22 @@ export default function StartupPlanViewPage() {
   
   // Function to fix missing version 1 in changeLog
   const fixMissingVersion1 = (plan: any) => {
+    console.log('fixMissingVersion1 called with plan:', {
+      id: plan._id,
+      hasChangeLog: !!plan.changeLog,
+      changeLogLength: plan.changeLog?.length,
+      changeLog: plan.changeLog
+    });
+    
     // Initialize changeLog if it doesn't exist
     if (!plan.changeLog) {
       plan.changeLog = [];
+      console.log('Initialized empty changeLog');
     }
     
     // If changeLog is empty, add version 1 entry
     if (plan.changeLog.length === 0) {
+      console.log('ChangeLog is empty, adding version 1 entry');
       plan.changeLog.push({
         version: 1,
         date: plan.createdAt || new Date(),
@@ -877,10 +886,11 @@ export default function StartupPlanViewPage() {
           sections: plan.sections || {}
         }
       });
-      console.log('Added initial version 1 to empty changeLog');
+      console.log('Added initial version 1 to empty changeLog. New changeLog:', plan.changeLog);
     } else {
       // Check if version 1 exists in existing changeLog
       const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
+      console.log('ChangeLog has entries, checking for version 1. Has version 1:', hasVersion1);
       
       if (!hasVersion1) {
         // Add version 1 entry at the beginning
@@ -903,10 +913,11 @@ export default function StartupPlanViewPage() {
             sections: plan.sections || {}
           }
         });
-        console.log('Added missing version 1 to existing changeLog');
+        console.log('Added missing version 1 to existing changeLog. New changeLog:', plan.changeLog);
       }
     }
     
+    console.log('fixMissingVersion1 returning plan with changeLog:', plan.changeLog);
     return plan;
   };
 

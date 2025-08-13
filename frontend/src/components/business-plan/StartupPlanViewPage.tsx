@@ -1036,6 +1036,9 @@ export default function StartupPlanViewPage() {
       
       console.log('Sending payload to backend:', payload);
       
+      console.log('Sending save request to:', `${API_URL}/startup-plan/${plan._id}`);
+      console.log('Save request payload:', payload);
+      
       const res = await fetch(`${API_URL}/startup-plan/${plan._id}`, {
         method: 'PUT',
         headers: {
@@ -1044,6 +1047,9 @@ export default function StartupPlanViewPage() {
         },
         body: JSON.stringify(payload)
       });
+      
+      console.log('Save response status:', res.status);
+      console.log('Save response headers:', res.headers);
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -1054,7 +1060,16 @@ export default function StartupPlanViewPage() {
       console.log('Backend response:', updated);
       console.log('Backend version:', updated.version);
       console.log('Backend changeLog length:', updated.changeLog?.length);
+      console.log('Backend changeLog:', updated.changeLog);
       console.log('Mapped plan data:', mapPlanToView(updated));
+      
+      // Check if the response has the expected structure
+      if (!updated.version) {
+        console.error('Backend response missing version field');
+      }
+      if (!updated.changeLog) {
+        console.error('Backend response missing changeLog field');
+      }
       
       setPlan(mapPlanToView(updated));
       setRawPlan(updated);

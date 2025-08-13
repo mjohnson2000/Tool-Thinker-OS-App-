@@ -1013,11 +1013,16 @@ export default function StartupPlanViewPage() {
       
       const updated = await res.json();
       console.log('Backend response:', updated);
+      console.log('Backend version:', updated.version);
+      console.log('Backend changeLog length:', updated.changeLog?.length);
       console.log('Mapped plan data:', mapPlanToView(updated));
       
       setPlan(mapPlanToView(updated));
       setRawPlan(updated);
       setEditMode(false);
+      
+      // Force a page refresh to ensure changes are visible
+      window.location.reload();
     } catch (err: any) {
       console.error('Failed to save changes:', err);
       alert(`Failed to save changes: ${err.message}`);

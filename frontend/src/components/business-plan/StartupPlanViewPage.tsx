@@ -851,21 +851,60 @@ export default function StartupPlanViewPage() {
   
   // Function to fix missing version 1 in changeLog
   const fixMissingVersion1 = (plan: any) => {
-    if (!plan.changeLog || plan.changeLog.length === 0) {
-      return plan;
+    // Initialize changeLog if it doesn't exist
+    if (!plan.changeLog) {
+      plan.changeLog = [];
     }
     
-    // Check if version 1 exists
-    const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
-    
-    if (!hasVersion1) {
-      // Add version 1 entry at the beginning
-      plan.changeLog.unshift({
+    // If changeLog is empty, add version 1 entry
+    if (plan.changeLog.length === 0) {
+      plan.changeLog.push({
         version: 1,
         date: plan.createdAt || new Date(),
         changes: ['Initial business plan created'],
-        reason: 'Original Business Plan'
+        reason: 'Original Business Plan',
+        content: {
+          businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
+          customerProfile: plan.customerProfile || { description: '' },
+          customerStruggle: plan.customerStruggle || [],
+          valueProposition: plan.valueProposition || '',
+          marketInformation: plan.marketInformation || {
+            marketSize: '',
+            trends: [],
+            competitors: []
+          },
+          financialSummary: plan.financialSummary || '',
+          sections: plan.sections || {}
+        }
       });
+      console.log('Added initial version 1 to empty changeLog');
+    } else {
+      // Check if version 1 exists in existing changeLog
+      const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
+      
+      if (!hasVersion1) {
+        // Add version 1 entry at the beginning
+        plan.changeLog.unshift({
+          version: 1,
+          date: plan.createdAt || new Date(),
+          changes: ['Initial business plan created'],
+          reason: 'Original Business Plan',
+          content: {
+            businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
+            customerProfile: plan.customerProfile || { description: '' },
+            customerStruggle: plan.customerStruggle || [],
+            valueProposition: plan.valueProposition || '',
+            marketInformation: plan.marketInformation || {
+              marketSize: '',
+              trends: [],
+              competitors: []
+            },
+            financialSummary: plan.financialSummary || '',
+            sections: plan.sections || {}
+          }
+        });
+        console.log('Added missing version 1 to existing changeLog');
+      }
     }
     
     return plan;

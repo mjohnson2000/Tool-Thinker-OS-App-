@@ -677,7 +677,7 @@ function mapPlanToView(plan: any): StartupPlan {
         console.log('Raw Customer Struggles section:', plan.sections?.['Customer Struggles']);
         console.log('SafeSplit result:', safeSplit(plan.sections?.['Customer Struggles']));
       
-      return enhanced.length > 0 ? enhanced : (sectionStruggles.length > 0 ? sectionStruggles : (sectionStruggle.length > 0 ? sectionStruggle : []));
+      return (enhanced && enhanced.length > 0) ? enhanced : (sectionStruggles.length > 0 ? sectionStruggles : (sectionStruggle.length > 0 ? sectionStruggle : []));
     })(),
     valueProposition: plan.valueProposition || getSectionContent('Value Proposition', ''),
     marketInformation: {
@@ -687,14 +687,14 @@ function mapPlanToView(plan: any): StartupPlan {
         const sectionCompetitors = safeSplit(getSectionContent('Competitors'));
         const sectionCompetitorAnalysis = safeSplit(getSectionContent('Competitor Analysis'));
         
-        return enhanced.length > 0 ? enhanced : (sectionCompetitors.length > 0 ? sectionCompetitors : (sectionCompetitorAnalysis.length > 0 ? sectionCompetitorAnalysis : []));
+        return (enhanced && enhanced.length > 0) ? enhanced : (sectionCompetitors.length > 0 ? sectionCompetitors : (sectionCompetitorAnalysis.length > 0 ? sectionCompetitorAnalysis : []));
       })(),
       trends: (() => {
         const enhanced = plan.marketInformation?.trends || [];
         const sectionMarketTrends = safeSplit(getSectionContent('Market Trends'));
         const sectionTrends = safeSplit(getSectionContent('Trends'));
         
-        return enhanced.length > 0 ? enhanced : (sectionMarketTrends.length > 0 ? sectionMarketTrends : (sectionTrends.length > 0 ? sectionTrends : []));
+        return (enhanced && enhanced.length > 0) ? enhanced : (sectionMarketTrends.length > 0 ? sectionMarketTrends : (sectionTrends.length > 0 ? sectionTrends : []));
       })(),
       validation: plan.marketInformation?.validation || getSectionContent('Market Validation', ''),
     },

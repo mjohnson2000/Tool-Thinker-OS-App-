@@ -748,7 +748,7 @@ export default function StartupPlanViewPage() {
     skills: true,
     resources: true,
     operations: true,
-    versionHistory: true
+    versionHistory: false // Show version history by default
   });
   const [showRevertModal, setShowRevertModal] = useState(false);
   const [revertTargetVersion, setRevertTargetVersion] = useState<number | null>(null);
@@ -1297,7 +1297,17 @@ export default function StartupPlanViewPage() {
                 borderRadius: '8px',
                 border: '1px solid #e9ecef'
               }}>
-                <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {plan.version}</span>
+                <span style={{ fontWeight: 600, color: '#181a1b' }}>
+                  Version {plan.version}
+                  {(() => {
+                    console.log('Version display debug:', {
+                      planVersion: plan.version,
+                      planChangeLog: plan.changeLog,
+                      planChangeLogLength: plan.changeLog?.length
+                    });
+                    return null;
+                  })()}
+                </span>
                 {plan.version > 1 && (
                   <span style={{ 
                     fontSize: '0.8rem', 
@@ -1421,7 +1431,15 @@ export default function StartupPlanViewPage() {
               </OverlayCard>
             </OverlayBackdrop>
           )}
-          {plan.changeLog && plan.changeLog.length > 0 && (
+          {(() => {
+            console.log('Version history condition check:', {
+              hasChangeLog: !!plan.changeLog,
+              changeLogLength: plan.changeLog?.length,
+              changeLog: plan.changeLog,
+              shouldShow: plan.changeLog && plan.changeLog.length > 0
+            });
+            return plan.changeLog && plan.changeLog.length > 0;
+          })() && (
             <SectionCard>
               <div 
                 style={{ 

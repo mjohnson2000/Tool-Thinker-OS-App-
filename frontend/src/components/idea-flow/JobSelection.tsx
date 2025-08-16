@@ -461,7 +461,7 @@ export function JobSelection({ onSelect, customer, interests, businessArea, idea
         console.log('JobSelection context:', { customer, interests, businessArea, ideaType, location, scheduleGoals });
         console.log('JobSelection contextString:', contextString);
         
-        const prompt = `You are a business problem generator. Generate exactly 5 specific problems that ${customer.title} face, related to these interests: "${interests}"
+        const prompt = `You are a business problem generator. Generate exactly 6 specific problems that ${customer.title} face, related to these interests: "${interests}"
 
 CONTEXT:
 - Customer: ${customer.title} (${customer.description})
@@ -472,7 +472,7 @@ ${location ? `- Location: ${location.city}, ${location.region}, ${location.count
 ${scheduleGoals ? `- Availability: ${scheduleGoals.hoursPerWeek} hours/week` : ''}
 ${scheduleGoals ? `- Income Target: $${scheduleGoals.incomeTarget}/month` : ''}
 
-CRITICAL: You must respond with ONLY a valid JSON array containing exactly 5 objects. No explanations, no markdown, no additional text.
+CRITICAL: You must respond with ONLY a valid JSON array containing exactly 6 objects. No explanations, no markdown, no additional text.
 
 Each object must have these exact fields:
 - "id": lowercase string with no spaces (e.g., "time-management")
@@ -543,7 +543,7 @@ Respond with ONLY the JSON array, nothing else.`;
         console.log('JobSelection - Valid options count:', validOptions.length);
         console.log('JobSelection - Using fallback jobs:', fallbackJobs);
         
-        while (validOptions.length < 5) {
+        while (validOptions.length < 6) {
           const fallbackJob = fallbackJobs[validOptions.length] || {
             id: `fallback-${validOptions.length + 1}`,
             title: `Help ${customer.title}`,
@@ -554,7 +554,7 @@ Respond with ONLY the JSON array, nothing else.`;
         }
         
         if (validOptions.length === 0) throw new Error('No valid jobs found');
-        setOptions(validOptions.slice(0, 5)); // Ensure exactly 5 options
+        setOptions(validOptions.slice(0, 6)); // Ensure exactly 6 options
         setProgress(100);
         clearTimeout(timeoutFallback); // Clear timeout if successful
       } catch (err: any) {

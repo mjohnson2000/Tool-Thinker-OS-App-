@@ -766,7 +766,7 @@ const steps = [
   { key: 'job', label: 'Problem' },
   { key: 'solution', label: 'Solution' },
   { key: 'skillAssessment', label: 'Skills' },
-  { key: 'businessPlan', label: 'Ideas', isPremium: true },
+  { key: 'businessPlan', label: 'Side Hustle Plan', isPremium: true },
   { key: 'nextStepsHub', label: 'Discovery', isPremium: true },
   { key: 'launch', label: 'Launch', isPremium: true },
 ];
@@ -861,6 +861,16 @@ function ResetPasswordRoute() {
   const { resetPassword } = useAuth();
   if (!token) return <Navigate to="/login" />;
   return <ResetPassword token={token} onResetPassword={resetPassword} />;
+}
+
+function StartupPlanRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/hustle/${id}`} replace />;
+}
+
+function StartupPlanEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/hustle/${id}/edit`} replace />;
 }
 
 function AppContent() {
@@ -972,11 +982,11 @@ function AppContent() {
       describeProblem: 'Describe Problem',
       describeSolution: 'Describe Solution',
       describeCompetition: 'Describe Competition',
-      businessPlan: 'Business Plan',
+      businessPlan: 'Side Hustle Plan',
       prematureJobDiscovery: 'Premature Job Discovery',
       marketEvaluation: 'Market Evaluation',
       evaluationScore: 'Validation Score',
-      startupPlan: 'Startup Plan',
+      startupPlan: 'Alpha Hustle Plan',
       launch: 'Launch Preparation',
       solution: 'Solution Selection',
       prematureIdeaType: 'Business Type Selection',
@@ -1785,7 +1795,7 @@ function AppContent() {
             <CourseLibrary />
           </AppContainer>
         } />
-        <Route path="/plans" element={
+        <Route path="/hustles" element={
           <AppContainer>
             <TopBar ref={topBarRef}>
               <TopBarLeft>
@@ -1858,7 +1868,7 @@ function AppContent() {
             <StartupPlanDashboard setAppState={setAppState} />
           </AppContainer>
         } />
-        <Route path="/startup-plan/:id/edit" element={
+        <Route path="/hustle/:id/edit" element={
           <AppContainer>
             <Logo
               src={logo}
@@ -1924,7 +1934,10 @@ function AppContent() {
             <StartupPlanEditPage setAppState={setAppState} />
           </AppContainer>
         } />
-        <Route path="/startup-plan/:id" element={<StartupPlanViewPage />} />
+        <Route path="/hustle/:id" element={<StartupPlanViewPage />} />
+        <Route path="/plans" element={<Navigate to="/hustles" replace />} />
+        <Route path="/startup-plan/:id" element={<StartupPlanRedirect />} />
+        <Route path="/startup-plan/:id/edit" element={<StartupPlanEditRedirect />} />
         <Route path="/validate/:planId" element={<AutomatedValidationPage />} />
 
 
@@ -1954,14 +1967,14 @@ function AppContent() {
               ) : (
                 <TopBarRight>
                   <NavButton 
-                    onClick={() => window.location.href = '/plans'} 
+                    onClick={() => window.location.href = '/hustles'} 
                     style={{
                       background: '#000',
                       color: '#fff',
                       border: 'none',
                       fontWeight: 600
                     }}>
-                    My Side Hustle Ideas
+                    My Side Hustles
                   </NavButton>
                   <AvatarButton onClick={() => {
                     setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));

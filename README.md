@@ -8,6 +8,24 @@ ToolThinker is an intelligent platform that helps startup founders use structure
 
 Empower solo founders and small teams with the same structured thinking tools that top entrepreneurs use, combined with AI-powered insights and personalized guidance.
 
+## 📢 Messaging Toolkit
+
+### Taglines (pick 1–2)
+- **Be early. Be profitable.**
+- **Where side hustlers go first.**
+- **Spot it early. Own the niche.**
+- **From idea to alpha in 15 minutes.**
+- **Uncrowded niches, unfair edges.**
+
+### Elevator Pitch (short)
+Alpha Hustler helps side hustlers spot uncrowded, fast-growing niches and gives them step-by-step playbooks to launch in days, not months.
+
+### Value Props
+- **Curated alpha-niche deals** (low competition, rising demand)
+- **1-page playbooks** with exact steps, scripts, pricing
+- **"Weekend-launch" templates** (offer, outreach, checkout)
+- **Signals newsletter** that alerts you before niches get crowded
+
 ## ✨ Features
 
 ### Core Platform

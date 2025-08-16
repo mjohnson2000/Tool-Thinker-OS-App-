@@ -15,6 +15,7 @@ const defaultBusinessAreas: BusinessArea[] = [
   { id: 'technology', title: 'Technology', description: 'Software and hardware', icon: '💻' },
   { id: 'creative', title: 'Creative', description: 'Arts and entertainment', icon: '🎨' },
   { id: 'finance', title: 'Finance', description: 'Money and investments', icon: '💰' },
+  { id: 'business', title: 'Business', description: 'Entrepreneurship and consulting', icon: '💼' },
 ];
 
 const Container = styled.div`
@@ -405,11 +406,11 @@ export function IdeaSelection({ onSelect, ideaType }: IdeaSelectionProps) {
         setProgress(prev => (prev < 90 ? prev + 5 : 90));
       }, 200);
 
-      const prompt = `Generate 5 business areas for a ${ideaType?.title.toLowerCase() || 'side hustle'} based on these interests: "${interests}"
+      const prompt = `Generate 6 business areas for a ${ideaType?.title.toLowerCase() || 'side hustle'} based on these interests: "${interests}"
 
 Focus on business areas that align with the user's interests and can be done as a side hustle.
 
-Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
+Return ONLY a JSON array with exactly 6 objects. Each object must have id, title, description, and icon (emoji).
 
 Example: [{"id": "education", "title": "Education", "description": "Learning and teaching", "icon": "📚"}]
 

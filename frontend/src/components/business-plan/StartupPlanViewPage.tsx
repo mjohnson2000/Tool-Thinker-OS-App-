@@ -831,7 +831,7 @@ export default function StartupPlanViewPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/startup-plan/${id}`, {
+        const res = await fetch(`${API_URL}/side-hustle/${id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -962,7 +962,7 @@ export default function StartupPlanViewPage() {
         return;
       }
       
-      const revertUrl = `${API_URL}/business-plan/${plan._id}/revert`;
+              const revertUrl = `${API_URL}/side-hustle/${plan._id}/revert`;
       console.log('Calling revert URL:', revertUrl);
       console.log('API_URL:', API_URL);
       console.log('Plan ID:', plan._id);
@@ -1068,7 +1068,7 @@ export default function StartupPlanViewPage() {
       
       console.log('Sending payload to backend:', payload);
       
-      const res = await fetch(`${API_URL}/startup-plan/${plan._id}`, {
+              const res = await fetch(`${API_URL}/side-hustle/${plan._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1180,7 +1180,7 @@ export default function StartupPlanViewPage() {
       console.log('Coach evaluation result:', coachEvaluation);
       
       // Save evaluation score to backend
-      const res = await fetch(`${API_URL}/business-plan/${plan._id}/evaluation-score`, {
+              const res = await fetch(`${API_URL}/side-hustle/${plan._id}/evaluation-score`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1221,9 +1221,16 @@ export default function StartupPlanViewPage() {
     }
   };
 
+        console.log('StartupPlanViewPage render state:', { loading, error, plan: !!plan, planId: id });
+        
         if (loading) return <Container>Loading business plan...</Container>;
-  if (error) return <Container style={{ color: '#dc3545' }}>{error}</Container>;
-  if (!plan) return null;
+        if (error) return <Container style={{ color: '#dc3545' }}>{error}</Container>;
+        if (!plan) {
+          console.log('No plan data, returning null');
+          return <Container style={{ background: 'yellow', padding: '2rem', color: 'black' }}>
+            DEBUG: No plan data available. Plan ID: {id}
+          </Container>;
+        }
 
   return (
     <Container>

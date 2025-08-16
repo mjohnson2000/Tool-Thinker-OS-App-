@@ -494,7 +494,7 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
     
     const context = businessContext?.idea || businessContext?.businessArea || businessContext?.interests || 'a new business';
     
-    const prompt = `Based on this business idea: "${context}", generate 5 different customer personas that would be most likely to use this product or service.
+    const prompt = `Based on this business idea: "${context}", generate 6 different customer personas that would be most likely to use this product or service.
 
     For each persona, provide:
     - A relevant emoji
@@ -507,6 +507,7 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
     - Different demographics
     - Different use cases
     - Different pain points
+    - Niche users
 
     Return the response as a JSON array with this exact structure:
     [
@@ -537,12 +538,12 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
         personas = generateFallbackPersonas(context);
       }
 
-      // Ensure we have exactly 5 personas
-      if (personas.length > 5) {
-        personas = personas.slice(0, 5);
-      } else if (personas.length < 5) {
+      // Ensure we have exactly 6 personas
+      if (personas.length > 6) {
+        personas = personas.slice(0, 6);
+      } else if (personas.length < 6) {
         const fallbackPersonas = generateFallbackPersonas(context);
-        personas = [...personas, ...fallbackPersonas.slice(0, 5 - personas.length)];
+        personas = [...personas, ...fallbackPersonas.slice(0, 6 - personas.length)];
       }
 
       setCustomerPersonas(personas);
@@ -585,6 +586,11 @@ export function DescribeCustomer({ onSubmit, initialValue = '', onClear, busines
         emoji: '🌟',
         title: 'Premium User',
         description: 'Quality-conscious customers willing to pay for better solutions',
+      },
+      {
+        emoji: '🎨',
+        title: 'Creative User',
+        description: 'Individuals who value unique and innovative solutions',
       },
     ];
   }

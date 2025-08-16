@@ -49,6 +49,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/chatgpt', chatgptRouter);
 app.use('/api/business-plan', businessPlanRouter);
 app.use('/api/startup-plan', businessPlanRouter);
+app.use('/api/side-hustle', businessPlanRouter);
 app.use('/api/coaches', coachesRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/stripe', stripeRouter);

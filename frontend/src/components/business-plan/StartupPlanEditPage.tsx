@@ -402,7 +402,7 @@ export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPage
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/startup-plan/${id}`, {
+        const res = await fetch(`${API_URL}/side-hustle/${id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -502,7 +502,7 @@ export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPage
     setError(null);
     setSaveStatus('saving');
     try {
-      const res = await fetch(`${API_URL}/startup-plan/${id}`, {
+      const res = await fetch(`${API_URL}/side-hustle/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -510,10 +510,10 @@ export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPage
         },
         body: JSON.stringify({ sections })
       });
-      if (!res.ok) throw new Error('Failed to save business plan');
+      if (!res.ok) throw new Error('Failed to save side hustle plan');
       setSaveStatus('saved');
       setTimeout(() => {
-        navigate(`/plans/${id}/view`);
+        navigate(`/hustle/${id}`);
       }, 1500);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
@@ -524,17 +524,17 @@ export default function StartupPlanEditPage({ setAppState }: StartupPlanEditPage
   };
 
   const handleCancel = () => {
-    navigate('/plans');
+    navigate('/hustles');
   };
 
-        if (loading) return <Container><LoadingMsg>Loading business plan...</LoadingMsg></Container>;
+        if (loading) return <Container><LoadingMsg>Loading side hustle plan...</LoadingMsg></Container>;
   if (error) return <Container><ErrorMsg>{error}</ErrorMsg></Container>;
   if (!plan) return null;
 
   return (
     <>
       <Container>
-        <Title>Edit Business Plan</Title>
+        <Title>Edit Side Hustle Plan</Title>
         <FormCard>
           {saveStatus && (
             <SaveStatus type={saveStatus}>

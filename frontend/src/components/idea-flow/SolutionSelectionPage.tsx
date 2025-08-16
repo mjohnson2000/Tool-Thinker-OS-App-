@@ -413,7 +413,7 @@ export function SolutionSelectionPage({ job, onSelect, interests, businessArea, 
           setProgress(prev => (prev < 90 ? prev + 5 : 90));
         }, 200);
         
-        const prompt = `Generate 5 unique, creative business solutions for this specific problem:
+        const prompt = `Generate 6 unique, creative business solutions for this specific problem:
 
 PROBLEM: ${job.title}
 PROBLEM DESCRIPTION: ${job.description}
@@ -434,7 +434,7 @@ REQUIREMENTS:
 5. Each solution should be unique and different from the others
 6. Solutions should be specific to the problem, not generic
 
-Return ONLY a JSON array with exactly 5 objects. Each object must have:
+Return ONLY a JSON array with exactly 6 objects. Each object must have:
 - id: unique identifier (lowercase, no spaces)
 - title: descriptive solution name
 - description: how this solution helps solve the specific problem
@@ -474,7 +474,7 @@ No explanation, just the JSON array.`;
         
         // If we have fewer than 5 valid options, add better fallback options
         const fallbackSolutions = generateFallbackSolutions(job, businessArea, customer, interests || '', validOptions.length);
-        while (validOptions.length < 5) {
+        while (validOptions.length < 6) {
           const fallbackSolution = fallbackSolutions[validOptions.length];
           if (fallbackSolution) {
             // Ensure the fallback solution has an id
@@ -496,7 +496,7 @@ No explanation, just the JSON array.`;
         }
         
         if (validOptions.length === 0) throw new Error('No valid solutions found');
-        setOptions(validOptions.slice(0, 5)); // Ensure exactly 5 options
+        setOptions(validOptions.slice(0, 6)); // Ensure exactly 6 options
         setProgress(100);
         clearTimeout(timeoutFallback); // Clear timeout if successful
       } catch (err: any) {

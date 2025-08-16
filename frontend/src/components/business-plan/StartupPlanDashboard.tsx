@@ -918,7 +918,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   const fetchPlans = async (pageNum = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/startup-plan?page=${pageNum}&limit=10`, {
+      const response = await fetch(`${API_URL}/side-hustle?page=${pageNum}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -932,17 +932,18 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
       if (!response.ok) throw new Error('Failed to fetch plans');
       
       const data = await response.json();
-      setPlans(data.startupPlans);
-      setTotalPages(data.pagination.pages || 1);
-      setPage(data.pagination.page || 1);
+      
+      setPlans(data.businessPlans || []);
+      setTotalPages(data.pagination?.pages || 1);
+      setPage(data.pagination?.page || 1);
       
       // Use pagination.total for the true total
-      const total = data.pagination.total || data.startupPlans.length;
-      const active = data.startupPlans.filter((p: StartupPlan) => p.status === 'active').length;
-      const draft = data.startupPlans.filter((p: StartupPlan) => p.status === 'draft').length;
-      const validated = data.startupPlans.filter((p: StartupPlan) => p.status === 'validated').length;
+      const total = data.pagination.total || data.businessPlans.length;
+      const active = data.businessPlans.filter((p: StartupPlan) => p.status === 'active').length;
+      const draft = data.businessPlans.filter((p: StartupPlan) => p.status === 'draft').length;
+      const validated = data.businessPlans.filter((p: StartupPlan) => p.status === 'validated').length;
       
-      const totalProgress = data.startupPlans.reduce((sum: number, plan: StartupPlan) => {
+      const totalProgress = data.businessPlans.reduce((sum: number, plan: StartupPlan) => {
         const progressFields = Object.values(plan.progress);
         const completed = progressFields.filter(Boolean).length;
         return sum + (completed / progressFields.length) * 100;
@@ -972,12 +973,12 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     if (onSelectPlan) {
       onSelectPlan(plan);
     } else {
-      navigate(`/startup-plan/${plan._id}`);
+      navigate(`/hustle/${plan._id}`);
     }
   };
 
   const handleEditPlan = (plan: StartupPlan) => {
-    navigate(`/startup-plan/${plan._id}/edit`);
+    navigate(`/hustle/${plan._id}/edit`);
   };
 
   const handleDeletePlan = async (planId: string) => {
@@ -988,7 +989,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     if (!deleteModalPlanId) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`${API_URL}/startup-plan/${deleteModalPlanId}`, {
+              const response = await fetch(`${API_URL}/side-hustle/${deleteModalPlanId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

@@ -305,7 +305,7 @@ export function CustomerSelection({ onSelect, businessArea, interests, ideaType,
         console.log('CustomerSelection context:', { businessArea, interests, location, scheduleGoals });
         console.log('CustomerSelection contextString:', contextString);
         
-        const prompt = `Generate 5 customer types for a ${ideaType?.title.toLowerCase() || 'side hustle'} business in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
+        const prompt = `Generate 6 customer types for a ${ideaType?.title.toLowerCase() || 'side hustle'} business in ${location?.city || 'your area'}, ${location?.country || 'your country'}.
 
 Business area: ${businessArea.title}
 ${ideaType ? `Service type: ${ideaType.title} - ${ideaType.description}` : ''}
@@ -314,7 +314,7 @@ ${scheduleGoals ? `Availability: ${scheduleGoals.hoursPerWeek} hours/week, Targe
 
 Focus on customers who would use ${ideaType?.title.toLowerCase() || 'side hustle'} services.
 
-Return ONLY a JSON array with exactly 5 objects. Each object must have id, title, description, and icon (emoji).
+Return ONLY a JSON array with exactly 6 objects. Each object must have id, title, description, and icon (emoji).
 
 Example: [{"id": "busy-professionals", "title": "Busy Professionals", "description": "Time-strapped, tech-savvy", "icon": "⏰"}]
 

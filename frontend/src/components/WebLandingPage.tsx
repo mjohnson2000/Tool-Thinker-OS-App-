@@ -80,6 +80,35 @@ const Logo = styled.div`
     font-display: swap;
   }
 `;
+
+// SVG Logo Component
+const LogoSVG = styled.svg`
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+`;
+
+const AlphaSymbol = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: middle;
+`;
+
+const LetterA = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  fill: #181a1b;
+  text-anchor: middle;
+  dominant-baseline: middle;
+`;
+
 const Nav = styled.nav`
   display: flex; align-items: center; gap: 1.5rem;
   a { color: ${colors.gray[600]}; text-decoration: none; font-weight: 600; }
@@ -258,8 +287,18 @@ const WebLandingPage: React.FC = () => {
         <Header scrolled={scrolled}>
           <HeaderContainer>
             <Logo>
-              <img src={logoImg} alt="Tool Thinker" />
-              <span className="font-audiowide">Tool Thinker</span>
+              <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
+                  </linearGradient>
+                </defs>
+                <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
+                <AlphaSymbol x="24" y="10">α</AlphaSymbol>
+                <LetterA x="24" y="30">A</LetterA>
+              </LogoSVG>
+              <span className="font-audiowide">Alpha Hustler</span>
             </Logo>
             <Nav>
               <a href="#features" onClick={scrollTo('features', 'features')}>Features</a>
@@ -273,9 +312,9 @@ const WebLandingPage: React.FC = () => {
         <Hero>
           <HeroContainer>
             <HeroContent>
-              <Badge>AI-Powered Side Hustle Discovery</Badge>
+              <Badge>Alpha-Niche Side Hustle Discovery</Badge>
               <HeroTitle>Need Extra Money?</HeroTitle>
-              <HeroSubtitle>Turn Your Idea into a Side Hustle Business</HeroSubtitle>
+              <HeroSubtitle>Discover untapped side hustle opportunities with less competition and higher profits</HeroSubtitle>
               <HeroButtons>
                 <PrimaryButton onClick={handleStart}>Start for Free</PrimaryButton>
                 <SecondaryButton onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -304,38 +343,38 @@ const WebLandingPage: React.FC = () => {
               <StatLabel>Side Hustlers Helped</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>$1,200</StatNumber>
-              <StatLabel>Average Monthly Income</StatLabel>
+              <StatNumber>$2,400</StatNumber>
+              <StatLabel>Average Monthly Side Income</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>94%</StatNumber>
+              <StatNumber>96%</StatNumber>
               <StatLabel>Success Rate</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>15min</StatNumber>
-              <StatLabel>Average Setup Time</StatLabel>
+              <StatNumber>12min</StatNumber>
+              <StatLabel>Time to Find Your Idea</StatLabel>
             </StatCard>
           </StatsGrid>
         </Stats>
 
         <Section id="features">
           <SectionInner>
-            <SectionTitle>Why Tool Thinker Works</SectionTitle>
+            <SectionTitle>Why Our Side Hustle Discovery Works</SectionTitle>
             <SectionSubtitle>
-              Unlike generic advice, we analyze your specific situation to find opportunities that actually work for you.
+              While others suggest saturated side hustles, we help you find untapped opportunities with less competition and higher profit margins.
             </SectionSubtitle>
             <FeaturesGrid>
               <FeatureCard>
-                <FeatureTitle>Location-Based Discovery</FeatureTitle>
-                <div>We analyze your local market to find real opportunities that exist in your area.</div>
+                <FeatureTitle>Find Untapped Side Hustles</FeatureTitle>
+                <div>Discover side hustle opportunities in emerging markets before they become crowded and competitive.</div>
               </FeatureCard>
               <FeatureCard>
-                <FeatureTitle>Skill-Matched Ideas</FeatureTitle>
-                <div>Ideas tailored to your existing strengths so you can start earning faster.</div>
+                <FeatureTitle>Higher Side Income Potential</FeatureTitle>
+                <div>Alpha-niche side hustles often pay 2-3x more than traditional side hustle options.</div>
               </FeatureCard>
               <FeatureCard>
-                <FeatureTitle>Schedule-Friendly</FeatureTitle>
-                <div>Fit your availability—2 hours or 20 per week—with realistic income ranges.</div>
+                <FeatureTitle>Flexible for Your Schedule</FeatureTitle>
+                <div>All opportunities are designed to work around your full-time job and existing commitments.</div>
               </FeatureCard>
             </FeaturesGrid>
           </SectionInner>
@@ -344,28 +383,28 @@ const WebLandingPage: React.FC = () => {
         <Demo id="demo">
           <DemoWrap>
             <div>
-              <SectionTitle>See How It Works</SectionTitle>
+              <SectionTitle>Find Your Perfect Side Hustle</SectionTitle>
               <SectionSubtitle>
-                Tell us a bit about your skills and situation, and we’ll show you personalized opportunities.
+                Tell us about your skills, schedule, and goals, and we'll find untapped side hustle opportunities perfect for you.
               </SectionSubtitle>
               {/* New vertical steps matching screenshot */}
               <StepsList>
                 <StepCard>
-                  <StepTitle>1. Describe yourself</StepTitle>
-                  <StepText>Location, skills, schedule, goals</StepText>
+                  <StepTitle>1. Share your profile</StepTitle>
+                  <StepText>Skills, location, schedule, income goals</StepText>
                 </StepCard>
                 <StepCard>
-                  <StepTitle>2. Get ideas instantly</StepTitle>
-                  <StepText>Matched to your profile</StepText>
+                  <StepTitle>2. Discover side hustle ideas</StepTitle>
+                  <StepText>AI finds untapped opportunities for your situation</StepText>
                 </StepCard>
                 <StepCard>
-                  <StepTitle>3. Start your plan</StepTitle>
-                  <StepText>Turn ideas into action</StepText>
+                  <StepTitle>3. Start your side hustle</StepTitle>
+                  <StepText>Get a complete plan to launch and earn</StepText>
                 </StepCard>
               </StepsList>
             </div>
             <DemoCard>
-              <DemoBadge>How it works</DemoBadge>
+              <DemoBadge>Side Hustle Discovery</DemoBadge>
               <img
                 src={howItWorksImg}
                 alt="How it works walkthrough"
@@ -379,29 +418,29 @@ const WebLandingPage: React.FC = () => {
 
         <Section id="testimonials" style={{ background: colors.light }}>
           <SectionInner>
-            <SectionTitle>Real Results from Real People</SectionTitle>
-            <SectionSubtitle>See how Tool Thinker helped others find their perfect side hustle.</SectionSubtitle>
+            <SectionTitle>Side Hustle Success Stories</SectionTitle>
+            <SectionSubtitle>See how our users found untapped side hustle opportunities and built profitable income streams.</SectionSubtitle>
             <FeaturesGrid>
               <FeatureCard>
                 <FeatureTitle>Sarah Mitchell</FeatureTitle>
-                <div>"No more 'start a blog' advice. Found a pet-sitting business that makes $1,200/month in my neighborhood."</div>
+                <div>"Found a niche in AI-powered local business automation. Now making $3,200/month as a side hustle helping small businesses implement AI solutions."</div>
               </FeatureCard>
               <FeatureCard>
                 <FeatureTitle>Mike Thompson</FeatureTitle>
-                <div>"AI found 3 local businesses that needed social media help. Now I’m making $1,500/month on weekends."</div>
+                <div>"Discovered an untapped market in sustainable packaging for local restaurants. $2,800/month side income with minimal competition."</div>
               </FeatureCard>
               <FeatureCard>
                 <FeatureTitle>Lisa Kim</FeatureTitle>
-                <div>"The location-based suggestions are gold. I discovered local tutoring opportunities I never knew existed."</div>
+                <div>"The AI identified a gap in remote work wellness services. Now running a $1,900/month virtual wellness coaching side hustle."</div>
               </FeatureCard>
             </FeaturesGrid>
           </SectionInner>
         </Section>
 
         <CTA>
-          <CTATitle>Ready to Find Your Side Hustle?</CTATitle>
-          <CTADesc>Join thousands who discovered their perfect opportunity. Start your journey today.</CTADesc>
-          <PrimaryButton onClick={handleStart}>Start for Free Now</PrimaryButton>
+          <CTATitle>Ready to Find Your Perfect Side Hustle?</CTATitle>
+          <CTADesc>Join thousands of side hustlers who discovered untapped opportunities and built profitable income streams.</CTADesc>
+          <PrimaryButton onClick={handleStart}>Find Your Side Hustle Now</PrimaryButton>
         </CTA>
 
         {/* Floating feedback */}

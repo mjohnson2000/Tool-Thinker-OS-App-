@@ -7,16 +7,61 @@ import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLin
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const Logo = styled.img`
+const Logo = styled.div`
   position: fixed;
-  top: 24px;
+  top: 54px;
   left: 24px;
-  height: 80px;
-  width: 80px;
-  margin-right: 1rem;
+  display: flex; align-items: center; gap: .75rem;
   cursor: pointer;
   user-select: none;
   z-index: 1101;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 0.75rem;
+  
+  span { 
+    font-family: 'Audiowide', 'Courier New', monospace; 
+    font-size: 1.4rem; 
+    color: #181a1b; 
+    font-weight: 400;
+    font-display: swap;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  @media (max-width: 768px) {
+    top: 50px;
+    left: 20px;
+    margin-left: 0.5rem;
+  }
+`;
+
+const LogoSVG = styled.svg`
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+`;
+
+const AlphaSymbol = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: middle;
+`;
+
+const LetterA = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  fill: #181a1b;
+  text-anchor: middle;
+  dominant-baseline: middle;
 `;
 
 
@@ -669,16 +714,30 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
 
   return (
     <>
+      <Logo onClick={() => navigate('/')}>
+        <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
+              <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
+            </linearGradient>
+          </defs>
+          <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
+          <AlphaSymbol x="24" y="10">α</AlphaSymbol>
+          <LetterA x="24" y="30">A</LetterA>
+        </LogoSVG>
+        <span className="font-audiowide">Alpha Hustler</span>
+      </Logo>
       <Container>
         <Header>
-          <Title>Business Ideas</Title>
+                      <Title>Side Hustles</Title>
           <CreateButton onClick={handleCreatePlan} disabled={stats.total >= 10}>
-            <FaPlus /> Create New Idea
+                          <FaPlus /> Create New Side Hustle
           </CreateButton>
         </Header>
         {stats.total >= 10 && (
           <div style={{ color: '#dc3545', textAlign: 'center', marginBottom: '1rem', fontWeight: 500 }}>
-            You have reached the maximum of 10 business ideas. Please delete an idea to create a new one.
+                          You have reached the maximum of 10 side hustles. Please delete an idea to create a new one.
           </div>
         )}
 
@@ -688,7 +747,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
               <FaChartLine /> Total Ideas
             </StatTitle>
             <StatValue>{stats.total}</StatValue>
-            <StatSubtitle>All business ideas</StatSubtitle>
+                          <StatSubtitle>All side hustles</StatSubtitle>
           </StatCard>
           <StatCard>
             <StatTitle>
@@ -743,10 +802,10 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
         {plans.length === 0 ? (
           <EmptyState>
             <EmptyIcon>📋</EmptyIcon>
-            <EmptyTitle>No business ideas yet</EmptyTitle>
-            <EmptyText>Create your first business idea to get started</EmptyText>
+            <EmptyTitle>No side hustles yet</EmptyTitle>
+                          <EmptyText>Create your first side hustle to get started</EmptyText>
             <CreateButton onClick={handleCreatePlan}>
-              <FaPlus /> Create Your First Idea
+                              <FaPlus /> Create Your First Side Hustle
             </CreateButton>
           </EmptyState>
         ) : (

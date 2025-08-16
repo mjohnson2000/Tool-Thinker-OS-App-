@@ -1,4 +1,4 @@
-// Startup Plan Evaluation Rubric
+// Side Hustle Plan Evaluation Rubric
 
 export interface EvaluationCriterion {
   name: string;
@@ -21,18 +21,18 @@ export interface EvaluationResult {
   recommendations: string[];
 }
 
-export const STARTUP_PLAN_EVALUATION_RUBRIC: EvaluationCriterion[] = [
+export const SIDE_HUSTLE_EVALUATION_RUBRIC: EvaluationCriterion[] = [
   {
     name: 'Problem Clarity',
     key: 'problemClarity',
     weight: 0.15,
-    description: 'Is the problem clear, specific, and important?'
+    description: 'Is the problem clear, specific, and important to potential customers?'
   },
   {
     name: 'Customer Definition',
     key: 'customerDefinition',
     weight: 0.15,
-    description: 'Is the target customer well-defined and validated?'
+    description: 'Is the target customer well-defined and accessible for a side hustle?'
   },
   {
     name: 'Solution & Value Proposition',
@@ -41,10 +41,16 @@ export const STARTUP_PLAN_EVALUATION_RUBRIC: EvaluationCriterion[] = [
     description: 'Is the solution unique and compelling? Does it solve the problem well?'
   },
   {
-    name: 'Market Size & Opportunity',
-    key: 'marketSize',
+    name: 'Side Hustle Viability',
+    key: 'sideHustleViability',
     weight: 0.15,
-    description: 'Is the market large and growing? Is there a real opportunity?'
+    description: 'Can this be realistically executed as a side hustle with limited time/resources?'
+  },
+  {
+    name: 'Market Opportunity',
+    key: 'marketOpportunity',
+    weight: 0.10,
+    description: 'Is there a real opportunity that can generate meaningful income?'
   },
   {
     name: 'Competitive Advantage',
@@ -56,26 +62,20 @@ export const STARTUP_PLAN_EVALUATION_RUBRIC: EvaluationCriterion[] = [
     name: 'Go-to-Market Strategy',
     key: 'goToMarket',
     weight: 0.10,
-    description: 'Is there a clear, realistic plan to reach customers?'
+    description: 'Is there a clear, realistic plan to reach customers with limited time?'
   },
   {
-    name: 'Business Model',
-    key: 'businessModel',
+    name: 'Revenue Model',
+    key: 'revenueModel',
     weight: 0.10,
-    description: 'Is there a clear path to revenue and profitability?'
-  },
-  {
-    name: 'Team & Execution',
-    key: 'team',
-    weight: 0.05,
-    description: 'Does the team have the skills and plan to execute?'
+    description: 'Is there a clear path to revenue that fits a side hustle model?'
   }
 ];
 
 // --- Evaluation Logic ---
 
-// Define a minimal StartupPlan type for evaluation (customize as needed)
-export interface StartupPlanForEvaluation {
+// Define a minimal SideHustlePlan type for evaluation (customize as needed)
+export interface SideHustlePlanForEvaluation {
   businessIdeaSummary: string;
   customerProfile: { description: string };
   customerStruggle: string[];
@@ -89,9 +89,9 @@ export interface StartupPlanForEvaluation {
 }
 
 // Simple rules-based evaluation function
-export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationResult {
-  console.log('=== EVALUATION DEBUG START ===');
-  console.log('Evaluating plan:', plan);
+export function evaluateSideHustlePlan(plan: SideHustlePlanForEvaluation): EvaluationResult {
+  console.log('=== SIDE HUSTLE EVALUATION DEBUG START ===');
+  console.log('Evaluating side hustle plan:', plan);
   console.log('Business Idea Summary length:', plan.businessIdeaSummary?.length || 0);
   console.log('Customer Profile length:', plan.customerProfile?.description?.length || 0);
   console.log('Value Proposition length:', plan.valueProposition?.length || 0);
@@ -134,18 +134,29 @@ export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationR
     feedback: valueScore >= 4 ? 'Value proposition is clear.' : 'Value proposition needs more detail.'
   });
 
-  // 4. Market Size & Opportunity (1–5 scale) - Very easy thresholds, lower weight
+  // 4. Side Hustle Viability (1–5 scale) - New criteria for side hustles
+  let viabilityScore = 1;
+  if (plan.businessIdeaSummary.length > 20) viabilityScore = 5;
+  else if (plan.businessIdeaSummary.length > 10) viabilityScore = 4;
+  else if (plan.businessIdeaSummary.length > 0) viabilityScore = 3;
+  criteriaScores.push({
+    key: 'sideHustleViability',
+    score: viabilityScore,
+    feedback: viabilityScore >= 4 ? 'Good potential as a side hustle.' : 'Consider if this fits your time constraints.'
+  });
+
+  // 5. Market Opportunity (1–5 scale) - Very easy thresholds, lower weight
   let marketScore = 1;
   if (plan.marketInformation.marketSize.length > 20) marketScore = 5;
   else if (plan.marketInformation.marketSize.length > 10) marketScore = 4;
   else if (plan.marketInformation.marketSize.length > 0) marketScore = 3;
   criteriaScores.push({
-    key: 'marketSize',
+    key: 'marketOpportunity',
     score: marketScore,
-    feedback: marketScore >= 4 ? 'Market size/opportunity is described.' : 'Market size/opportunity is missing or too brief.'
+    feedback: marketScore >= 4 ? 'Market opportunity is described.' : 'Market opportunity is missing or too brief.'
   });
 
-  // 5. Competitive Advantage (1–5 scale) - Any answer gets 3+, lower weight
+  // 6. Competitive Advantage (1–5 scale) - Any answer gets 3+, lower weight
   let compScore = 1;
   if (plan.marketInformation.competitors.length >= 2) compScore = 5;
   else if (plan.marketInformation.competitors.length === 1) compScore = 4;
@@ -156,7 +167,7 @@ export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationR
     feedback: compScore >= 4 ? 'Competitors identified.' : 'List more competitors and clarify your advantage.'
   });
 
-  // 6. Go-to-Market Strategy (1–5 scale, use trends as proxy) - Any answer gets 3+, lower weight
+  // 7. Go-to-Market Strategy (1–5 scale, use trends as proxy) - Any answer gets 3+, lower weight
   let gtmScore = 1;
   if (plan.marketInformation.trends.length >= 2) gtmScore = 5;
   else if (plan.marketInformation.trends.length === 1) gtmScore = 4;
@@ -167,27 +178,19 @@ export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationR
     feedback: gtmScore >= 4 ? 'Some go-to-market thinking is present.' : 'Add more about how you will reach customers.'
   });
 
-  // 7. Business Model (1–5 scale, use value prop length as proxy) - Very easy thresholds
-  let bmScore = 1;
-  if (plan.valueProposition.length > 20) bmScore = 5;
-  else if (plan.valueProposition.length > 10) bmScore = 4;
-  else if (plan.valueProposition.length > 0) bmScore = 3;
+  // 8. Revenue Model (1–5 scale, use value prop length as proxy) - Very easy thresholds
+  let revenueScore = 1;
+  if (plan.valueProposition.length > 20) revenueScore = 5;
+  else if (plan.valueProposition.length > 10) revenueScore = 4;
+  else if (plan.valueProposition.length > 0) revenueScore = 3;
   criteriaScores.push({
-    key: 'businessModel',
-    score: bmScore,
-    feedback: bmScore >= 4 ? 'Business model is implied.' : 'Clarify how you will make money.'
-  });
-
-  // 8. Team & Execution (1–5 scale) - Default to 4
-  let teamScore = 4;
-  criteriaScores.push({
-    key: 'team',
-    score: teamScore,
-    feedback: 'Add more about your team and execution plan.'
+    key: 'revenueModel',
+    score: revenueScore,
+    feedback: revenueScore >= 4 ? 'Revenue model is implied.' : 'Clarify how you will make money.'
   });
 
   // Calculate weighted total (reduce weights for marketSize, competitors, trends)
-  const weights = [0.18, 0.18, 0.18, 0.08, 0.08, 0.08, 0.15, 0.07];
+  const weights = [0.18, 0.18, 0.18, 0.18, 0.08, 0.08, 0.08, 0.04];
   let total = 0;
   for (let i = 0; i < criteriaScores.length; i++) {
     const c = criteriaScores[i];
@@ -196,22 +199,28 @@ export function evaluateStartupPlan(plan: StartupPlanForEvaluation): EvaluationR
   }
   let totalScore = Math.round(total);
   console.log('Final total score:', totalScore);
-  console.log('=== EVALUATION DEBUG END ===');
+  console.log('=== SIDE HUSTLE EVALUATION DEBUG END ===');
 
   // Force minimum score of 60
   if (totalScore < 60) totalScore = 60;
 
   // Summarize strengths and recommendations
-  const strengths = criteriaScores.filter(c => c.score >= 4).map((c, i) => STARTUP_PLAN_EVALUATION_RUBRIC[i]?.name || c.key);
+  const strengths = criteriaScores.filter(c => c.score >= 4).map((c, i) => SIDE_HUSTLE_EVALUATION_RUBRIC[i]?.name || c.key);
   const recommendations = criteriaScores.filter(c => c.score < 4).map(c => c.feedback);
 
   return {
     criteria: criteriaScores,
     totalScore,
-    summary: totalScore >= 80 ? 'Excellent plan with strong fundamentals.' : totalScore >= 60 ? 'Solid plan, but some areas need work.' : 'Plan needs significant improvement.',
+    summary: totalScore >= 80 ? 'Excellent side hustle plan with strong fundamentals.' : totalScore >= 60 ? 'Solid side hustle plan, but some areas need work.' : 'Plan needs significant improvement for side hustle viability.',
     strengths,
     recommendations
   };
+}
+
+// Legacy function for backward compatibility
+export const STARTUP_PLAN_EVALUATION_RUBRIC = SIDE_HUSTLE_EVALUATION_RUBRIC;
+export function evaluateStartupPlan(plan: any): EvaluationResult {
+  return evaluateSideHustlePlan(plan);
 }
 
 // Test function to understand what gives us 18/100

@@ -28,29 +28,31 @@ businessPlanRouter.post("/discovery", async (req: Request, res: Response) => {
   }
 
   const prompt = customPrompt?.trim() || `
-You are a business strategist AI. Given:
+You are a side hustle strategist AI. Given:
 - Interests: ${idea.interests}
 - Customer Persona: ${customer.title} (${customer.description})
 - Customer Job: ${job.title} (${job.description})
 
-Generate a comprehensive Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
+Generate a comprehensive Side Hustle Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
 
-- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job.
+- Business Idea Summary: 2-3 sentences summarizing the side hustle idea based on the user's interests, customer persona, and job. Focus on how this can be executed part-time.
 - Customer Profile: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
-- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
-- Market Size: 1-2 sentences estimating the size or opportunity of the target market.
+- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the side hustle provides to the customer.
+- Market Size: 1-2 sentences estimating the size or opportunity of the target market for a side hustle.
 - Competitors: 2-3 bullet points listing main competitors or alternatives. MUST include actual competitor names or types.
 - Market Trends: 2-3 bullet points describing relevant trends in the market. MUST include actual industry trends, not generic statements.
-- Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
-- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this business idea.
+- Market Validation: 1-2 sentences on how the side hustle idea can be validated or has been validated.
+- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this side hustle. Include realistic income expectations for part-time work.
 
 CRITICAL REQUIREMENTS:
 - Every section must contain specific, actionable content
 - Market Trends must include actual industry trends, not "trends to be analyzed"
 - Competitors must include actual competitor names or types, not "competitors to be identified"
 - Use bullet points (•) for lists
-- Make content specific to the business idea
+- Make content specific to the side hustle idea
+- Focus on part-time execution and realistic income expectations
+- Consider time constraints and resource limitations typical of side hustles
 
 Return as JSON:
 {
@@ -906,7 +908,33 @@ businessPlanRouter.patch("/:id/revert", auth, async (req: AuthRequest, res: Resp
     })));
 
     // Find the target version in the change log
-    const targetEntry = plan.changeLog.find(entry => entry.version === targetVersion);
+    let targetEntry = plan.changeLog.find(entry => entry.version === targetVersion);
+    
+    // If version 1 is missing, create it from the current plan's sections
+    if (!targetEntry && targetVersion === 1) {
+      console.log('Version 1 not found, creating it from current plan sections...');
+      const version1Content = {
+        businessIdeaSummary: plan.businessIdeaSummary,
+        customerProfile: plan.customerProfile,
+        customerStruggle: plan.customerStruggle,
+        valueProposition: plan.valueProposition,
+        marketInformation: plan.marketInformation,
+        financialSummary: plan.financialSummary,
+        sections: plan.sections
+      };
+      
+      // Create version 1 entry
+      targetEntry = {
+        version: 1,
+        date: plan.createdAt || new Date(),
+        changes: ['Original business plan content'],
+        reason: 'Original Business Plan',
+        content: version1Content
+      };
+      
+      console.log('Created version 1 entry:', targetEntry);
+    }
+    
     if (!targetEntry) {
       return res.status(404).json({ error: "Target version not found" });
     }

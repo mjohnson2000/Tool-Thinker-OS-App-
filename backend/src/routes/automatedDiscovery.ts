@@ -522,23 +522,23 @@ Return ONLY a JSON array of personas.`
         {
           id: '3',
           name: 'Emily Watson',
-          role: 'Startup Founder',
-          companySize: 'Startup (1-50)',
+          role: 'Side Hustler',
+          companySize: 'Individual',
           industry: industryKey,
           age: '28',
           experience: '3 years',
-          budget: '$5k-20k annually',
-          painPoints: ['Limited resources', 'Need to move fast', 'Competitive pressure'],
-          goals: ['Rapid growth', 'Market validation', 'Efficient operations'],
-          decisionFactors: ['Speed of implementation', 'Cost-effectiveness', 'Competitive advantage'],
-          objections: ['Limited budget', 'Time constraints', 'Risk of new solutions'],
-          communicationStyle: 'Fast-paced and direct',
+          budget: '$500-5k annually',
+          painPoints: ['Limited time', 'Need for flexibility', 'Balancing with full-time job'],
+          goals: ['Additional income', 'Skill development', 'Work-life balance'],
+          decisionFactors: ['Time efficiency', 'Low upfront costs', 'Flexible schedule'],
+          objections: ['Time constraints', 'Limited budget', 'Risk of failure'],
+          communicationStyle: 'Efficient and practical',
           techSavviness: 'High',
-          summary: 'Emily is a driven startup founder looking for solutions that can help her company grow quickly and efficiently.',
+          summary: 'Emily is a busy professional looking for a side hustle that can generate additional income while fitting her schedule.',
           validationQuestions: [
-                         'How quickly can we implement this?',
+                         'How much time does this require?',
              'What is the cost vs. benefit?',
-             'How does this give us a competitive edge?'
+             'Can I do this alongside my full-time job?'
           ],
           feedback: [],
           feedbackQuality: 'pending'
@@ -4064,7 +4064,7 @@ router.post('/generate-professional-business-plan', async (req, res) => {
     });
 
     // Create comprehensive professional business plan prompt
-    const businessPlanPrompt = `You are a senior business consultant and strategic advisor creating a comprehensive, professional-grade business plan suitable for banks, investors, and other financial institutions. This plan will be used for official business purposes and must meet professional standards.
+    const businessPlanPrompt = `You are a senior business consultant and strategic advisor creating a comprehensive, professional-grade side hustle business plan suitable for banks, investors, and other financial institutions. This plan will be used for official business purposes and must meet professional standards for side hustle ventures.
 
 BUSINESS OVERVIEW:
 Business Idea: ${businessIdea}

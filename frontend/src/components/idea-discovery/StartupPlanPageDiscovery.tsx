@@ -1040,24 +1040,24 @@ export function StartupPlanPageDiscovery({ context, onSignup, onLogin, isAuthent
     try {
       // Build a detailed prompt for the AI using all user input
       const aiPrompt = `
-You are a startup strategist AI. Given the following user input:
+You are a side hustle strategist AI. Given the following user input:
 - Interests: ${context.idea?.interests || ''}
 - Customer Persona: ${context.customer?.title || ''} (${context.customer?.description || ''})
 - Customer Job: ${context.job?.title || ''} (${context.job?.description || ''})
 ${context.location ? `- Location: ${context.location.city}, ${context.location.region}, ${context.location.country}` : ''}
 ${context.scheduleGoals ? `- Availability: ${context.scheduleGoals.hoursPerWeek} hours/week, Income Target: $${context.scheduleGoals.incomeTarget}/month` : ''}
 
-      Generate a comprehensive Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
+      Generate a comprehensive Side Hustle Business Plan with the following sections. CRITICAL: Each section must contain actual, specific content, not placeholder text.
 
-- Business Idea Summary: 2-3 sentences summarizing the business idea based on the user's interests, customer persona, and job. ${context.location ? `Make it specific to ${context.location.city}, ${context.location.region}.` : ''}
+- Business Idea Summary: 2-3 sentences summarizing the side hustle idea based on the user's interests, customer persona, and job. ${context.location ? `Make it specific to ${context.location.city}, ${context.location.region}.` : ''} Focus on how this can be executed part-time.
 - Customer Profile: 1-2 sentences describing the target customer.
 - Customer Struggles: 2-3 bullet points listing the main struggles or pain points of the customer related to the job.
-- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the business provides to the customer.
-- Market Size: 1-2 sentences estimating the size or opportunity of the target market.
+- Value Proposition: 1-2 sentences proposing a solution to the customer struggles above, describing the unique value the side hustle provides to the customer.
+- Market Size: 1-2 sentences estimating the size or opportunity of the target market for a side hustle.
 - Competitors: 2-3 bullet points listing main competitors or alternatives. MUST include actual competitor names or types.
 - Market Trends: 2-3 bullet points describing relevant trends in the market. MUST include actual industry trends, not generic statements.
-- Market Validation: 1-2 sentences on how the business idea can be validated or has been validated.
-- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this business idea.
+- Market Validation: 1-2 sentences on how the side hustle idea can be validated or has been validated.
+- Financial Summary: 2-3 sentences summarizing the expected revenue model, main costs, and financial opportunity for this side hustle. Include realistic income expectations for part-time work.
 
 Return as JSON:
 {
@@ -1452,7 +1452,7 @@ No extra text, just valid JSON.`;
     if (gapAnalysis) {
       sections.push({
         title: 'Comprehensive Gap Analysis',
-        content: gapAnalysis as any, // Type assertion to handle complex object
+        content: gapAnalysis,
         type: 'gapAnalysis'
       });
     }
@@ -1532,7 +1532,7 @@ No extra text, just valid JSON.`;
               })()
             ) : section.type === 'gapAnalysis' ? (
               (() => {
-                const content = section.content as unknown as {
+                const content = section.content as {
                   skills: { selectedSkills: string[]; missingSkills: string[]; recommendations: string[]; learningPath: string[] };
                   resources: { financial: string[]; human: string[]; physical: string[] };
                   operations: { processes: string[]; systems: string[]; infrastructure: string[] };

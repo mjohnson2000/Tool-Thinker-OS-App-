@@ -677,7 +677,7 @@ function mapPlanToView(plan: any): StartupPlan {
         console.log('Raw Customer Struggles section:', plan.sections?.['Customer Struggles']);
         console.log('SafeSplit result:', safeSplit(plan.sections?.['Customer Struggles']));
       
-      return (enhanced && enhanced.length > 0) ? enhanced : (sectionStruggles.length > 0 ? sectionStruggles : (sectionStruggle.length > 0 ? sectionStruggle : []));
+      return enhanced.length > 0 ? enhanced : (sectionStruggles.length > 0 ? sectionStruggles : (sectionStruggle.length > 0 ? sectionStruggle : []));
     })(),
     valueProposition: plan.valueProposition || getSectionContent('Value Proposition', ''),
     marketInformation: {
@@ -687,14 +687,14 @@ function mapPlanToView(plan: any): StartupPlan {
         const sectionCompetitors = safeSplit(getSectionContent('Competitors'));
         const sectionCompetitorAnalysis = safeSplit(getSectionContent('Competitor Analysis'));
         
-        return (enhanced && enhanced.length > 0) ? enhanced : (sectionCompetitors.length > 0 ? sectionCompetitors : (sectionCompetitorAnalysis.length > 0 ? sectionCompetitorAnalysis : []));
+        return enhanced.length > 0 ? enhanced : (sectionCompetitors.length > 0 ? sectionCompetitors : (sectionCompetitorAnalysis.length > 0 ? sectionCompetitorAnalysis : []));
       })(),
       trends: (() => {
         const enhanced = plan.marketInformation?.trends || [];
         const sectionMarketTrends = safeSplit(getSectionContent('Market Trends'));
         const sectionTrends = safeSplit(getSectionContent('Trends'));
         
-        return (enhanced && enhanced.length > 0) ? enhanced : (sectionMarketTrends.length > 0 ? sectionMarketTrends : (sectionTrends.length > 0 ? sectionTrends : []));
+        return enhanced.length > 0 ? enhanced : (sectionMarketTrends.length > 0 ? sectionMarketTrends : (sectionTrends.length > 0 ? sectionTrends : []));
       })(),
       validation: plan.marketInformation?.validation || getSectionContent('Market Validation', ''),
     },
@@ -748,84 +748,12 @@ export default function StartupPlanViewPage() {
     skills: true,
     resources: true,
     operations: true,
-    versionHistory: false // Show version history by default
+    versionHistory: true
   });
   const [showRevertModal, setShowRevertModal] = useState(false);
   const [revertTargetVersion, setRevertTargetVersion] = useState<number | null>(null);
   const [reverting, setReverting] = useState(false);
   const [revertSuccess, setRevertSuccess] = useState<string | null>(null);
-
-  // Function to fix missing version 1 in changeLog
-  const fixMissingVersion1 = (plan: any) => {
-    console.log('fixMissingVersion1 called with plan:', {
-      id: plan._id,
-      hasChangeLog: !!plan.changeLog,
-      changeLogLength: plan.changeLog?.length,
-      changeLog: plan.changeLog
-    });
-    
-    // Initialize changeLog if it doesn't exist
-    if (!plan.changeLog) {
-      plan.changeLog = [];
-      console.log('Initialized empty changeLog');
-    }
-    
-    // If changeLog is empty, add version 1 entry
-    if (plan.changeLog.length === 0) {
-      console.log('ChangeLog is empty, adding version 1 entry');
-      plan.changeLog.push({
-        version: 1,
-        date: plan.createdAt || new Date(),
-        changes: ['Initial business plan created'],
-        reason: 'Original Business Plan',
-        content: {
-          businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
-          customerProfile: plan.customerProfile || { description: '' },
-          customerStruggle: plan.customerStruggle || [],
-          valueProposition: plan.valueProposition || '',
-          marketInformation: plan.marketInformation || {
-            marketSize: '',
-            trends: [],
-            competitors: []
-          },
-          financialSummary: plan.financialSummary || '',
-          sections: plan.sections || {}
-        }
-      });
-      console.log('Added initial version 1 to empty changeLog. New changeLog:', plan.changeLog);
-    } else {
-      // Check if version 1 exists in existing changeLog
-      const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
-      console.log('ChangeLog has entries, checking for version 1. Has version 1:', hasVersion1);
-      
-      if (!hasVersion1) {
-        // Add version 1 entry at the beginning
-        plan.changeLog.unshift({
-          version: 1,
-          date: plan.createdAt || new Date(),
-          changes: ['Initial business plan created'],
-          reason: 'Original Business Plan',
-          content: {
-            businessIdeaSummary: plan.businessIdeaSummary || plan.summary || '',
-            customerProfile: plan.customerProfile || { description: '' },
-            customerStruggle: plan.customerStruggle || [],
-            valueProposition: plan.valueProposition || '',
-            marketInformation: plan.marketInformation || {
-              marketSize: '',
-              trends: [],
-              competitors: []
-            },
-            financialSummary: plan.financialSummary || '',
-            sections: plan.sections || {}
-          }
-        });
-        console.log('Added missing version 1 to existing changeLog. New changeLog:', plan.changeLog);
-      }
-    }
-    
-    console.log('fixMissingVersion1 returning plan with changeLog:', plan.changeLog);
-    return plan;
-  };
 
   useEffect(() => {
     async function fetchPlan() {
@@ -920,6 +848,28 @@ export default function StartupPlanViewPage() {
 
   const handleEdit = () => setEditMode(true);
   const handleCancelEdit = () => setEditMode(false);
+  
+  // Function to fix missing version 1 in changeLog
+  const fixMissingVersion1 = (plan: any) => {
+    if (!plan.changeLog || plan.changeLog.length === 0) {
+      return plan;
+    }
+    
+    // Check if version 1 exists
+    const hasVersion1 = plan.changeLog.some((entry: any) => entry.version === 1);
+    
+    if (!hasVersion1) {
+      // Add version 1 entry at the beginning
+      plan.changeLog.unshift({
+        version: 1,
+        date: plan.createdAt || new Date(),
+        changes: ['Initial business plan created'],
+        reason: 'Original Business Plan'
+      });
+    }
+    
+    return plan;
+  };
 
   const handleRevertToVersion = async (targetVersion: number) => {
     // Show confirmation modal instead of browser confirm
@@ -1047,9 +997,6 @@ export default function StartupPlanViewPage() {
       
       console.log('Sending payload to backend:', payload);
       
-      console.log('Sending save request to:', `${API_URL}/startup-plan/${plan._id}`);
-      console.log('Save request payload:', payload);
-      
       const res = await fetch(`${API_URL}/startup-plan/${plan._id}`, {
         method: 'PUT',
         headers: {
@@ -1059,9 +1006,6 @@ export default function StartupPlanViewPage() {
         body: JSON.stringify(payload)
       });
       
-      console.log('Save response status:', res.status);
-      console.log('Save response headers:', res.headers);
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to save changes');
@@ -1069,25 +1013,11 @@ export default function StartupPlanViewPage() {
       
       const updated = await res.json();
       console.log('Backend response:', updated);
-      console.log('Backend version:', updated.version);
-      console.log('Backend changeLog length:', updated.changeLog?.length);
-      console.log('Backend changeLog:', updated.changeLog);
       console.log('Mapped plan data:', mapPlanToView(updated));
-      
-      // Check if the response has the expected structure
-      if (!updated.version) {
-        console.error('Backend response missing version field');
-      }
-      if (!updated.changeLog) {
-        console.error('Backend response missing changeLog field');
-      }
       
       setPlan(mapPlanToView(updated));
       setRawPlan(updated);
       setEditMode(false);
-      
-      // Show success message instead of page refresh
-      alert('Changes saved successfully! Version updated to ' + updated.version);
     } catch (err: any) {
       console.error('Failed to save changes:', err);
       alert(`Failed to save changes: ${err.message}`);
@@ -1362,17 +1292,7 @@ export default function StartupPlanViewPage() {
                 borderRadius: '8px',
                 border: '1px solid #e9ecef'
               }}>
-                <span style={{ fontWeight: 600, color: '#181a1b' }}>
-                  Version {plan.version}
-                  {(() => {
-                    console.log('Version display debug:', {
-                      planVersion: plan.version,
-                      planChangeLog: plan.changeLog,
-                      planChangeLogLength: plan.changeLog?.length
-                    });
-                    return null;
-                  })()}
-                </span>
+                <span style={{ fontWeight: 600, color: '#181a1b' }}>Version {plan.version}</span>
                 {plan.version > 1 && (
                   <span style={{ 
                     fontSize: '0.8rem', 
@@ -1496,15 +1416,7 @@ export default function StartupPlanViewPage() {
               </OverlayCard>
             </OverlayBackdrop>
           )}
-          {(() => {
-            console.log('Version history condition check:', {
-              hasChangeLog: !!plan.changeLog,
-              changeLogLength: plan.changeLog?.length,
-              changeLog: plan.changeLog,
-              shouldShow: plan.changeLog && plan.changeLog.length > 0
-            });
-            return plan.changeLog && plan.changeLog.length > 0;
-          })() && (
+          {plan.changeLog && plan.changeLog.length > 0 && (
             <SectionCard>
               <div 
                 style={{ 

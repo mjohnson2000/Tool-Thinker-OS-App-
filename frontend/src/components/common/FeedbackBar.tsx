@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Bar = styled.div<{visible:boolean}>`
-  display: ${p=>p.visible?'flex':'none'};
+const Bar = styled.div<{$visible:boolean}>`
+  display: ${p=>p.$visible?'flex':'none'};
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
@@ -66,7 +66,7 @@ export const FeedbackBar: React.FC<Props> = ({ context, className }) => {
 
   if (!visible) return null;
   return (
-    <Bar visible={visible} className={className} role="region" aria-label="Feedback">
+    <Bar $visible={visible} className={className} role="region" aria-label="Feedback">
       <span style={{fontWeight:600}}>Was this helpful?</span>
       <Thumb active={thumb===1} onClick={()=> setThumb(1)}>👍</Thumb>
       <Thumb active={thumb===0} onClick={()=> setThumb(0)}>👎</Thumb>

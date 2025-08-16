@@ -6,6 +6,7 @@ import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
 import { generateToken, verifyToken } from '../utils/token';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -125,37 +126,104 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-// Password reset request
-router.post('/reset-password', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: 'Email is required' });
+// Reset password with token (MUST come before the general reset-password route)
+console.log('Registering POST /reset-password/:token');
+router.post('/reset-password/:token', async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+  
+  if (!password) return res.status(400).json({ message: 'Password is required' });
+  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+  
   try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+    
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Update user password and clear reset token
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    
+    res.json({ message: 'Password reset successful' });
+  } catch (err) {
+    console.error('Reset password with token error:', err);
+    res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
+// Password reset request
+console.log('Registering POST /reset-password');
+router.post('/reset-password', async (req, res) => {
+  console.log('Reset password request received:', req.body);
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    // Check if email configuration is set up
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('Email configuration missing. Please set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.');
+      return res.status(500).json({ 
+        message: 'Password reset service is not configured. Please contact support.' 
+      });
+    }
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'No user with that email' });
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
     // Generate token and expiry
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = Date.now() + 1000 * 60 * 60; // 1 hour
     user.resetPasswordToken = token;
     user.resetPasswordExpires = new Date(expiry);
     await user.save();
-    // Send email
-    const transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-    const resetUrl = `http://localhost:5173/reset-password/${token}`; // adjust frontend URL as needed
-    await transporter.sendMail({
-      to: user.email,
-      subject: 'Password Reset',
-      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link is valid for 1 hour.</p>`
-    });
-    res.json({ message: 'Reset email sent' });
+
+    // Send email using the utility function
+    try {
+      await sendPasswordResetEmail(user.email, token);
+      console.log(`Password reset email sent to ${user.email}`);
+      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      
+      // For development/testing: still return success but log the error
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEVELOPMENT MODE: Returning success despite email failure');
+        console.log('Reset token for testing:', token);
+        console.log('Reset URL for testing:', `${process.env.FRONTEND_URL}/reset-password/${token}`);
+        res.json({ 
+          message: 'Password reset link generated (email failed - check console for token)',
+          debug: { token, resetUrl: `${process.env.FRONTEND_URL}/reset-password/${token}` }
+        });
+      } else {
+        // Revert the token if email fails in production
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        
+        return res.status(500).json({ 
+          message: 'Failed to send reset email. Please try again later.' 
+        });
+      }
+    }
   } catch (err) {
     console.error('Reset password error:', err);
-    res.status(500).json({ message: 'Failed to send reset email' });
+    res.status(500).json({ message: 'An error occurred. Please try again later.' });
   }
 });
 

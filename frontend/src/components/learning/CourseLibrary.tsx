@@ -38,6 +38,12 @@ const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding-top: 100px;
+  
+  @media (max-width: 768px) {
+    padding-top: 80px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 `;
 
 const Header = styled.div`
@@ -50,6 +56,14 @@ const Title = styled.h1`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -65,12 +79,28 @@ const SearchSection = styled.div`
   padding: 2rem;
   margin-bottom: 2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SearchBar = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -115,6 +145,18 @@ const CoursesGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 2rem;
   margin-top: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
 `;
 
 const CourseCard = styled.div`

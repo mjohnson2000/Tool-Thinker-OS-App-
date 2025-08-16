@@ -2,21 +2,77 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar, FaInfoCircle } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaEye, FaTrash, FaShare, FaHistory, FaUsers, FaChartLine, FaLightbulb, FaCheckCircle, FaClock, FaStar, FaInfoCircle, FaArrowLeft } from 'react-icons/fa';
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const Logo = styled.div`
+const TopBar = styled.div`
   position: fixed;
-  top: 54px;
-  left: 24px;
-  display: flex; align-items: center; gap: .75rem;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  z-index: 1000;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    justify-content: space-between;
+  }
+`;
+
+const TopBarLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
+`;
+
+const TopBarRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.6rem;
+    padding: 0.3rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+`;
+
+const Logo = styled.div`
+  display: flex; 
+  align-items: center; 
+  gap: .75rem;
   cursor: pointer;
   user-select: none;
-  z-index: 1101;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 0.75rem;
   
   span { 
     font-family: 'Audiowide', 'Courier New', monospace; 
@@ -31,9 +87,19 @@ const Logo = styled.div`
   }
   
   @media (max-width: 768px) {
-    top: 50px;
-    left: 20px;
-    margin-left: 0.5rem;
+    gap: 0.5rem;
+    
+    span {
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.4rem;
+    
+    span {
+      font-size: 1rem;
+    }
   }
 `;
 
@@ -44,6 +110,18 @@ const LogoSVG = styled.svg`
   background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   padding: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+  }
 `;
 
 const AlphaSymbol = styled.text`
@@ -64,6 +142,216 @@ const LetterA = styled.text`
   dominant-baseline: middle;
 `;
 
+const DesktopNavButton = styled.button`
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
+  border: none;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(24, 26, 27, 0.2);
+  letter-spacing: 0.02em;
+  
+  &:hover {
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(24, 26, 27, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0px);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileNavButton = styled.button`
+  display: none;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
+  border: none;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
+  letter-spacing: 0.02em;
+  
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(24, 26, 27, 0.3);
+  }
+`;
+
+const AvatarButton = styled.button`
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0;
+  margin-left: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: visible;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    border-width: 1px;
+  }
+`;
+
+const AvatarContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  position: relative;
+  overflow: visible;
+  
+  @media (max-width: 768px) {
+    gap: 0.1rem;
+  }
+`;
+
+
+
+const TopBarAvatar = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
+  
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+`;
+
+const TopBarAvatarImg = styled.img`
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e5e5;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    border-width: 1px;
+  }
+`;
+
+const PlanBadge = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #181a1b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 2px solid rgba(24, 26, 27, 0.2);
+  padding: 0.3rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  letter-spacing: 0.02em;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  
+  &:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-color: rgba(24, 26, 27, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    min-width: 44px;
+    min-height: 20px;
+    border-width: 1px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    min-width: 40px;
+    min-height: 18px;
+  }
+`;
+
 
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
@@ -77,8 +365,22 @@ const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=007AFF&c
 
 const Container = styled.div`
   max-width: 1200px;
-  margin: 7.5rem auto 2rem auto;
+  margin: 0 auto;
   padding: 2rem 1rem;
+  padding-top: calc(var(--topbar-height, 96px) + 0.25rem);
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 0.5rem;
+    padding-top: calc(var(--topbar-height, 72px) + 0.25rem);
+  }
+`;
+
+const PageWrapper = styled.div`
+  --topbar-height: 96px;
+  
+  @media (max-width: 768px) {
+    --topbar-height: 72px;
+  }
 `;
 
 const Header = styled.div`
@@ -86,6 +388,13 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const Title = styled.h1`
@@ -109,6 +418,25 @@ const Title = styled.h1`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    text-align: center;
+    
+    &::after {
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+    
+    &::after {
+      width: 40px;
+    }
   }
 `;
 
@@ -154,6 +482,17 @@ const CreateButton = styled.button<{ disabled?: boolean }>`
     transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-1px)'};
     box-shadow: ${({ disabled }) => disabled ? '0 4px 12px rgba(0,0,0,0.15)' : '0 6px 16px rgba(0,0,0,0.2)'};
   }
+  
+  @media (max-width: 768px) {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    justify-content: center;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.95rem;
+  }
 `;
 
 const StatsGrid = styled.div`
@@ -161,6 +500,18 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const StatCard = styled.div`
@@ -713,21 +1064,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
   }
 
   return (
-    <>
-      <Logo onClick={() => navigate('/')}>
-        <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
-              <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
-            </linearGradient>
-          </defs>
-          <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
-          <AlphaSymbol x="24" y="10">α</AlphaSymbol>
-          <LetterA x="24" y="30">A</LetterA>
-        </LogoSVG>
-        <span className="font-audiowide">Alpha Hustler</span>
-      </Logo>
+    <PageWrapper>
       <Container>
         <Header>
                       <Title>Side Hustles</Title>
@@ -887,93 +1224,93 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
             </div>
           </>
         )}
-      </Container>
-      {showScorePrompt && selectedPlan && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.45)',
-          zIndex: 2000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
+        {showScorePrompt && selectedPlan && (
           <div style={{
-            background: '#fff',
-            borderRadius: 16,
-            padding: '2.5rem 2rem',
-            maxWidth: 420,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            textAlign: 'center',
-            position: 'relative',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#dc3545' }}>Score Too Low</h2>
-            <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: '#444' }}>
-              Your business idea needs a minimum evaluation score of <b>{MINIMUM_SCORE}</b> to continue to the Next Steps Hub.<br /><br />
-              Your current score is <b>{selectedPlan.marketEvaluation?.score ?? 0}</b>.<br /><br />
-              To improve your score, click <b>View</b> on your idea and edit your responses.<br />
-              <span style={{ fontWeight: 500 }}>
-                After editing, be sure to click the <b>Evaluate Idea</b> button on the View page to update your evaluation score.
-              </span>
-            </p>
-            <button
-              style={{
-                background: '#181a1b',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '0.7rem 1.5rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                marginRight: 12,
-                cursor: 'pointer',
-              }}
-              onClick={() => {
-                setShowScorePrompt(false);
-                navigate(`/startup-plan/${selectedPlan._id}`);
-              }}
-            >
-              View & Edit Idea
-            </button>
-            <button
-              style={{
-                background: '#fff',
-                color: '#181a1b',
-                border: '1.5px solid #e5e5e5',
-                borderRadius: 8,
-                padding: '0.7rem 1.5rem',
-                fontSize: '1rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              onClick={() => setShowScorePrompt(false)}
-            >
-              Close
-            </button>
+            <div style={{
+              background: '#fff',
+              borderRadius: 16,
+              padding: '2.5rem 2rem',
+              maxWidth: 420,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              textAlign: 'center',
+              position: 'relative',
+            }}>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#dc3545' }}>Score Too Low</h2>
+              <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: '#444' }}>
+                Your business idea needs a minimum evaluation score of <b>{MINIMUM_SCORE}</b> to continue to the Next Steps Hub.<br /><br />
+                Your current score is <b>{selectedPlan.marketEvaluation?.score ?? 0}</b>.<br /><br />
+                To improve your score, click <b>View</b> on your idea and edit your responses.<br />
+                <span style={{ fontWeight: 500 }}>
+                  After editing, be sure to click the <b>Evaluate Idea</b> button on the View page to update your evaluation score.
+                </span>
+              </p>
+              <button
+                style={{
+                  background: '#181a1b',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '0.7rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  marginRight: 12,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setShowScorePrompt(false);
+                  navigate(`/startup-plan/${selectedPlan._id}`);
+                }}
+              >
+                View & Edit Idea
+              </button>
+              <button
+                style={{
+                  background: '#fff',
+                  color: '#181a1b',
+                  border: '1.5px solid #e5e5e5',
+                  borderRadius: 8,
+                  padding: '0.7rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowScorePrompt(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-      {deleteModalPlanId && (
-        <ModalBackdrop>
-          <ModalCard>
-            <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: '#dc3545' }}>Delete Business Idea?</h2>
-            <p style={{ fontSize: '1.05rem', color: '#444', marginBottom: '1.5rem' }}>
-              Are you sure you want to delete this business idea? This action cannot be undone.
-            </p>
-            <ModalActions>
-              <DangerButton onClick={confirmDeletePlan} disabled={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </DangerButton>
-              <ActionButton variant="secondary" onClick={() => setDeleteModalPlanId(null)} disabled={isDeleting}>
-                Cancel
-              </ActionButton>
-            </ModalActions>
-          </ModalCard>
-        </ModalBackdrop>
-      )}
-    </>
+        )}
+        {deleteModalPlanId && (
+          <ModalBackdrop>
+            <ModalCard>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.2rem', color: '#dc3545' }}>Delete Business Idea?</h2>
+              <p style={{ fontSize: '1.05rem', color: '#444', marginBottom: '1.5rem' }}>
+                Are you sure you want to delete this business idea? This action cannot be undone.
+              </p>
+              <ModalActions>
+                <DangerButton onClick={confirmDeletePlan} disabled={isDeleting}>
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </DangerButton>
+                <ActionButton variant="secondary" onClick={() => setDeleteModalPlanId(null)} disabled={isDeleting}>
+                  Cancel
+                </ActionButton>
+              </ModalActions>
+            </ModalCard>
+          </ModalBackdrop>
+        )}
+      </Container>
+    </PageWrapper>
   );
 } 

@@ -7,7 +7,7 @@ import logo from './assets/logo.png';
 import defaultAvatar from './assets/money-woman.jpg';
 import './index.css';
 import { AuthProvider } from './contexts/AuthContext';
-import { FaUserCircle } from 'react-icons/fa';
+import { FaUserCircle, FaArrowLeft } from 'react-icons/fa';
 import { ErrorNotification } from './components/common/ErrorNotification';
 import { FeedbackWidget } from './components/common/FeedbackWidget';
 import { trackEvent } from './utils/analytics';
@@ -146,15 +146,12 @@ const NavBar = styled.div`
 `;
 
 const Logo = styled.div`
-  position: fixed;
-  top: 54px;
-  left: 24px;
-  display: flex; align-items: center; gap: .75rem;
+  display: flex; 
+  align-items: center; 
+  gap: .75rem;
   cursor: pointer;
   user-select: none;
-  z-index: 1101;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 0.75rem;
   
   span { 
     font-family: 'Audiowide', 'Courier New', monospace; 
@@ -169,9 +166,27 @@ const Logo = styled.div`
   }
   
   @media (max-width: 768px) {
-    top: 50px;
-    left: 20px;
-    margin-left: 0.5rem;
+    gap: 0.5rem;
+    
+    span {
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.4rem;
+    
+    span {
+      font-size: 1rem;
+    }
+  }
+  
+  @media (max-width: 360px) {
+    gap: 0.3rem;
+    
+    span {
+      font-size: 0.9rem;
+    }
   }
 `;
 
@@ -182,6 +197,18 @@ const LogoSVG = styled.svg`
   background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
   padding: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+  }
 `;
 
 const AlphaSymbol = styled.text`
@@ -240,12 +267,13 @@ const NavButton = styled.button`
 const TopBar = styled.div`
   position: fixed;
   top: 0;
+  left: 0;
   right: 0;
   width: 100vw;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2.5rem;
+  padding: 1rem 1.5rem;
   z-index: 1000;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
   backdrop-filter: blur(20px);
@@ -254,7 +282,8 @@ const TopBar = styled.div`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   @media (max-width: 768px) {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
+    justify-content: space-between;
   }
 `;
 
@@ -276,8 +305,80 @@ const TopBarRight = styled.div`
   }
   
   @media (max-width: 768px) {
-    gap: 0.8rem;
-    padding: 0.4rem;
+    gap: 0.6rem;
+    padding: 0.3rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+`;
+
+const TopBarLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #181a1b;
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+  }
+`;
+
+const MobileNavButton = styled.button`
+  display: none;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  color: #ffffff;
+  border: none;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
+  letter-spacing: 0.02em;
+  
+  @media (max-width: 768px) {
+    display: block;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #2d2d2d 0%, #181a1b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(24, 26, 27, 0.3);
+  }
+`;
+
+const DesktopNavButton = styled(NavButton)`
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -325,8 +426,9 @@ const AvatarButton = styled.button`
   }
   
   @media (max-width: 768px) {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    border-width: 1px;
   }
 `;
 
@@ -561,6 +663,14 @@ const PlanBadge = styled.div`
     background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
     border-color: rgba(24, 26, 27, 0.3);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    min-width: 44px;
+    min-height: 20px;
+    border-width: 1px;
   }
 `;
 
@@ -1164,39 +1274,43 @@ function AppContent() {
         <Route path="/" element={<WebLandingPage />} />
         <Route path="/app" element={
           <AppContainer>
-            <Logo
-              onClick={handleLogoToLanding}
-              onKeyDown={handleLogoKeyDown}
-              role="link"
-              aria-label="Go to landing page"
-              tabIndex={0}
-            >
-              <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
-                    <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
-                  </linearGradient>
-                </defs>
-                <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
-                <AlphaSymbol x="24" y="10">α</AlphaSymbol>
-                <LetterA x="24" y="30">A</LetterA>
-              </LogoSVG>
-              <span className="font-audiowide">Alpha Hustler</span>
-            </Logo>
+
             <TopBar ref={topBarRef}>
+              <TopBarLeft>
+                <Logo 
+                  onClick={handleLogoToLanding}
+                  onKeyDown={handleLogoKeyDown}
+                  role="link"
+                  aria-label="Go to landing page"
+                  tabIndex={0}
+                >
+                  <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
+                        <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
+                      </linearGradient>
+                    </defs>
+                    <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
+                    <AlphaSymbol x="24" y="10">α</AlphaSymbol>
+                    <LetterA x="24" y="30">A</LetterA>
+                  </LogoSVG>
+                  <span className="font-audiowide">Alpha Hustler</span>
+                </Logo>
+              </TopBarLeft>
+              
               {!isAuthenticated ? (
-                <>
+                <TopBarRight>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
                     Log in
                   </LoginButton>
                   <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
                     Sign up for free
                   </SignupFreeButton>
-                </>
+                </TopBarRight>
               ) : (
                 <TopBarRight>
-                  <NavButton 
+                  <DesktopNavButton 
                     onClick={() => window.location.href = '/plans'} 
                     style={{
                       background: '#000',
@@ -1205,34 +1319,36 @@ function AppContent() {
                       fontWeight: 600
                     }}>
                     My Side Hustles
-                  </NavButton>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  </DesktopNavButton>
+                  <MobileNavButton 
+                    onClick={() => window.location.href = '/plans'}>
+                    Hustles
+                  </MobileNavButton>
                   <AvatarButton onClick={() => {
                     setAppState(prev => ({ ...prev, stepBeforeAuth: currentStep, currentStep: 'profile' }));
                     }} aria-label="Profile">
-                      {user && user.profilePic ? (
-                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-                      ) : user && user.email ? (
-                        <TopBarAvatar>
-                          {user.email
-                            .split('@')[0]
-                            .split(/[._-]/)
-                            .map(part => part[0]?.toUpperCase())
-                            .join('')
-                            .slice(0, 2) || 'U'}
-                        </TopBarAvatar>
-                      ) : (
-                        <AvatarImg src={defaultAvatar} alt="Avatar" />
-                      )}
-                    </AvatarButton>
-                      {user && location.pathname !== '/' && (
-                        <PlanBadge>
-                          {!user?.isSubscribed
-                            ? PLAN_DISPLAY_NAMES['free']
-                            : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                        </PlanBadge>
-                      )}
-                    </div>
+                    {user && user.profilePic ? (
+                      <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                    ) : user && user.email ? (
+                      <TopBarAvatar>
+                        {user.email
+                          .split('@')[0]
+                          .split(/[._-]/)
+                          .map(part => part[0]?.toUpperCase())
+                          .join('')
+                          .slice(0, 2) || 'U'}
+                      </TopBarAvatar>
+                    ) : (
+                      <AvatarImg src={defaultAvatar} alt="Avatar" />
+                    )}
+                  </AvatarButton>
+                  {user && location.pathname !== '/' && (
+                    <PlanBadge>
+                      {!user?.isSubscribed
+                        ? PLAN_DISPLAY_NAMES['free']
+                        : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                    </PlanBadge>
+                  )}
                 </TopBarRight>
               )}
             </TopBar>
@@ -1671,64 +1787,71 @@ function AppContent() {
         } />
         <Route path="/plans" element={
           <AppContainer>
-            <Logo
-              src={logo}
-              alt="ToolThinker Logo"
-              onClick={handleLogoToLanding}
-              onKeyDown={handleLogoKeyDown}
-              role="link"
-              aria-label="Go to landing page"
-              tabIndex={0}
-            />
             <TopBar ref={topBarRef}>
+              <TopBarLeft>
+                <Logo 
+                  onClick={handleLogoToLanding}
+                  onKeyDown={handleLogoKeyDown}
+                  role="link"
+                  aria-label="Go to landing page"
+                  tabIndex={0}
+                >
+                  <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
+                        <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
+                      </linearGradient>
+                    </defs>
+                    <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
+                    <AlphaSymbol x="24" y="10">α</AlphaSymbol>
+                    <LetterA x="24" y="30">A</LetterA>
+                  </LogoSVG>
+                  <span className="font-audiowide">Alpha Hustler</span>
+                </Logo>
+              </TopBarLeft>
               {!isAuthenticated ? (
-                <>
+                <TopBarRight>
                   <LoginButton onClick={() => setAppState(prev => ({...prev, currentStep: 'login'}))} aria-label="Log In">
                     Log in
                   </LoginButton>
                   <SignupFreeButton onClick={() => setAppState(prev => ({...prev, currentStep: 'signup'}))} aria-label="Sign up for free">
                     Sign up for free
                   </SignupFreeButton>
-                </>
+                </TopBarRight>
               ) : (
                 <TopBarRight>
-                  <NavButton 
-                    onClick={() => window.location.href = '/plans'} 
-                    style={{
-                      background: '#000',
-                      color: '#fff',
-                      border: 'none',
-                      fontWeight: 600
-                    }}>
-                    My Side Hustle Ideas
-                  </NavButton>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                     <AvatarButton onClick={() => {
-                       setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
-                     }} aria-label="Profile">
-                      {user && user.profilePic ? (
-                        <TopBarAvatarImg src={user.profilePic} alt="Profile" />
-                      ) : user && user.email ? (
-                        <TopBarAvatar>
-                          {user.email
-                            .split('@')[0]
-                            .split(/[._-]/)
-                            .map(part => part[0]?.toUpperCase())
-                            .join('')
-                            .slice(0, 2) || 'U'}
-                        </TopBarAvatar>
-                      ) : (
-                        <AvatarImg src={defaultAvatar} alt="Avatar" />
-                      )}
-                    </AvatarButton>
-                    {user && (
-                      <PlanBadge>
-                        {!user?.isSubscribed
-                          ? PLAN_DISPLAY_NAMES['free']
-                          : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
-                      </PlanBadge>
+                  <DesktopNavButton onClick={() => window.location.href = '/app'}>
+                    <FaArrowLeft /> Back to App
+                  </DesktopNavButton>
+                  <MobileNavButton onClick={() => window.location.href = '/app'}>
+                    <FaArrowLeft /> Back
+                  </MobileNavButton>
+                  <AvatarButton onClick={() => {
+                    setAppState(prev => ({ ...prev, stepBeforeAuth: 'landing' as Step, currentStep: 'profile' }));
+                  }} aria-label="Profile">
+                    {user && user.profilePic ? (
+                      <TopBarAvatarImg src={user.profilePic} alt="Profile" />
+                    ) : user && user.email ? (
+                      <TopBarAvatar>
+                        {user.email
+                          .split('@')[0]
+                          .split(/[._-]/)
+                          .map(part => part[0]?.toUpperCase())
+                          .join('')
+                          .slice(0, 2) || 'U'}
+                      </TopBarAvatar>
+                    ) : (
+                      <TopBarAvatar>U</TopBarAvatar>
                     )}
-                  </div>
+                  </AvatarButton>
+                  {user && (
+                    <PlanBadge>
+                      {!user?.isSubscribed
+                        ? PLAN_DISPLAY_NAMES['free']
+                        : PLAN_DISPLAY_NAMES[user?.subscriptionTier || 'basic']}
+                    </PlanBadge>
+                  )}
                 </TopBarRight>
               )}
             </TopBar>

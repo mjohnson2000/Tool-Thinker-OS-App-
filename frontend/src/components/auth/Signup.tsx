@@ -177,6 +177,25 @@ const Link = styled.a`
   }
 `;
 
+const LinkButton = styled.button`
+  background: none;
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  color: #181a1b;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  
+  &:hover {
+    background: rgba(24, 26, 27, 0.05);
+    border-color: rgba(24, 26, 27, 0.2);
+    text-decoration: none;
+  }
+`;
+
 const ErrorMessage = styled.div`
   color: #dc3545;
   font-size: 1rem;
@@ -260,7 +279,7 @@ export function Signup({ onSignup, onLogin }: SignupProps) {
         </Button>
       </form>
       <Subtext>
-        Already have an account? <Link onClick={onLogin}>Log in</Link>
+        Already have an account? <LinkButton onClick={onLogin}>Log in</LinkButton>
       </Subtext>
     </GlassCard>
   );

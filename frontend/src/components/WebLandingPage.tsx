@@ -64,10 +64,19 @@ const Header = styled.header<{ scrolled?: boolean }>`
   padding: ${({ scrolled }) => (scrolled ? '0.5rem' : '1rem')} 0;
   transition: padding .2s ease, box-shadow .2s ease;
   ${({ scrolled }) => scrolled ? 'box-shadow: 0 6px 18px rgba(0,0,0,.06);' : ''}
+  
+  @media (max-width: 768px) {
+    padding: ${({ scrolled }) => (scrolled ? '0.4rem' : '0.8rem')} 0;
+  }
 `;
 const HeaderContainer = styled.div`
   max-width: 1200px; margin: 0 auto; padding: 0 2rem;
   display: flex; align-items: center; justify-content: space-between;
+  
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+    gap: 1rem;
+  }
 `;
 const Logo = styled.div`
   display: flex; align-items: center; gap: .75rem;
@@ -78,6 +87,22 @@ const Logo = styled.div`
     color: ${colors.dark}; 
     font-weight: 400;
     font-display: swap;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+    
+    span {
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.4rem;
+    
+    span {
+      font-size: 1rem;
+    }
   }
 `;
 
@@ -109,13 +134,103 @@ const LetterA = styled.text`
   dominant-baseline: middle;
 `;
 
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${colors.dark};
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+  }
+`;
+
 const Nav = styled.nav`
   display: flex; align-items: center; gap: 1.5rem;
   a { color: ${colors.gray[600]}; text-decoration: none; font-weight: 600; }
+  
+  @media (max-width: 768px) {
+    gap: 1rem;
+    
+    a {
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.8rem;
+    
+    a {
+      font-size: 0.85rem;
+    }
+  }
+`;
+
+const MobileNav = styled.nav<{ $isOpen: boolean }>`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: ${({ $isOpen }) => $isOpen ? 'flex' : 'none'};
+    position: fixed;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid ${colors.gray[200]};
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    
+    a {
+      color: ${colors.gray[600]};
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid ${colors.gray[100]};
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+`;
+
+const DesktopNav = styled(Nav)`
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 const HeaderButton = styled.button`
   background: ${colors.gradient.primary}; color: ${colors.white}; border: none; border-radius: 10px;
   padding: .7rem 1.25rem; font-weight: 700; cursor: pointer;
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
 `;
 
 /* Hero */
@@ -260,6 +375,7 @@ const CTADesc = styled.p`opacity: .95; margin: 0 auto 1.2rem auto; max-width: 68
 const WebLandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled((window.scrollY || 0) > 24);
@@ -300,13 +416,25 @@ const WebLandingPage: React.FC = () => {
               </LogoSVG>
               <span className="font-audiowide">Alpha Hustler</span>
             </Logo>
-            <Nav>
+            <DesktopNav>
               <a href="#features" onClick={scrollTo('features', 'features')}>Features</a>
               <a href="#demo" onClick={scrollTo('demo', 'demo')}>Demo</a>
               <a href="#testimonials" onClick={scrollTo('testimonials', 'testimonials')}>Testimonials</a>
-            </Nav>
+            </DesktopNav>
             <HeaderButton onClick={handleStart}>Get Started</HeaderButton>
+            <MobileMenuButton 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              ☰
+            </MobileMenuButton>
           </HeaderContainer>
+          <MobileNav $isOpen={mobileMenuOpen}>
+            <a href="#features" onClick={(e) => { scrollTo('features', 'features')(e); setMobileMenuOpen(false); }}>Features</a>
+            <a href="#demo" onClick={(e) => { scrollTo('demo', 'demo')(e); setMobileMenuOpen(false); }}>Demo</a>
+            <a href="#testimonials" onClick={(e) => { scrollTo('testimonials', 'testimonials')(e); setMobileMenuOpen(false); }}>Testimonials</a>
+            <a href="#" onClick={() => { handleStart(); setMobileMenuOpen(false); }}>Get Started</a>
+          </MobileNav>
         </Header>
 
         <Hero>

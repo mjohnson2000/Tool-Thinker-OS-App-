@@ -32,13 +32,60 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to: email,
-    subject: 'Reset your password',
+    subject: 'Reset your ToolThinker password',
     html: `
-      <h1>Password Reset Request</h1>
-      <p>You requested to reset your password. Click the link below to set a new password:</p>
-      <a href="${resetUrl}">${resetUrl}</a>
-      <p>This link will expire in 1 hour.</p>
-      <p>If you didn't request this, please ignore this email.</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your Password</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 12px 12px; }
+          .button { display: inline-block; background: #007AFF; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+          .button:hover { background: #0056b3; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Reset Your Password</h1>
+            <p>ToolThinker - Your Thinking OS for Startup Success</p>
+          </div>
+          <div class="content">
+            <h2>Hello!</h2>
+            <p>We received a request to reset your password for your ToolThinker account.</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Reset My Password</a>
+            </div>
+            
+            <p>If the button doesn't work, copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #007AFF;">${resetUrl}</p>
+            
+            <div class="warning">
+              <strong>⚠️ Important:</strong>
+              <ul>
+                <li>This link will expire in 1 hour</li>
+                <li>If you didn't request this password reset, please ignore this email</li>
+                <li>Your password will remain unchanged until you click the link above</li>
+              </ul>
+            </div>
+            
+            <p>Need help? Contact our support team at support@toolthinker.com</p>
+          </div>
+          <div class="footer">
+            <p>© 2024 ToolThinker. All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
     `
   });
 } 

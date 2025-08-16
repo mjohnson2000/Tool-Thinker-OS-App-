@@ -193,6 +193,25 @@ const Link = styled.a`
   }
 `;
 
+const LinkButton = styled.button`
+  background: none;
+  border: 1px solid rgba(24, 26, 27, 0.1);
+  color: #181a1b;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  
+  &:hover {
+    background: rgba(24, 26, 27, 0.05);
+    border-color: rgba(24, 26, 27, 0.2);
+    text-decoration: none;
+  }
+`;
+
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onSignup: () => void;
@@ -204,10 +223,13 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setResetMessage('');
     setIsLoading(true);
     try {
       await onLogin(email, password);
@@ -220,11 +242,48 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+    
+    setError('');
+    setResetMessage('');
+    setIsResetting(true);
+    
+    try {
+      if (onRequestPasswordReset) {
+        await onRequestPasswordReset(email);
+        setResetMessage('Password reset email sent! Check your inbox.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <GlassCard>
       <Title>Log In</Title>
       <form onSubmit={handleSubmit} autoComplete="off">
         {error && <ErrorMessage>{error}</ErrorMessage>}
+        {resetMessage && (
+          <div style={{
+            color: '#007AFF',
+            fontSize: '1rem',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            padding: '0.8rem 1rem',
+            background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%)',
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 122, 255, 0.2)',
+            fontWeight: '500'
+          }}>
+            {resetMessage}
+          </div>
+        )}
         <Input
           type="email"
           placeholder="Email"
@@ -246,13 +305,17 @@ export function Login({ onLogin, onSignup, onRequestPasswordReset }: LoginProps)
       </form>
       <Subtext>
         Don&apos;t have an account?{' '}
-        <Link as="button" onClick={onSignup}>Sign up</Link>
+        <LinkButton onClick={onSignup}>Sign up</LinkButton>
       </Subtext>
       {onRequestPasswordReset && (
         <Subtext>
-          <Link as="button" onClick={() => onRequestPasswordReset(email)}>
-            Forgot password?
-          </Link>
+          <LinkButton 
+            onClick={handlePasswordReset}
+            disabled={isResetting}
+            style={{ opacity: isResetting ? 0.6 : 1 }}
+          >
+            {isResetting ? 'Sending...' : 'Forgot password?'}
+          </LinkButton>
         </Subtext>
       )}
     </GlassCard>

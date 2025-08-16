@@ -37,6 +37,27 @@ const Container = styled.div`
     background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
     pointer-events: none;
   }
+  
+  @media (max-width: 768px) {
+    margin: 1rem auto;
+    padding: 1.5rem;
+    border-radius: 16px;
+    max-width: 95%;
+    
+    &::before {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0.5rem auto;
+    padding: 1rem;
+    border-radius: 12px;
+    
+    &::before {
+      border-radius: 12px 12px 0 0;
+    }
+  }
 `;
 
 const Title = styled.h1`
@@ -66,6 +87,26 @@ const Title = styled.h1`
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
   }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    
+    &::after {
+      width: 50px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+    margin-top: 1rem;
+    margin-bottom: 0.8rem;
+    
+    &::after {
+      width: 40px;
+    }
+  }
 `;
 
 const Subtitle = styled.p`
@@ -79,6 +120,16 @@ const Subtitle = styled.p`
   margin-right: auto;
   font-weight: 400;
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
 `;
 
 const Textarea = styled.textarea`
@@ -107,6 +158,20 @@ const Textarea = styled.textarea`
     background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  
+  @media (max-width: 768px) {
+    min-height: 120px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 100px;
+    padding: 0.8rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
   }
 `;
 
@@ -146,6 +211,17 @@ const ButtonContainer = styled.div`
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
 `;
 
 const ImprovementButton = styled.button<{ accept?: boolean }>`
@@ -199,6 +275,18 @@ const ImprovementButton = styled.button<{ accept?: boolean }>`
     &::before {
       display: none;
     }
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.95rem;
+    border-radius: 10px;
   }
 `;
 

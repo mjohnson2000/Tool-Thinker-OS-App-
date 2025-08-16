@@ -34,6 +34,15 @@ const Container = styled.div`
   padding: 2rem;
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+  }
 `;
 
 const Header = styled.div`
@@ -48,12 +57,30 @@ const Title = styled.h1`
   color: #181a1b;
   margin-bottom: 1rem;
   font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+  }
 `;
 
 const Subtitle = styled.p`
   font-size: 1.2rem;
   color: #6c757d;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const ProgressContainer = styled.div`
@@ -62,6 +89,18 @@ const ProgressContainer = styled.div`
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
 `;
 
 const ProgressHeader = styled.div`

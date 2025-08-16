@@ -11,6 +11,15 @@ const Container = styled.div`
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+  }
 `;
 
 const Title = styled.h2`
@@ -38,6 +47,24 @@ const Title = styled.h2`
     height: 3px;
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    
+    &::after {
+      width: 50px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+    
+    &::after {
+      width: 40px;
+    }
   }
 `;
 

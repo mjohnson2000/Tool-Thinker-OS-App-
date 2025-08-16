@@ -16,6 +16,19 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
+  
+  @media (max-width: 768px) {
+    margin: 1rem auto;
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0.5rem auto;
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
 `;
 
 const Avatar = styled.div`
@@ -30,6 +43,20 @@ const Avatar = styled.div`
   font-size: 2.5rem;
   color: #222;
   font-weight: 700;
+  
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+    font-size: 2.2rem;
+    margin: 0 auto 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+    margin: 0 auto 0.8rem;
+  }
 `;
 
 const AvatarImg = styled.img`
@@ -39,6 +66,18 @@ const AvatarImg = styled.img`
   border-radius: 50%;
   object-fit: cover;
   background: #e5e5e5;
+  
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 0.8rem;
+  }
 `;
 
 const Name = styled.div`
@@ -47,6 +86,14 @@ const Name = styled.div`
   margin-bottom: 0.3rem;
   color: #222;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const NameInput = styled.input`
@@ -64,12 +111,30 @@ const NameInput = styled.input`
     outline: 2px solid #007aff;
     border-color: #007aff;
   }
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    padding: 0.5rem 0.6rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    padding: 0.6rem 0.5rem;
+  }
 `;
 
 const Email = styled.p`
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
   color: #444;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.95rem;
+  }
 `;
 
 const Divider = styled.hr`
@@ -94,6 +159,16 @@ const Actions = styled.div`
   gap: 0.7rem;
   width: 100%;
   margin-top: 1.2rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
 `;
 
 const Button = styled.button`
@@ -110,6 +185,16 @@ const Button = styled.button`
   &:hover, &:focus {
     background: #222;
     box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.8rem 1.3rem;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -195,6 +280,18 @@ const ModalContent = styled.div`
   box-shadow: 0 4px 24px rgba(0,0,0,0.18);
   min-width: 320px;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    min-width: 280px;
+    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+    margin: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 260px;
+    padding: 1.2rem 1rem 1rem 1rem;
+    margin: 0.5rem;
+  }
 `;
 
 const ModalButtonRow = styled.div`
@@ -202,6 +299,17 @@ const ModalButtonRow = styled.div`
   gap: 1rem;
   justify-content: center;
   margin-top: 1.5rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.6rem;
+    margin-top: 1rem;
+    flex-direction: column;
+  }
 `;
 
 const BlurOverlay = styled.div`

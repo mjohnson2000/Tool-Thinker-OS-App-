@@ -14,6 +14,14 @@ const PageContainer = styled.div`
   justify-content: center;
   background: #f7f7f9;
   padding: 2rem 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 0.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
 const Card = styled.div`
@@ -27,6 +35,17 @@ const Card = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    border-radius: 20px;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1.5rem 1rem 1rem 1rem;
+    border-radius: 16px;
+  }
 `;
 
 const PremiumBadge = styled.div`
@@ -49,6 +68,14 @@ const Title = styled.h2`
   font-weight: 700;
   margin-bottom: 0.7rem;
   color: #222;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.6rem;
+  }
 `;
 
 const BenefitsList = styled.ul`
@@ -57,6 +84,16 @@ const BenefitsList = styled.ul`
   padding-left: 1.2rem;
   color: #444;
   font-size: 1.08rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin: 1rem 0 1.5rem 0;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.95rem;
+    margin: 0.8rem 0 1.2rem 0;
+  }
 `;
 
 const Button = styled.button`
@@ -75,6 +112,18 @@ const Button = styled.button`
   &:hover, &:focus {
     background: #222;
     box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem 1.3rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.9rem;
   }
 `;
 
@@ -165,6 +214,18 @@ const TierGrid = styled.div`
   justify-content: center;
   margin: 2rem 0 1.5rem 0;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 1.5rem;
+    margin: 1.5rem 0 1rem 0;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 1rem;
+    margin: 1rem 0 0.8rem 0;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const TierCard = styled.div<{ accent?: boolean; current?: boolean }>`
@@ -182,6 +243,21 @@ const TierCard = styled.div<{ accent?: boolean; current?: boolean }>`
   align-items: center;
   position: relative;
   outline: ${({ current }) => (current ? '2px solid #181a1b' : 'none')};
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+    min-width: 240px;
+    max-width: 300px;
+    border-radius: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1.2rem 1rem 1rem 1rem;
+    min-width: 220px;
+    max-width: 280px;
+    border-radius: 12px;
+    width: 100%;
+  }
 `;
 
 const TierName = styled.h3`
@@ -189,6 +265,14 @@ const TierName = styled.h3`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 0.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const TierPrice = styled.div`
@@ -196,6 +280,16 @@ const TierPrice = styled.div`
   font-weight: 700;
   color: #181a1b;
   margin-bottom: 1.2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const FeatureList = styled.ul`

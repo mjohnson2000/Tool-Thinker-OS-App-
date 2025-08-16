@@ -53,6 +53,27 @@ const Container = styled.div`
     background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
     pointer-events: none;
   }
+  
+  @media (max-width: 768px) {
+    margin: 1rem auto;
+    padding: 1.5rem;
+    border-radius: 16px;
+    max-width: 95%;
+    
+    &::before {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0.5rem auto;
+    padding: 1rem;
+    border-radius: 12px;
+    
+    &::before {
+      border-radius: 12px 12px 0 0;
+    }
+  }
 `;
 
 const Title = styled.h1`

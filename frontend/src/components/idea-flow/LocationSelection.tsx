@@ -23,6 +23,15 @@ const Container = styled.div`
   max-width: 700px;
   margin: 0 auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+  }
 `;
 
 const FormCard = styled.div`
@@ -59,6 +68,25 @@ const FormCard = styled.div`
     background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
     pointer-events: none;
   }
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin-top: 1rem;
+    border-radius: 16px;
+    
+    &::before {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
+    border-radius: 12px;
+    
+    &::before {
+      border-radius: 12px 12px 0 0;
+    }
+  }
 `;
 
 const Title = styled.h2`
@@ -87,6 +115,24 @@ const Title = styled.h2`
     background: linear-gradient(90deg, #181a1b, #4a4a4a);
     border-radius: 2px;
   }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    
+    &::after {
+      width: 50px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+    
+    &::after {
+      width: 40px;
+    }
+  }
 `;
 
 const Subtitle = styled.p`
@@ -98,6 +144,16 @@ const Subtitle = styled.p`
   max-width: 550px;
   font-weight: 400;
   opacity: 0.9;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
 `;
 
 const PreferenceSection = styled.div`

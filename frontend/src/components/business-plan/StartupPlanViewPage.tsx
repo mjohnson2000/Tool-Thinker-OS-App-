@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes, FaHistory, FaInfoCircle } from 'react-icons/fa';
-import logo from '../../assets/logo.png';
+// Logo components for consistent branding
 import { sideHustleCoach } from '../../utils/sideHustleCoach';
 import type { CoachEvaluation } from '../../utils/sideHustleCoach';
 import { FeedbackBar } from '../common/FeedbackBar';
@@ -527,12 +527,83 @@ const Score = styled.div<{ color: string }>`
   border: 1px solid rgba(0, 0, 0, 0.08);
 `;
 
-const Logo = styled.img`
-  height: 60px;
-  width: 60px;
-  border-radius: 16px;
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   cursor: pointer;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 2rem;
+  
+  span {
+    font-family: 'Audiowide', 'Courier New', monospace;
+    font-size: 1.4rem;
+    color: #181a1b;
+    font-weight: 400;
+    font-display: swap;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    
+    span {
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    
+    span {
+      font-size: 1rem;
+    }
+  }
+`;
+
+const LogoSVG = styled.svg`
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+  }
+`;
+
+const AlphaSymbol = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: middle;
+`;
+
+const LetterA = styled.text`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  fill: #181a1b;
+  text-anchor: middle;
+  dominant-baseline: middle;
 `;
 
 const OverlayBackdrop = styled.div`
@@ -1156,7 +1227,20 @@ export default function StartupPlanViewPage() {
 
   return (
     <Container>
-      <Logo src={logo} alt="ToolThinker Logo" onClick={() => navigate('/')} />
+      <Logo onClick={() => navigate('/')}>
+        <LogoSVG viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{stopColor: '#fff', stopOpacity: 1}} />
+              <stop offset="100%" style={{stopColor: '#f0f0f0', stopOpacity: 1}} />
+            </linearGradient>
+          </defs>
+          <rect width="48" height="48" rx="10" fill="url(#logoGradient)" />
+          <AlphaSymbol x="24" y="10">α</AlphaSymbol>
+          <LetterA x="24" y="30">A</LetterA>
+        </LogoSVG>
+        <span className="font-audiowide">Alpha Hustler</span>
+      </Logo>
       <FormCard>
         <TopActions>
           <PrimaryButton onClick={() => navigate('/plans')}><FaArrowLeft /> Back to Ideas</PrimaryButton>

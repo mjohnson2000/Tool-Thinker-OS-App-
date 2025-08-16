@@ -9,6 +9,17 @@ const Container = styled.div`
   max-width: 400px;
   margin: 2rem auto;
   padding: 2rem;
+  
+  @media (max-width: 768px) {
+    margin: 1rem auto;
+    padding: 1.5rem;
+    max-width: 95%;
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0.5rem auto;
+    padding: 1rem;
+  }
 `;
 
 const Title = styled.h2`
@@ -18,6 +29,16 @@ const Title = styled.h2`
   margin-bottom: 1.5rem;
   text-align: center;
   font-display: swap;
+  
+  @media (max-width: 768px) {
+    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const Form = styled.form`

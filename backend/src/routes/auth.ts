@@ -28,7 +28,13 @@ const resetPasswordSchema = z.object({
 // Profile update schema
 const profileUpdateSchema = z.object({
   name: z.string().min(1).max(64).optional(),
-  profilePic: z.string().max(1000000).optional()
+  profilePic: z.string().max(1000000).optional(),
+  location: z.object({
+    city: z.string().min(1).max(100),
+    region: z.string().min(1).max(100),
+    country: z.string().min(1).max(100),
+    zipCode: z.string().max(20).optional()
+  }).optional()
 });
 
 // Signup route
@@ -268,6 +274,7 @@ router.get('/validate', async (req: Request, res: Response, next: NextFunction) 
           email: user.email,
           name: user.name,
           profilePic: user.profilePic,
+          location: user.location,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
           subscriptionTier: user.subscriptionTier || 'basic',
@@ -298,11 +305,12 @@ function requireAuth(req: Request & { userId?: string }, res: Response, next: Ne
 console.log('Registering PATCH /profile');
 router.patch('/profile', requireAuth, async (req: Request & { userId?: string }, res: Response, next: NextFunction) => {
   try {
-    const { name, profilePic } = profileUpdateSchema.parse(req.body);
+    const { name, profilePic, location } = profileUpdateSchema.parse(req.body);
     const user = await User.findById(req.userId);
     if (!user) throw new AppError(404, 'User not found');
     if (name !== undefined) user.name = name;
     if (profilePic !== undefined) user.profilePic = profilePic;
+    if (location !== undefined) user.location = location;
     await user.save();
     res.json({
       status: 'success',
@@ -311,6 +319,7 @@ router.patch('/profile', requireAuth, async (req: Request & { userId?: string },
           email: user.email,
           name: user.name,
           profilePic: user.profilePic,
+          location: user.location,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
           subscriptionTier: user.subscriptionTier || 'basic',

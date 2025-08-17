@@ -188,7 +188,7 @@ const OptionButton = styled.button`
 export function Landing({ onSelect }: LandingProps) {
   return (
     <Container>
-      <Tagline>Find Your Perfect Side Hustle</Tagline>
+              <Tagline>How It Works</Tagline>
       <Title>What's your situation?</Title>
       <FormCard>
         <Options>

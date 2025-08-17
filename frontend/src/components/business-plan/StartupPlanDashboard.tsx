@@ -1034,6 +1034,11 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     navigate(`/validate/${plan._id}`);
   };
 
+  const handleMoreResources = (plan: StartupPlan) => {
+    // Navigate to a resources page or open a modal with resources
+    navigate(`/resources/${plan._id}`);
+  };
+
   const filteredPlans = plans.filter(plan => 
     statusFilter === 'all' || plan.status === statusFilter
   );
@@ -1068,7 +1073,7 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
     <PageWrapper>
       <Container>
         <Header>
-                      <Title>Side Hustles</Title>
+                      <Title>My Alpha Side Hustles</Title>
           <CreateButton onClick={handleCreatePlan} disabled={stats.total >= 10}>
                           <FaPlus /> Create New Side Hustle
           </CreateButton>
@@ -1214,6 +1219,9 @@ export default function StartupPlanDashboard({ onSelectPlan, setAppState }: Star
                         <FaCheckCircle /> Validate
                       </ActionButton>
                     )}
+                    <ActionButton variant="secondary" onClick={() => handleMoreResources(plan)}>
+                      <FaInfoCircle /> More Resources
+                    </ActionButton>
                   </PlanActions>
                 </PlanCard>
               ))}

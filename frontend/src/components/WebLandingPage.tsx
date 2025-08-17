@@ -6,6 +6,7 @@ import logoImg from '../assets/logo.png';
 import heroBg from '../assets/money-woman.jpg';
 import howItWorksImg from '../assets/Howitworks1.png';
 import { FeedbackWidget } from './common/FeedbackWidget';
+import { TrendingIdeasCarousel } from './common/TrendingIdeasCarousel';
 import { trackEvent } from '../utils/analytics';
 
 /* Global base (fonts are linked in index.html via <link> tags) */
@@ -442,7 +443,7 @@ const WebLandingPage: React.FC = () => {
             <HeroContent>
               <Badge>Alpha-Niche Side Hustle Discovery</Badge>
               <HeroTitle>Need Extra Money?</HeroTitle>
-              <HeroSubtitle>Discover untapped side hustle opportunities with less competition and higher profits</HeroSubtitle>
+              <HeroSubtitle>Add an extra $1–$3k/month with early-growth side hustle niches</HeroSubtitle>
               <HeroButtons>
                 <PrimaryButton onClick={handleStart}>Start for Free</PrimaryButton>
                 <SecondaryButton onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -487,7 +488,7 @@ const WebLandingPage: React.FC = () => {
 
         <Section id="features">
           <SectionInner>
-            <SectionTitle>Why Our Side Hustle Discovery Works</SectionTitle>
+            <SectionTitle>Why The Alpha-Niche Side Hustle Discovery Works</SectionTitle>
             <SectionSubtitle>
               While others suggest saturated side hustles, we help you find untapped opportunities with less competition and higher profit margins.
             </SectionSubtitle>
@@ -511,7 +512,7 @@ const WebLandingPage: React.FC = () => {
         <Demo id="demo">
           <DemoWrap>
             <div>
-              <SectionTitle>Find Your Perfect Side Hustle</SectionTitle>
+              <SectionTitle>How It Works</SectionTitle>
               <SectionSubtitle>
                 Tell us about your skills, schedule, and goals, and we'll find untapped side hustle opportunities perfect for you.
               </SectionSubtitle>
@@ -544,6 +545,13 @@ const WebLandingPage: React.FC = () => {
           </DemoWrap>
         </Demo>
 
+        {/* Trending Ideas Section */}
+        <Section style={{ background: colors.light }}>
+          <SectionInner>
+            <TrendingIdeasCarousel />
+          </SectionInner>
+        </Section>
+
         <Section id="testimonials" style={{ background: colors.light }}>
           <SectionInner>
             <SectionTitle>Side Hustle Success Stories</SectionTitle>
@@ -566,7 +574,7 @@ const WebLandingPage: React.FC = () => {
         </Section>
 
         <CTA>
-          <CTATitle>Ready to Find Your Perfect Side Hustle?</CTATitle>
+          <CTATitle>Ready to Start Your Alpha Side Hustle?</CTATitle>
           <CTADesc>Join thousands of side hustlers who discovered untapped opportunities and built profitable income streams.</CTADesc>
           <PrimaryButton onClick={handleStart}>Find Your Side Hustle Now</PrimaryButton>
         </CTA>

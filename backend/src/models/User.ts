@@ -18,6 +18,13 @@ export interface IUser extends Document {
   updatedAt?: Date;
   name?: string;
   profilePic?: string;
+  // Location fields for local trending ideas
+  location?: {
+    city: string;
+    region: string;
+    country: string;
+    zipCode?: string;
+  };
   comparePassword(candidatePassword: string): Promise<boolean>;
   generateAuthToken(): string;
 }
@@ -69,6 +76,29 @@ const userSchema = new Schema<IUser>({
     type: String,
     trim: true,
     default: ''
+  },
+  // Location fields for local trending ideas
+  location: {
+    city: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    region: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    zipCode: {
+      type: String,
+      trim: true,
+      default: ''
+    }
   }
 }, {
   timestamps: true

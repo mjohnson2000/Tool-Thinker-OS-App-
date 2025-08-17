@@ -11,6 +11,12 @@ interface User {
   lastLogin?: string;
   name?: string;
   profilePic?: string;
+  location?: {
+    city: string;
+    region: string;
+    country: string;
+    zipCode?: string;
+  };
 }
 
 interface AuthContextType {
@@ -23,7 +29,7 @@ interface AuthContextType {
   verifyEmail: (token: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
-  updateProfile: (data: { name?: string; profilePic?: string }) => Promise<void>;
+  updateProfile: (data: { name?: string; profilePic?: string; location?: any }) => Promise<void>;
   mockUpgradeToPremium: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -147,17 +153,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateProfile = async (data: { name?: string; profilePic?: string }) => {
+  const updateProfile = async (data: { name?: string; profilePic?: string; location?: any }) => {
+    console.log('=== AuthContext: updateProfile called ===');
+    console.log('Data to update:', data);
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Not authenticated');
+      
+      console.log('Making API call to:', `${API_URL}/auth/profile`);
+      console.log('With headers:', { Authorization: `Bearer ${token}` });
+      
       const response = await axios.patch<{ data: { user: User } }>(`${API_URL}/auth/profile`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('API response:', response.data);
+      
       if (response.data && response.data.data && response.data.data.user) {
+        console.log('Setting user to:', response.data.data.user);
         setUser(response.data.data.user);
+      } else {
+        console.log('No user data in response');
       }
     } catch (error: any) {
+      console.error('updateProfile error:', error);
+      console.error('Error response:', error.response?.data);
       throw new Error(error.response?.data?.message || 'Failed to update profile');
     }
   };

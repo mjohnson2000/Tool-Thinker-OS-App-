@@ -884,7 +884,51 @@ function AppContent() {
       console.log('Loaded appState from localStorage:', storedState);
       const parsedState = storedState ? JSON.parse(storedState) : initialAppState;
       
-      // Ensure the idea object is properly structured
+      // Check for pre-filled idea data from trending ideas
+      const prefilledIdea = localStorage.getItem('prefilledIdea');
+      if (prefilledIdea) {
+        try {
+          const ideaData = JSON.parse(prefilledIdea);
+          console.log('Found pre-filled idea data:', ideaData);
+          
+          // Pre-fill the idea data with supported fields
+          parsedState.idea = {
+            ...parsedState.idea,
+            existingIdeaText: ideaData.title,
+            interests: ideaData.description || '',
+            area: { 
+              id: 'trending-idea', 
+              title: ideaData.title, 
+              description: ideaData.description, 
+              icon: '🔥' 
+            }
+          };
+          
+          console.log('Found pre-filled idea data:', ideaData);
+          
+                // Clear the pre-filled data from localStorage
+      localStorage.removeItem('prefilledIdea');
+    } catch (error) {
+      console.error('Error parsing pre-filled idea data:', error);
+      localStorage.removeItem('prefilledIdea');
+    }
+  }
+  
+  // Check if we should show login after navigation (from trending ideas)
+  // This must happen BEFORE any other currentStep modifications
+  const showLoginAfterNavigation = localStorage.getItem('showLoginAfterNavigation');
+  console.log('showLoginAfterNavigation:', showLoginAfterNavigation);
+  if (showLoginAfterNavigation === 'true') {
+    localStorage.removeItem('showLoginAfterNavigation');
+    parsedState.currentStep = 'login';
+    console.log('Setting currentStep to login from showLoginAfterNavigation');
+  } else if (prefilledIdea) {
+    // Only set to existingIdea if we're not showing login
+    parsedState.currentStep = 'existingIdea';
+    console.log('Setting currentStep to existingIdea from prefilledIdea');
+  }
+  
+  // Ensure the idea object is properly structured
       if (!parsedState.idea || typeof parsedState.idea !== 'object') {
         parsedState.idea = { interests: '', area: null, existingIdeaText: '' };
       }
@@ -918,6 +962,20 @@ function AppContent() {
     });
   };
 
+  const handleLoginSuccess = () => {
+    // Check for pending local request from trending ideas
+    const pendingRequest = localStorage.getItem('pendingLocalRequest');
+    console.log('Login success, pending request:', pendingRequest);
+    if (pendingRequest === 'true') {
+      localStorage.removeItem('pendingLocalRequest');
+      // Navigate back to the landing page to handle the local request
+      console.log('Navigating to landing page for pending local request');
+      navigate('/');
+    } else {
+      setAppState(prev => ({ ...prev, currentStep: stepBeforeAuth || 'landing' }));
+    }
+  };
+
   const hideError = () => {
     setErrorNotification(prev => ({ ...prev, isVisible: false }));
   };
@@ -937,6 +995,11 @@ function AppContent() {
       setAppState(prev => ({ ...prev, currentStep: 'profile', stepBeforeAuth: prev.currentStep }));
       // Remove ?profile=1 from the URL after opening
       params.delete('profile');
+      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    } else if (params.get('login') === 'true') {
+      setAppState(prev => ({ ...prev, currentStep: 'login' }));
+      // Remove ?login=true from the URL after opening
+      params.delete('login');
       navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
     }
   }, [location.search]);
@@ -958,7 +1021,20 @@ function AppContent() {
     if (isAuthenticated && appState.currentStep === 'summary') {
       setAppState(prev => ({ ...prev, currentStep: 'businessPlan' }));
     }
-  }, [isAuthenticated, appState.currentStep]);
+    
+    // Handle pending local request after login
+    if (isAuthenticated) {
+      const pendingRequest = localStorage.getItem('pendingLocalRequest');
+      console.log('Auth change - checking pending request:', pendingRequest);
+      if (pendingRequest === 'true') {
+        console.log('Handling pending local request - navigating to landing');
+        navigate('/');
+        // Don't remove the flag here - let the TrendingIdeasCarousel handle it
+      }
+    }
+  }, [isAuthenticated, appState.currentStep, navigate]);
+
+
 
   // Track page views when currentStep changes
   useEffect(() => {
@@ -1208,7 +1284,11 @@ function AppContent() {
   }
 
   function handleClearExistingIdea() {
-    handleClearStep();
+    // Don't clear if we have pre-filled data from trending ideas
+    const prefilledIdea = localStorage.getItem('prefilledIdea');
+    if (!prefilledIdea) {
+      handleClearStep();
+    }
   }
 
   function handleProblemGuidanceContinue() {
@@ -1250,6 +1330,7 @@ function AppContent() {
 
   // Debug: log appState before rendering
   console.log('AppContent about to render, appState:', appState);
+  console.log('Current step:', currentStep, 'isFlowStep:', isFlowStep);
   if (currentStep === 'summary') {
     console.log('Summary render check:', { idea, customer, job });
   }

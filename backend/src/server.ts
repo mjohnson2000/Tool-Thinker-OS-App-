@@ -17,6 +17,8 @@ const stripeWebhookRouter = require('./routes/stripeWebhook');
 import logRoute from './routes/log';
 import automatedDiscoveryRouter from './routes/automatedDiscovery';
 import feedbackRouter from './routes/feedback';
+import { trendingIdeasRouter } from './routes/trendingIdeas';
+import { scheduleTrendingIdeasGeneration, scheduleTrendingIdeasCleanup } from './utils/cronJobs';
 
 // Import models to ensure they're registered
 import './models/User';
@@ -26,6 +28,7 @@ import './models/Course';
 import './models/Booking';
 import './models/UserProgress';
 import './models/Feedback';
+import './models/TrendingIdea';
 
 // Load environment variables
 config();
@@ -56,6 +59,7 @@ app.use('/api/stripe', stripeRouter);
 app.use('/api/log', logRoute);
 app.use('/api/automated-discovery', automatedDiscoveryRouter);
 app.use('/api/feedback', feedbackRouter);
+app.use('/api/trending-ideas', trendingIdeasRouter);
 
 // Error handling
 app.use(errorHandler);
@@ -66,6 +70,11 @@ const PORT = process.env.PORT || 5000;
 async function startServer() {
   try {
     await connectDB();
+    
+    // Initialize cron jobs
+    scheduleTrendingIdeasGeneration();
+    scheduleTrendingIdeasCleanup();
+    
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

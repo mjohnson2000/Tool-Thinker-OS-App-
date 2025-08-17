@@ -5,78 +5,117 @@ import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 
 const Container = styled.div`
-  max-width: 420px;
+  max-width: 600px;
   margin: 2rem auto;
-  padding: 2.5rem 2rem;
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 3rem 2.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  border: 1px solid rgba(255,255,255,0.8);
+  overflow: hidden;
   
   @media (max-width: 768px) {
     margin: 1rem auto;
     padding: 2rem 1.5rem;
-    border-radius: 20px;
-    max-width: 95%;
+    border-radius: 16px;
+    max-width: 92%;
   }
   
   @media (max-width: 480px) {
     margin: 0.5rem auto;
     padding: 1.5rem 1rem;
     border-radius: 16px;
+    max-width: 95%;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
   }
 `;
 
 const Avatar = styled.div`
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.2rem;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.5rem;
   border-radius: 50%;
-  background: #e5e5e5;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  color: #222;
+  font-size: 2.8rem;
+  color: white;
   font-weight: 700;
+  box-shadow: 
+    0 8px 24px rgba(24, 26, 27, 0.3),
+    0 4px 12px rgba(24, 26, 27, 0.2);
+  border: 3px solid rgba(255,255,255,0.9);
   
   @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+    margin: 0 auto 1.2rem;
+  }
+  
+  @media (max-width: 480px) {
     width: 70px;
     height: 70px;
     font-size: 2.2rem;
     margin: 0 auto 1rem;
   }
-  
-  @media (max-width: 480px) {
-    width: 60px;
-    height: 60px;
-    font-size: 2rem;
-    margin: 0 auto 0.8rem;
-  }
 `;
 
 const AvatarImg = styled.img`
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.2rem;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.5rem;
   border-radius: 50%;
   object-fit: cover;
-  background: #e5e5e5;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  box-shadow: 
+    0 8px 24px rgba(24, 26, 27, 0.3),
+    0 4px 12px rgba(24, 26, 27, 0.2);
+  border: 3px solid rgba(255,255,255,0.9);
   
   @media (max-width: 768px) {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 1rem;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.2rem;
   }
   
   @media (max-width: 480px) {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 0.8rem;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
   }
 `;
 
@@ -97,29 +136,41 @@ const Name = styled.div`
 `;
 
 const NameInput = styled.input`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-  color: #222;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #181a1b;
   width: 100%;
-  text-align: center;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  padding: 0.4rem 0.7rem;
-  background: #fafbfc;
+  text-align: left;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  
   &:focus {
-    outline: 2px solid #007aff;
-    border-color: #007aff;
+    outline: none;
+    border-color: #181a1b;
+    box-shadow: 
+      0 0 0 3px rgba(24, 26, 27, 0.1),
+      0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
   }
   
   @media (max-width: 768px) {
-    font-size: 1.2rem;
-    padding: 0.5rem 0.6rem;
+    font-size: 1rem;
+    padding: 0.75rem 0.875rem;
   }
   
   @media (max-width: 480px) {
-    font-size: 1.1rem;
-    padding: 0.6rem 0.5rem;
+    font-size: 0.95rem;
+    padding: 0.7rem 0.8rem;
   }
 `;
 
@@ -172,39 +223,60 @@ const Actions = styled.div`
 `;
 
 const Button = styled.button`
-  background: #000;
-  color: #fff;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 0.7rem 1.5rem;
+  border-radius: 12px;
+  padding: 0.875rem 1.75rem;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
   outline: none;
+  box-shadow: 
+    0 4px 16px rgba(24, 26, 27, 0.3),
+    0 2px 8px rgba(24, 26, 27, 0.2);
+  
   &:hover, &:focus {
-    background: #222;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 24px rgba(24, 26, 27, 0.4),
+      0 4px 12px rgba(24, 26, 27, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
   
   @media (max-width: 768px) {
-    padding: 0.8rem 1.3rem;
+    padding: 0.8rem 1.5rem;
     font-size: 0.95rem;
   }
   
   @media (max-width: 480px) {
-    padding: 0.9rem 1.2rem;
+    padding: 0.75rem 1.3rem;
     font-size: 0.9rem;
   }
 `;
 
 const SecondaryButton = styled(Button)`
-  background: #f5f5f7;
-  color: #000;
-  border: 1.5px solid #e5e5e5;
+  background: white;
+  color: #181a1b;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  
   &:hover, &:focus {
-    background: #e6e6e6;
-    color: #222;
+    background: #f8fafc;
+    color: #181a1b;
+    border-color: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   }
 `;
 
@@ -354,22 +426,25 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
 
 const PlanBadge = styled.div`
   margin-top: -0.2rem;
-  margin-bottom: 1.2rem;
-  background: #f3f4f6;
-  color: #181a1b;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1.5px solid #181a1b;
-  padding: 0.18rem 1.1rem 0.22rem 1.1rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 0.4rem 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  min-height: 22px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  letter-spacing: 0.01em;
+  min-width: 60px;
+  min-height: 28px;
+  box-shadow: 
+    0 4px 16px rgba(24, 26, 27, 0.3),
+    0 2px 8px rgba(24, 26, 27, 0.2);
+  letter-spacing: 0.02em;
   user-select: none;
+  text-transform: uppercase;
+  font-size: 0.75rem;
 `;
 
 interface ProfileProps {
@@ -384,6 +459,12 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
   const [name, setName] = useState(user?.name || '');
   const [profilePic, setProfilePic] = useState(user?.profilePic || '');
   const [picPreview, setPicPreview] = useState(user?.profilePic || '');
+  const [location, setLocation] = useState({
+    city: user?.location?.city || '',
+    region: user?.location?.region || '',
+    country: user?.location?.country || '',
+    zipCode: user?.location?.zipCode || ''
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -392,12 +473,17 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
-  // Track changes to name and profile picture
+  // Track changes to name, profile picture, and location
   useEffect(() => {
     const nameChanged = name !== (user?.name || '');
     const picChanged = profilePic !== (user?.profilePic || '');
-    setHasChanges(nameChanged || picChanged);
-  }, [name, profilePic, user?.name, user?.profilePic]);
+    const locationChanged = 
+      location.city !== (user?.location?.city || '') ||
+      location.region !== (user?.location?.region || '') ||
+      location.country !== (user?.location?.country || '') ||
+      location.zipCode !== (user?.location?.zipCode || '');
+    setHasChanges(nameChanged || picChanged || locationChanged);
+  }, [name, profilePic, location, user?.name, user?.profilePic, user?.location]);
 
   if (isLoading) return <Container aria-busy="true">Loading profile...</Container>;
   if (!user) return <Container>No user found. Please log in.</Container>;
@@ -427,9 +513,17 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
     setError(null);
     setSuccess(null);
     try {
-      const update: { name?: string; profilePic?: string } = {};
+      const update: { name?: string; profilePic?: string; location?: any } = {};
       if (name.trim()) update.name = name.trim();
       if (profilePic) update.profilePic = profilePic;
+      if (location.city && location.region && location.country) {
+        update.location = {
+          city: location.city.trim(),
+          region: location.region.trim(),
+          country: location.country.trim(),
+          zipCode: location.zipCode.trim()
+        };
+      }
       await updateProfile(update);
       setSuccess('Profile updated!');
     } catch (err: any) {
@@ -481,7 +575,7 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
           )}
           {/* Edit link just below avatar, with less margin */}
           <EditLink type="button" style={{ marginBottom: '0.3rem', marginTop: '-0.5rem' }} onClick={() => document.getElementById('profile-pic-upload')?.click()}>
-            Edit
+            Edit Pic
           </EditLink>
           {/* PlanBadge below Edit link, with extra margin-bottom */}
           <PlanBadge>
@@ -492,7 +586,7 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
           <form onSubmit={handleSave} style={{ width: '100%' }}>
             <label htmlFor="profile-pic-upload" style={{ display: 'none' }}>
               <EditPicButton type="button" onClick={() => document.getElementById('profile-pic-upload')?.click()}>
-                Edit
+                Edit Pic
               </EditPicButton>
             </label>
             <HiddenPicInput id="profile-pic-upload" type="file" accept="image/*" onChange={handlePicChange} aria-label="Upload profile picture" />
@@ -504,8 +598,35 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
               aria-label="Name"
               maxLength={64}
             />
-            {error && <div style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</div>}
-            {success && <div style={{ color: 'green', marginBottom: '0.5rem' }}>{success}</div>}
+            
+            {error && (
+              <div style={{ 
+                color: '#dc2626', 
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                border: '1px solid #fecaca',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: '500'
+              }}>
+                ❌ {error}
+              </div>
+            )}
+            {success && (
+              <div style={{ 
+                color: '#059669', 
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                border: '1px solid #bbf7d0',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: '500'
+              }}>
+                ✅ {success}
+              </div>
+            )}
             {hasChanges && (
               <SaveButton type="submit" disabled={isSaving} aria-label="Save profile">
                 {isSaving ? 'Saving...' : 'Save'}
@@ -523,6 +644,83 @@ export function Profile({ setAppState, isTrackerCollapsed, onClose }: ProfilePro
             <span>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '—'}</span>
           </InfoRow>
           <Divider />
+          
+          {/* Location Fields */}
+          <div style={{ 
+            marginTop: '1rem',
+            marginBottom: '1.5rem',
+            textAlign: 'left', 
+            width: '100%',
+            padding: '1.5rem',
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(24, 26, 27, 0.1)'
+          }}>
+            <div style={{ 
+              fontSize: '1rem', 
+              fontWeight: '700', 
+              marginBottom: '1rem', 
+              color: '#181a1b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span style={{ 
+                width: '20px', 
+                height: '20px', 
+                background: 'linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '0.75rem',
+                fontWeight: 'bold'
+              }}>
+                📍
+              </span>
+              Location for Local Trending Ideas
+            </div>
+            <div style={{ 
+              display: 'grid', 
+              gap: '1rem', 
+              marginBottom: '0.5rem'
+            }}>
+              <NameInput
+                type="text"
+                value={location.city}
+                onChange={e => setLocation(prev => ({ ...prev, city: e.target.value }))}
+                placeholder="City"
+                aria-label="City"
+                maxLength={100}
+              />
+              <NameInput
+                type="text"
+                value={location.region}
+                onChange={e => setLocation(prev => ({ ...prev, region: e.target.value }))}
+                placeholder="State/Region"
+                aria-label="State or Region"
+                maxLength={100}
+              />
+              <NameInput
+                type="text"
+                value={location.country}
+                onChange={e => setLocation(prev => ({ ...prev, country: e.target.value }))}
+                placeholder="Country"
+                aria-label="Country"
+                maxLength={100}
+              />
+              <NameInput
+                type="text"
+                value={location.zipCode}
+                onChange={e => setLocation(prev => ({ ...prev, zipCode: e.target.value }))}
+                placeholder="ZIP/Postal Code (optional)"
+                aria-label="ZIP or Postal Code"
+                maxLength={20}
+              />
+            </div>
+          </div>
+          
           <Actions>
             <Button onClick={() => {/* TODO: Wire up change password flow */}} aria-label="Change password">Change Password</Button>
             <SecondaryButton onClick={() => setShowLogoutModal(true)} aria-label="Log out">Log out</SecondaryButton>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FiTrendingUp, FiClock, FiDollarSign, FiTarget, FiArrowLeft, FiArrowRight, FiBookmark, FiPause, FiPlay, FiMapPin, FiGlobe } from 'react-icons/fi';
+import { FiTrendingUp, FiClock, FiDollarSign, FiTarget, FiArrowLeft, FiArrowRight, FiBookmark, FiPause, FiPlay, FiMapPin, FiGlobe, FiHeart } from 'react-icons/fi';
 import { FaFire } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -21,6 +21,8 @@ interface TrendingIdea {
   score: number;
   views: number;
   saves: number;
+  likes: number;
+  isLiked?: boolean;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -104,13 +106,13 @@ const DateDisplay = styled.div`
 `;
 
 const SlideCounter = styled.div`
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 16px;
   font-weight: 700;
   font-size: 0.85rem;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
   animation: ${pulse} 2s ease-in-out infinite;
 `;
 
@@ -187,6 +189,7 @@ const IdeaCard = styled.div`
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   border-radius: 20px;
   padding: 2.5rem;
+  position: relative;
   border: 1px solid rgba(24, 26, 27, 0.08);
   box-shadow: 
     0 8px 32px rgba(0,0,0,0.08),
@@ -203,7 +206,7 @@ const IdeaCard = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+    background: linear-gradient(90deg, #181a1b, #374151, #4b5563, #6b7280, #9ca3af);
     background-size: 200% 100%;
     animation: ${shimmer} 3s ease-in-out infinite;
   }
@@ -223,8 +226,8 @@ const IdeaHeader = styled.div`
 
 const SlideNumber = styled.div`
   position: absolute;
-  bottom: 1rem;
-  right: 1rem;
+  top: -20px;
+  right: -20px;
   background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
   color: white;
   width: 40px;
@@ -247,7 +250,7 @@ const SlideNumber = styled.div`
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+    background: linear-gradient(135deg, #181a1b, #374151);
     border-radius: 50%;
     z-index: -1;
     opacity: 0.3;
@@ -263,7 +266,7 @@ const IdeaTitle = styled.h3`
 `;
 
 const ScoreBadge = styled.div`
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
   color: white;
   padding: 0.75rem 1.25rem;
   border-radius: 25px;
@@ -273,8 +276,8 @@ const ScoreBadge = styled.div`
   align-items: center;
   gap: 0.5rem;
   box-shadow: 
-    0 4px 16px rgba(255, 107, 107, 0.4),
-    0 2px 8px rgba(255, 107, 107, 0.2);
+    0 4px 16px rgba(24, 26, 27, 0.3),
+    0 2px 8px rgba(24, 26, 27, 0.2);
   animation: ${pulse} 2s ease-in-out infinite;
   position: relative;
   
@@ -285,7 +288,7 @@ const ScoreBadge = styled.div`
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+    background: linear-gradient(135deg, #181a1b, #374151);
     border-radius: 27px;
     z-index: -1;
     opacity: 0.3;
@@ -349,7 +352,7 @@ const DetailItem = styled.div`
   }
   
   svg {
-    color: #ff6b6b;
+    color: #374151;
     flex-shrink: 0;
   }
 `;
@@ -430,8 +433,10 @@ const ActionButtons = styled.div`
   }
 `;
 
-const SaveButton = styled.button`
-  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
+const LikeButton = styled.button<{ $isLiked: boolean }>`
+  background: ${props => props.$isLiked 
+    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' 
+    : 'linear-gradient(135deg, #181a1b 0%, #374151 100%)'};
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -445,9 +450,9 @@ const SaveButton = styled.button`
   gap: 0.75rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 
-    0 4px 16px rgba(24, 26, 27, 0.3),
-    0 2px 8px rgba(24, 26, 27, 0.2);
+  box-shadow: ${props => props.$isLiked 
+    ? '0 4px 16px rgba(5, 150, 105, 0.3), 0 2px 8px rgba(5, 150, 105, 0.2)' 
+    : '0 4px 16px rgba(24, 26, 27, 0.3), 0 2px 8px rgba(24, 26, 27, 0.2)'};
   
   &::before {
     content: '';
@@ -462,9 +467,9 @@ const SaveButton = styled.button`
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 
-      0 8px 24px rgba(24, 26, 27, 0.4),
-      0 4px 12px rgba(24, 26, 27, 0.3);
+    box-shadow: ${props => props.$isLiked 
+      ? '0 8px 24px rgba(5, 150, 105, 0.4), 0 4px 12px rgba(5, 150, 105, 0.3)' 
+      : '0 8px 24px rgba(24, 26, 27, 0.4), 0 4px 12px rgba(24, 26, 27, 0.3)'};
     
     &::before {
       left: 100%;
@@ -614,21 +619,21 @@ const Dot = styled.button<{ $active: boolean }>`
   border-radius: 50%;
   border: none;
   background: ${props => props.$active 
-    ? 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)' 
+    ? 'linear-gradient(135deg, #181a1b 0%, #374151 100%)' 
     : 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)'};
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: ${props => props.$active 
-    ? '0 2px 8px rgba(255, 107, 107, 0.3)' 
+    ? '0 2px 8px rgba(24, 26, 27, 0.3)' 
     : '0 1px 4px rgba(0,0,0,0.1)'};
   
   &:hover {
     background: ${props => props.$active 
-      ? 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)' 
+      ? 'linear-gradient(135deg, #181a1b 0%, #374151 100%)' 
       : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)'};
     transform: scale(1.2);
     box-shadow: ${props => props.$active 
-      ? '0 4px 12px rgba(255, 107, 107, 0.4)' 
+      ? '0 4px 12px rgba(24, 26, 27, 0.4)' 
       : '0 2px 8px rgba(0,0,0,0.15)'};
   }
 `;
@@ -661,7 +666,7 @@ const ProgressBar = styled.div<{ $progress: number }>`
   bottom: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+  background: linear-gradient(90deg, #181a1b 0%, #374151 100%);
   width: ${props => props.$progress}%;
   transition: width 0.3s ease;
   z-index: 10;
@@ -681,7 +686,7 @@ const ErrorContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  color: #ef4444;
+  color: #dc2626;
   font-size: 1.1rem;
   text-align: center;
 `;
@@ -723,24 +728,24 @@ const ToggleButton = styled.button<{ $active: boolean }>`
 `;
 
 const AuthPrompt = styled.div`
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
+  background: linear-gradient(135deg, #f4f5f7 0%, #e5e7eb 100%);
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   padding: 1.5rem;
   margin: 1rem 0;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 `;
 
 const AuthPromptTitle = styled.h3`
-  color: #92400e;
+  color: #374151;
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   font-weight: 600;
 `;
 
 const AuthPromptText = styled.p`
-  color: #78350f;
+  color: #6b7280;
   margin: 0 0 1rem 0;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -900,8 +905,8 @@ export function TrendingIdeasCarousel() {
       
       const config: any = {};
       
-      // Add authentication header for local ideas
-      if (ideaType === 'local' && isAuthenticated) {
+      // Add authentication header for both local and general ideas to get like status
+      if (isAuthenticated) {
         const token = localStorage.getItem('token');
         if (token) {
           config.headers = { Authorization: `Bearer ${token}` };
@@ -969,19 +974,43 @@ export function TrendingIdeasCarousel() {
     return index % trendingIdeas.length;
   };
 
-  const handleSave = async (ideaId: string) => {
+  const handleLike = async (ideaId: string) => {
+    if (!isAuthenticated) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
     try {
-      await axios.post(`${API_URL}/trending-ideas/${ideaId}/save`);
-      // Update local state to reflect the save
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/trending-ideas/${ideaId}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Update local state to reflect the like
+      const responseData = response.data as any;
       setTrendingIdeas(prev => 
         prev.map(idea => 
           idea._id === ideaId 
-            ? { ...idea, saves: idea.saves + 1 }
+            ? { 
+                ...idea, 
+                likes: responseData.data.likes,
+                isLiked: responseData.data.isLiked || false
+              }
             : idea
         )
       );
-    } catch (err) {
-      console.error('Error saving idea:', err);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setShowAuthPrompt(true);
+      } else {
+        console.error('Error liking idea:', err);
+      }
     }
   };
 
@@ -1133,7 +1162,7 @@ export function TrendingIdeasCarousel() {
       <Header>
         <HeaderLeft>
           <Title>
-            <FaFire style={{ color: '#ff6b6b' }} />
+            <FaFire style={{ color: '#374151' }} />
             Today's Alpha-Niche Ideas
           </Title>
           <Subtitle>
@@ -1171,12 +1200,12 @@ export function TrendingIdeasCarousel() {
         <AuthPrompt>
           <AuthPromptTitle>Sign In Required</AuthPromptTitle>
           <AuthPromptText>
-            To view local trending ideas, you need to sign in to your account.
+            To like trending ideas and view local opportunities, you need to sign in to your account.
           </AuthPromptText>
           <AuthButton onClick={handleSignIn}>
             Sign In
           </AuthButton>
-          <AuthButton onClick={testNavigation} style={{ marginTop: '10px', backgroundColor: '#ff6b6b' }}>
+          <AuthButton onClick={testNavigation} style={{ marginTop: '10px', backgroundColor: '#181a1b' }}>
             Test Navigation
           </AuthButton>
         </AuthPrompt>
@@ -1216,10 +1245,7 @@ export function TrendingIdeasCarousel() {
               <IdeaCard>
                 <IdeaHeader>
                   <IdeaTitle>{idea.title}</IdeaTitle>
-                  <ScoreBadge>
-                    <FaFire />
-                    {idea.score}
-                  </ScoreBadge>
+                  <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
                 </IdeaHeader>
 
                 <IdeaDescription>{idea.description}</IdeaDescription>
@@ -1254,15 +1280,17 @@ export function TrendingIdeasCarousel() {
                 </TagsContainer>
 
                 <ActionButtons>
-                  <SaveButton onClick={() => handleSave(idea._id)}>
-                    <FiBookmark />
-                    Save Idea
-                  </SaveButton>
+                  <LikeButton 
+                    $isLiked={idea.isLiked || false}
+                    onClick={() => handleLike(idea._id)}
+                  >
+                    <FiHeart />
+                    {idea.isLiked ? 'Liked' : 'Like'} ({idea.likes || 0})
+                  </LikeButton>
                   <ExploreButton onClick={() => handleExplore(idea)}>
                     Explore This Alpha Idea
                   </ExploreButton>
                 </ActionButtons>
-                <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
               </IdeaCard>
             </CarouselSlide>
           ))}

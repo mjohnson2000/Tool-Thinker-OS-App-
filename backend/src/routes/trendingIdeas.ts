@@ -75,6 +75,28 @@ router.get('/', async (req: Request, res: Response) => {
     
     let trendingIdeas = await TrendingIdea.find(query).sort({ score: -1 }).limit(5);
 
+    // Add user's like status to each idea if authenticated
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const { verifyToken } = require('../utils/token');
+        const decoded = verifyToken(token);
+        const user = await User.findById(decoded.id);
+        
+        if (user) {
+          trendingIdeas = trendingIdeas.map(idea => {
+            const ideaObj = idea.toObject() as any;
+            ideaObj.isLiked = idea.likedBy.includes(user._id.toString());
+            return ideaObj;
+          });
+        }
+      } catch (error) {
+        // Token verification failed, continue without user like status
+        console.log('Token verification failed for like status:', error);
+      }
+    }
+
     // If no ideas for today, generate new ones
     if (trendingIdeas.length === 0) {
       console.log(`No ${type} trending ideas found for today, generating new ones...`);
@@ -217,6 +239,35 @@ router.post('/:id/save', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error saving idea:', error);
     res.status(500).json({ success: false, error: 'Failed to save idea' });
+  }
+});
+
+// POST /api/trending-ideas/:id/like - Like/unlike an idea (requires authentication)
+router.post('/:id/like', auth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    
+    const idea = await TrendingIdea.findById(id);
+    
+    if (!idea) {
+      return res.status(404).json({ success: false, error: 'Idea not found' });
+    }
+    
+    await idea.toggleLike(userId);
+    
+    // Return the idea with the user's like status
+    const ideaObj = idea.toObject() as any;
+    ideaObj.isLiked = idea.likedBy.includes(userId);
+    
+    res.json({ success: true, data: ideaObj });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ success: false, error: 'Failed to toggle like' });
   }
 });
 

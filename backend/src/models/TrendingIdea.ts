@@ -13,6 +13,8 @@ export interface ITrendingIdea extends Document {
   score: number;
   views: number;
   saves: number;
+  likes: number;
+  likedBy: string[]; // Array of user IDs who liked this idea
   // Location fields for local ideas
   isLocal: boolean;
   location?: {
@@ -24,6 +26,7 @@ export interface ITrendingIdea extends Document {
   updatedAt: Date;
   incrementViews(): Promise<ITrendingIdea>;
   incrementSaves(): Promise<ITrendingIdea>;
+  toggleLike(userId: string): Promise<ITrendingIdea>;
 }
 
 const trendingIdeaSchema = new Schema<ITrendingIdea>({
@@ -87,6 +90,14 @@ const trendingIdeaSchema = new Schema<ITrendingIdea>({
     type: Number,
     default: 0
   },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  likedBy: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   // Location fields for local ideas
   isLocal: {
     type: Boolean,
@@ -131,6 +142,23 @@ trendingIdeaSchema.methods.incrementViews = function() {
 // Method to increment saves
 trendingIdeaSchema.methods.incrementSaves = function() {
   this.saves += 1;
+  return this.save();
+};
+
+// Method to toggle like for a user
+trendingIdeaSchema.methods.toggleLike = function(userId: string) {
+  const userIndex = this.likedBy.indexOf(userId);
+  
+  if (userIndex === -1) {
+    // User hasn't liked this idea, add their like
+    this.likedBy.push(userId);
+    this.likes += 1;
+  } else {
+    // User has already liked this idea, remove their like
+    this.likedBy.splice(userIndex, 1);
+    this.likes = Math.max(0, this.likes - 1);
+  }
+  
   return this.save();
 };
 

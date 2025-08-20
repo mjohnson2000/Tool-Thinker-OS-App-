@@ -39,7 +39,7 @@ const slideIn = keyframes`
 
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.02); }
 `;
 
 const shimmer = keyframes`
@@ -49,17 +49,17 @@ const shimmer = keyframes`
 
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-5px); }
 `;
 
 const Container = styled.div`
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 0;
+  padding: 0.25rem 0;
   
   @media (max-width: 768px) {
-    padding: 1rem 0;
+    padding: 0.125rem 0;
   }
 `;
 
@@ -67,26 +67,26 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 1.5rem;
   }
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 `;
 
 const HeaderRight = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.75rem;
   
   @media (max-width: 768px) {
     align-items: flex-start;
@@ -94,26 +94,21 @@ const HeaderRight = styled.div`
 `;
 
 const DateDisplay = styled.div`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #f8fafc;
   padding: 0.75rem 1.5rem;
-  border-radius: 20px;
-  border: 1px solid rgba(24, 26, 27, 0.08);
-  font-weight: 600;
-  color: #374151;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  backdrop-filter: blur(10px);
-`;
-
-const SlideCounter = styled.div`
-  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  box-shadow: 0 2px 8px rgba(24, 26, 27, 0.2);
-  animation: ${pulse} 2s ease-in-out infinite;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
 `;
 
 const Title = styled.h2`
@@ -121,98 +116,71 @@ const Title = styled.h2`
   font-size: clamp(1.6rem, 3vw, 2.1rem);
   font-weight: 400;
   color: #181a1b;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 0;
   
   svg {
+    color: #374151;
     animation: ${float} 3s ease-in-out infinite;
-  }
-  
-  @media (max-width: 768px) {
-    gap: 0.5rem;
   }
 `;
 
 const Subtitle = styled.p`
-  color: #4b5563;
-  max-width: 680px;
-  margin: 0.5rem 0 0 0;
-  line-height: 1.75;
-  padding-left: 3rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 600px;
+`;
+
+const ToggleContainer = styled.div`
+  display: flex;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.25rem;
+  gap: 0.25rem;
+`;
+
+const ToggleButton = styled.button<{ $active: boolean }>`
+  background: ${props => props.$active ? '#ffffff' : 'transparent'};
+  color: ${props => props.$active ? '#181a1b' : '#6b7280'};
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: ${props => props.$active ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'};
+  
+  &:hover {
+    background: ${props => props.$active ? '#ffffff' : '#f1f5f9'};
+    color: ${props => props.$active ? '#181a1b' : '#374151'};
+  }
   
   @media (max-width: 768px) {
-    padding-left: 2.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
   }
 `;
 
 const CarouselContainer = styled.div`
   position: relative;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem 2rem;
   overflow: hidden;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 
-    0 20px 40px rgba(0,0,0,0.1),
-    0 8px 16px rgba(0,0,0,0.06),
-    inset 0 1px 0 rgba(255,255,255,0.8);
-  border: 1px solid rgba(255,255,255,0.9);
-  backdrop-filter: blur(10px);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-  }
-`;
-
-const CarouselTrack = styled.div<{ $currentIndex: number }>`
-  display: flex;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(-${props => props.$currentIndex * 100}%);
-`;
-
-const CarouselSlide = styled.div`
-  min-width: 100%;
-  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   
   @media (max-width: 768px) {
-    padding: 1.5rem 1rem;
-  }
-`;
-
-const IdeaCard = styled.div`
-  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-  border-radius: 20px;
-  padding: 2.5rem;
-  position: relative;
-  border: 1px solid rgba(24, 26, 27, 0.08);
-  box-shadow: 
-    0 8px 32px rgba(0,0,0,0.08),
-    0 4px 16px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.9);
-  animation: ${fadeIn} 0.6s ease-out;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #181a1b, #374151, #4b5563, #6b7280, #9ca3af);
-    background-size: 200% 100%;
-    animation: ${shimmer} 3s ease-in-out infinite;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 2rem 1.5rem;
+    padding: 0.75rem 1.5rem;
   }
 `;
 
@@ -220,116 +188,54 @@ const IdeaHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   position: relative;
 `;
 
 const SlideNumber = styled.div`
   position: absolute;
-  top: -20px;
-  right: -20px;
-  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
+  top: -15px;
+  right: 5px;
+  background: #374151;
   color: white;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1rem;
-  box-shadow: 
-    0 4px 16px rgba(24, 26, 27, 0.3),
-    0 2px 8px rgba(24, 26, 27, 0.2);
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   z-index: 10;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, #181a1b, #374151);
-    border-radius: 50%;
-    z-index: -1;
-    opacity: 0.3;
-    filter: blur(4px);
-  }
 `;
 
 const IdeaTitle = styled.h3`
-  margin: 0 0 0.35rem 0;
-  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-  font-weight: 900;
-  color: #181a1b;
-`;
-
-const ScoreBadge = styled.div`
-  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
-  color: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 25px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 
-    0 4px 16px rgba(24, 26, 27, 0.3),
-    0 2px 8px rgba(24, 26, 27, 0.2);
-  animation: ${pulse} 2s ease-in-out infinite;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, #181a1b, #374151);
-    border-radius: 27px;
-    z-index: -1;
-    opacity: 0.3;
-    filter: blur(4px);
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-    gap: 0.25rem;
-  }
+  margin: 0 0 1.25rem 0;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 `;
 
 const IdeaDescription = styled.p`
-  color: #4b5563;
-  line-height: 1.7;
-  margin-bottom: 2rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
   font-size: 1.1rem;
-  font-weight: 400;
-  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 500;
 `;
 
 const IdeaDetails = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
   margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(24, 26, 27, 0.06);
-  backdrop-filter: blur(10px);
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.75rem;
   }
 `;
 
@@ -337,88 +243,44 @@ const DetailItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #6b7280;
-  font-size: 0.9rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
-  border: 1px solid rgba(24, 26, 27, 0.04);
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.9);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   
   svg {
-    color: #374151;
+    color: #059669;
     flex-shrink: 0;
+    font-size: 1.1rem;
   }
 `;
 
 const DetailLabel = styled.span`
-  font-weight: 600;
-  color: #374151;
-  min-width: 60px;
+  font-weight: 700;
+  color: #111827;
+  min-width: 70px;
+  font-size: 0.9rem;
 `;
 
 const TagsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(24, 26, 27, 0.06);
-  
-  @media (max-width: 768px) {
-    gap: 0.5rem;
-    padding: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
+  margin-bottom: 2.5rem;
 `;
 
 const Tag = styled.span`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  color: #475569;
+  background: #f0f9ff;
+  color: #0369a1;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 600;
-  border: 1px solid rgba(24, 26, 27, 0.08);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.5s ease;
-  }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    
-    &::before {
-      left: 100%;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    border-radius: 16px;
-  }
+  border: 1px solid #bae6fd;
 `;
 
 const ActionButtons = styled.div`
@@ -426,6 +288,7 @@ const ActionButtons = styled.div`
   gap: 1rem;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -434,107 +297,52 @@ const ActionButtons = styled.div`
 `;
 
 const LikeButton = styled.button<{ $isLiked: boolean }>`
-  background: ${props => props.$isLiked 
-    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' 
-    : 'linear-gradient(135deg, #181a1b 0%, #374151 100%)'};
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 0.95rem;
+  background: ${props => props.$isLiked ? '#059669' : '#f8fafc'};
+  color: ${props => props.$isLiked ? 'white' : '#374151'};
+  border: 1px solid ${props => props.$isLiked ? '#059669' : '#e5e7eb'};
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  position: relative;
-  overflow: hidden;
-  box-shadow: ${props => props.$isLiked 
-    ? '0 4px 16px rgba(5, 150, 105, 0.3), 0 2px 8px rgba(5, 150, 105, 0.2)' 
-    : '0 4px 16px rgba(24, 26, 27, 0.3), 0 2px 8px rgba(24, 26, 27, 0.2)'};
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s ease;
-  }
+  gap: 0.5rem;
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: ${props => props.$isLiked 
-      ? '0 8px 24px rgba(5, 150, 105, 0.4), 0 4px 12px rgba(5, 150, 105, 0.3)' 
-      : '0 8px 24px rgba(24, 26, 27, 0.4), 0 4px 12px rgba(24, 26, 27, 0.3)'};
-    
-    &::before {
-      left: 100%;
-    }
-  }
-  
-  &:active {
+    background: ${props => props.$isLiked ? '#047857' : '#f1f5f9'};
     transform: translateY(-1px);
   }
   
   @media (max-width: 768px) {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.9rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem;
     width: 100%;
     justify-content: center;
   }
 `;
 
 const ExploreButton = styled.button`
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #181a1b;
-  border: 2px solid rgba(24, 26, 27, 0.12);
-  padding: 1rem 2rem;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 0.95rem;
+  background: #181a1b;
+  color: white;
+  border: 1px solid #181a1b;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 
-    0 4px 16px rgba(0,0,0,0.08),
-    0 2px 8px rgba(0,0,0,0.04);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(24, 26, 27, 0.05), transparent);
-    transition: left 0.5s ease;
-  }
+  transition: all 0.2s ease;
   
   &:hover {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-color: rgba(24, 26, 27, 0.2);
-    transform: translateY(-3px);
-    box-shadow: 
-      0 8px 24px rgba(0,0,0,0.12),
-      0 4px 12px rgba(0,0,0,0.08);
-    
-    &::before {
-      left: 100%;
-    }
-  }
-  
-  &:active {
+    background: #374151;
+    border-color: #374151;
     transform: translateY(-1px);
   }
   
   @media (max-width: 768px) {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.9rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem;
     width: 100%;
     justify-content: center;
   }
@@ -547,100 +355,166 @@ const NavigationButtons = styled.div`
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   pointer-events: none;
+  
+  .nav-left {
+    margin-left: -4.5rem;
+  }
+  
+  .nav-right {
+    margin-right: -0.5rem;
+  }
 `;
 
 const NavButton = styled.button`
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(24, 26, 27, 0.08);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 50%;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   pointer-events: all;
-  box-shadow: 
-    0 4px 16px rgba(0,0,0,0.1),
-    0 2px 8px rgba(0,0,0,0.06);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   
   svg {
     color: #374151;
-    font-size: 1.25rem;
-    transition: all 0.3s ease;
+    font-size: 1.125rem;
   }
   
   &:hover {
-    background: white;
-    transform: scale(1.1);
-    box-shadow: 
-      0 8px 24px rgba(0,0,0,0.15),
-      0 4px 12px rgba(0,0,0,0.1);
-    
-    svg {
-      color: #181a1b;
-      transform: scale(1.1);
-    }
-  }
-  
-  &:active {
+    background: #f8fafc;
     transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   }
   
   @media (max-width: 768px) {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     
     svg {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 `;
 
-const DotsContainer = styled.div`
+const ProgressContainer = styled.div`
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
   margin-top: 2rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(24, 26, 27, 0.06);
+  gap: 0.5rem;
 `;
 
 const Dot = styled.button<{ $active: boolean }>`
-  width: 14px;
-  height: 14px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   border: none;
-  background: ${props => props.$active 
-    ? 'linear-gradient(135deg, #181a1b 0%, #374151 100%)' 
-    : 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)'};
+  background: ${props => props.$active ? '#374151' : '#d1d5db'};
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: ${props => props.$active 
-    ? '0 2px 8px rgba(24, 26, 27, 0.3)' 
-    : '0 1px 4px rgba(0,0,0,0.1)'};
+  transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.$active 
-      ? 'linear-gradient(135deg, #181a1b 0%, #374151 100%)' 
-      : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)'};
-    transform: scale(1.2);
-    box-shadow: ${props => props.$active 
-      ? '0 4px 12px rgba(24, 26, 27, 0.4)' 
-      : '0 2px 8px rgba(0,0,0,0.15)'};
+    background: ${props => props.$active ? '#374151' : '#9ca3af'};
+  }
+`;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 1rem;
+`;
+
+const ProgressFill = styled.div<{ $progress: number }>`
+  height: 100%;
+  background: #374151;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: ${props => props.$progress}%;
+`;
+
+const ErrorContainer = styled.div`
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin: 2rem 0;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  gap: 1rem;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #374151;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const AuthPrompt = styled.div`
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem 0;
+`;
+
+const AuthPromptTitle = styled.h3`
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const AuthPromptText = styled.p`
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.6;
+`;
+
+const AuthButton = styled.button`
+  background: #181a1b;
+  color: white;
+  border: 1px solid #181a1b;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #374151;
+    border-color: #374151;
   }
 `;
 
 const AutoPlayToggle = styled.button`
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(24, 26, 27, 0.1);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -648,123 +522,68 @@ const AutoPlayToggle = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   
   &:hover {
-    background: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: #f8fafc;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  
+  svg {
+    color: #374151;
+    font-size: 1rem;
   }
 `;
 
-const ProgressBar = styled.div<{ $progress: number }>`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #181a1b 0%, #374151 100%);
-  width: ${props => props.$progress}%;
-  transition: width 0.3s ease;
-  z-index: 10;
+const CarouselWrapper = styled.div`
+  width: 100%;
+  overflow: hidden;
+  position: relative;
 `;
 
-const LoadingContainer = styled.div`
+const CarouselTrack = styled.div<{ $currentIndex: number }>`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  color: #6b7280;
-  font-size: 1.1rem;
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-${props => props.$currentIndex * 100}%);
 `;
 
-const ErrorContainer = styled.div`
+const CarouselSlide = styled.div`
+  min-width: 100%;
+  width: 100%;
+  flex-shrink: 0;
+  padding: 0;
+  height: 600px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  color: #dc2626;
-  font-size: 1.1rem;
-  text-align: center;
-`;
-
-const IdeaTypeToggle = styled.div`
-  display: flex;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-`;
-
-const ToggleButton = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: ${props => props.$active ? 'linear-gradient(135deg, #181a1b 0%, #374151 100%)' : 'transparent'};
-  color: ${props => props.$active ? 'white' : '#6b7280'};
-  box-shadow: ${props => props.$active ? '0 4px 16px rgba(24, 26, 27, 0.3)' : 'none'};
-  
-  &:hover {
-    transform: ${props => props.$active ? 'none' : 'translateY(-1px)'};
-    color: ${props => props.$active ? 'white' : '#374151'};
-  }
+  align-items: stretch;
   
   @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    height: 700px;
   }
 `;
 
-const AuthPrompt = styled.div`
-  background: linear-gradient(135deg, #f4f5f7 0%, #e5e7eb 100%);
-  border: 1px solid #d1d5db;
+const IdeaCard = styled.div`
+  background: #ffffff;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-`;
-
-const AuthPromptTitle = styled.h3`
-  color: #374151;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-`;
-
-const AuthPromptText = styled.p`
-  color: #6b7280;
-  margin: 0 0 1rem 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-`;
-
-const AuthButton = styled.button`
-  background: linear-gradient(135deg, #181a1b 0%, #374151 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(24, 26, 27, 0.3);
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  animation: ${fadeIn} 0.6s ease-out;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(24, 26, 27, 0.4);
+  @media (max-width: 768px) {
+    padding: 1.5rem;
   }
 `;
 
@@ -1130,7 +949,7 @@ export function TrendingIdeasCarousel() {
     return (
       <Container>
         <LoadingContainer>
-          <FiTrendingUp style={{ marginRight: '0.5rem' }} />
+          <LoadingSpinner />
           Loading today's trending ideas...
         </LoadingContainer>
       </Container>
@@ -1171,30 +990,27 @@ export function TrendingIdeasCarousel() {
         </HeaderLeft>
         <HeaderRight>
           <DateDisplay>
+            <FiClock />
             {formatDate()}
           </DateDisplay>
-          <SlideCounter>
-            {getCurrentSlideNumber()} of {trendingIdeas.length}
-          </SlideCounter>
+          <ToggleContainer>
+            <ToggleButton 
+              $active={ideaType === 'general'} 
+              onClick={() => handleIdeaTypeChange('general')}
+            >
+              <FiGlobe />
+              General
+            </ToggleButton>
+            <ToggleButton 
+              $active={ideaType === 'local'} 
+              onClick={() => handleIdeaTypeChange('local')}
+            >
+              <FiMapPin />
+              Local
+            </ToggleButton>
+          </ToggleContainer>
         </HeaderRight>
       </Header>
-
-      <IdeaTypeToggle>
-        <ToggleButton 
-          $active={ideaType === 'general'} 
-          onClick={() => handleIdeaTypeChange('general')}
-        >
-          <FiGlobe />
-          General
-        </ToggleButton>
-        <ToggleButton 
-          $active={ideaType === 'local'} 
-          onClick={() => handleIdeaTypeChange('local')}
-        >
-          <FiMapPin />
-          Local
-        </ToggleButton>
-      </IdeaTypeToggle>
 
       {showAuthPrompt && (
         <AuthPrompt>
@@ -1236,72 +1052,76 @@ export function TrendingIdeasCarousel() {
           </AutoPlayToggle>
         )}
         {trendingIdeas.length > 1 && isAutoPlaying && (
-          <ProgressBar $progress={(((currentIndex % trendingIdeas.length) + 1) / trendingIdeas.length) * 100} />
+          <ProgressBar>
+            <ProgressFill $progress={(((currentIndex % trendingIdeas.length) + 1) / trendingIdeas.length) * 100} />
+          </ProgressBar>
         )}
-        <CarouselTrack $currentIndex={currentIndex}>
-          {/* Create a seamless loop by duplicating slides */}
-          {[...trendingIdeas, ...trendingIdeas].map((idea, index) => (
-            <CarouselSlide key={`${idea._id}-${index}`}>
-              <IdeaCard>
-                <IdeaHeader>
-                  <IdeaTitle>{idea.title}</IdeaTitle>
-                  <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
-                </IdeaHeader>
+        <CarouselWrapper>
+          <CarouselTrack $currentIndex={currentIndex}>
+            {/* Create a seamless loop by duplicating slides */}
+            {[...trendingIdeas, ...trendingIdeas].map((idea, index) => (
+              <CarouselSlide key={`${idea._id}-${index}`}>
+                <IdeaCard>
+                  <IdeaHeader>
+                    <IdeaTitle>{idea.title}</IdeaTitle>
+                    <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
+                  </IdeaHeader>
 
-                <IdeaDescription>{idea.description}</IdeaDescription>
+                  <IdeaDescription>{idea.description}</IdeaDescription>
 
-                <IdeaDetails>
-                  <DetailItem>
-                    <FiTarget />
-                    <DetailLabel>Market:</DetailLabel>
-                    {idea.market}
-                  </DetailItem>
-                  <DetailItem>
-                    <FiTrendingUp />
-                    <DetailLabel>Trend:</DetailLabel>
-                    {idea.trend}
-                  </DetailItem>
-                  <DetailItem>
-                    <FiClock />
-                    <DetailLabel>Launch:</DetailLabel>
-                    {idea.timeToLaunch}
-                  </DetailItem>
-                  <DetailItem>
-                    <FiDollarSign />
-                    <DetailLabel>Potential:</DetailLabel>
-                    {idea.potential}
-                  </DetailItem>
-                </IdeaDetails>
+                  <IdeaDetails>
+                    <DetailItem>
+                      <FiTarget />
+                      <DetailLabel>Market:</DetailLabel>
+                      {idea.market}
+                    </DetailItem>
+                    <DetailItem>
+                      <FiTrendingUp />
+                      <DetailLabel>Trend:</DetailLabel>
+                      {idea.trend}
+                    </DetailItem>
+                    <DetailItem>
+                      <FiClock />
+                      <DetailLabel>Launch:</DetailLabel>
+                      {idea.timeToLaunch}
+                    </DetailItem>
+                    <DetailItem>
+                      <FiDollarSign />
+                      <DetailLabel>Potential:</DetailLabel>
+                      {idea.potential}
+                    </DetailItem>
+                  </IdeaDetails>
 
-                <TagsContainer>
-                  {idea.tags.map((tag, tagIndex) => (
-                    <Tag key={tagIndex}>{tag}</Tag>
-                  ))}
-                </TagsContainer>
+                  <TagsContainer>
+                    {idea.tags.map((tag, tagIndex) => (
+                      <Tag key={tagIndex}>{tag}</Tag>
+                    ))}
+                  </TagsContainer>
 
-                <ActionButtons>
-                  <LikeButton 
-                    $isLiked={idea.isLiked || false}
-                    onClick={() => handleLike(idea._id)}
-                  >
-                    <FiHeart />
-                    {idea.isLiked ? 'Liked' : 'Like'} ({idea.likes || 0})
-                  </LikeButton>
-                  <ExploreButton onClick={() => handleExplore(idea)}>
-                    Explore This Alpha Idea
-                  </ExploreButton>
-                </ActionButtons>
-              </IdeaCard>
-            </CarouselSlide>
-          ))}
-        </CarouselTrack>
+                  <ActionButtons>
+                    <LikeButton 
+                      $isLiked={idea.isLiked || false}
+                      onClick={() => handleLike(idea._id)}
+                    >
+                      <FiHeart />
+                      {idea.isLiked ? 'Liked' : 'Like'} ({idea.likes || 0})
+                    </LikeButton>
+                    <ExploreButton onClick={() => handleExplore(idea)}>
+                      Explore This Alpha Idea
+                    </ExploreButton>
+                  </ActionButtons>
+                </IdeaCard>
+              </CarouselSlide>
+            ))}
+          </CarouselTrack>
+        </CarouselWrapper>
 
         {trendingIdeas.length > 1 && (
           <NavigationButtons>
-            <NavButton onClick={prevSlide}>
+            <NavButton className="nav-left" onClick={prevSlide}>
               <FiArrowLeft />
             </NavButton>
-            <NavButton onClick={nextSlide}>
+            <NavButton className="nav-right" onClick={nextSlide}>
               <FiArrowRight />
             </NavButton>
           </NavigationButtons>
@@ -1309,7 +1129,7 @@ export function TrendingIdeasCarousel() {
       </CarouselContainer>
 
       {trendingIdeas.length > 1 && (
-        <DotsContainer>
+        <ProgressContainer>
           {trendingIdeas.map((_, index) => (
             <Dot
               key={index}
@@ -1317,7 +1137,7 @@ export function TrendingIdeasCarousel() {
               onClick={() => goToSlide(index)}
             />
           ))}
-        </DotsContainer>
+        </ProgressContainer>
       )}
     </Container>
   );

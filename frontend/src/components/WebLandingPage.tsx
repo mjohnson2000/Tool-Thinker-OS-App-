@@ -643,7 +643,7 @@ const WebLandingPage: React.FC = () => {
           </SectionInner>
         </Section>
 
-        <Section id="testimonials" style={{ background: colors.light }}>
+        <Section id="testimonials" style={{ background: colors.white }}>
           <SectionInner>
             <SectionTitle>Side Hustle Success Stories</SectionTitle>
             <SectionSubtitle>See how our users found untapped side hustle opportunities and built profitable income streams.</SectionSubtitle>

@@ -293,6 +293,12 @@ interface ProgressTrackerProps {
 export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscribed = false, isPremature = false }: ProgressTrackerProps) {
   const currentStepIndex = steps.findIndex(step => step.key === currentStepKey);
   const [animating, setAnimating] = React.useState<Set<string>>(new Set());
+  const [forceUpdate, setForceUpdate] = React.useState(0);
+
+  // Force re-render when steps or currentStepKey changes
+  React.useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [steps, currentStepKey]);
 
   const getStatus = (stepIndex: number) => {
     if (currentStepIndex === -1) return 'upcoming';
@@ -328,7 +334,7 @@ export function ProgressTracker({ steps, currentStepKey, onStepClick, isSubscrib
   return (
     <>
       {/* Desktop/Tablet Sidebar */}
-      <TrackerContainer>
+      <TrackerContainer key={`${forceUpdate}-${currentStepKey}`}>
         {steps.map((step, index) => {
           const status = getStatus(index);
           const isClickable = status === 'completed' && canAccessStep(step);

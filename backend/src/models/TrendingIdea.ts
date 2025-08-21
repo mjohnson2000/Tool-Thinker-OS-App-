@@ -10,6 +10,7 @@ export interface ITrendingIdea extends Document {
   timeToLaunch: '1-2 weeks' | '1-2 months' | '3+ months';
   potential: '$500-2K/month' | '$2K-5K/month' | '$5K+/month';
   tags: string[];
+  businessType: 'digital-services' | 'local-services' | 'creative-services' | 'professional-services' | 'physical-products' | 'online-business';
   score: number;
   views: number;
   saves: number;
@@ -76,6 +77,11 @@ const trendingIdeaSchema = new Schema<ITrendingIdea>({
     trim: true,
     maxlength: 50
   }],
+  businessType: {
+    type: String,
+    enum: ['digital-services', 'local-services', 'creative-services', 'professional-services', 'physical-products', 'online-business'],
+    required: true
+  },
   score: {
     type: Number,
     default: 0,

@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LocationModal } from './LocationModal';
+import { fetchChatGPT } from '../../utils/chatgpt';
 
 interface TrendingIdea {
   _id: string;
@@ -18,12 +19,52 @@ interface TrendingIdea {
   timeToLaunch: '1-2 weeks' | '1-2 months' | '3+ months';
   potential: '$500-2K/month' | '$2K-5K/month' | '$5K+/month';
   tags: string[];
+  businessType: 'digital-services' | 'local-services' | 'creative-services' | 'professional-services' | 'physical-products' | 'online-business';
   score: number;
   views: number;
   saves: number;
   likes: number;
   isLiked?: boolean;
 }
+
+const businessTypes = [
+  {
+    id: 'digital-services',
+    title: 'Digital Services',
+    icon: '💻',
+    color: '#3b82f6'
+  },
+  {
+    id: 'local-services',
+    title: 'Local Services',
+    icon: '🏠',
+    color: '#10b981'
+  },
+  {
+    id: 'creative-services',
+    title: 'Creative Services',
+    icon: '🎨',
+    color: '#8b5cf6'
+  },
+  {
+    id: 'professional-services',
+    title: 'Professional Services',
+    icon: '👔',
+    color: '#f59e0b'
+  },
+  {
+    id: 'physical-products',
+    title: 'Physical Products',
+    icon: '🛍️',
+    color: '#ef4444'
+  },
+  {
+    id: 'online-business',
+    title: 'Online Business',
+    icon: '🌐',
+    color: '#06b6d4'
+  }
+];
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -84,12 +125,14 @@ const HeaderLeft = styled.div`
 
 const HeaderRight = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.75rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
   
   @media (max-width: 768px) {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
   }
 `;
 
@@ -194,7 +237,7 @@ const IdeaHeader = styled.div`
 
 const SlideNumber = styled.div`
   position: absolute;
-  top: -15px;
+  top: 5px;
   right: 5px;
   background: #374151;
   color: white;
@@ -273,14 +316,16 @@ const TagsContainer = styled.div`
   margin-bottom: 2.5rem;
 `;
 
-const Tag = styled.span`
-  background: #f0f9ff;
-  color: #0369a1;
+const Tag = styled.span<{ $isHighlighted?: boolean; $color?: string }>`
+  background: ${props => props.$isHighlighted ? 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)' : '#f0f9ff'};
+  color: ${props => props.$isHighlighted ? '#495057' : '#0369a1'};
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  border: 1px solid #bae6fd;
+  border: 1px solid ${props => props.$isHighlighted ? '#dee2e6' : '#bae6fd'};
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.$isHighlighted ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'};
 `;
 
 const ActionButtons = styled.div`
@@ -450,6 +495,61 @@ const ErrorContainer = styled.div`
   margin: 2rem 0;
 `;
 
+const LocationBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  
+  svg {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    
+    svg {
+      font-size: 0.9rem;
+    }
+  }
+`;
+
+const LocationIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-right: 1rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  
+  svg {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    margin-right: 0.5rem;
+    
+    svg {
+      font-size: 0.9rem;
+    }
+  }
+`;
+
 const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -602,6 +702,7 @@ export function TrendingIdeasCarousel() {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [pendingLocalRequest, setPendingLocalRequest] = useState(false);
+  const [exploringIdeaId, setExploringIdeaId] = useState<string | null>(null);
 
 
 
@@ -833,30 +934,92 @@ export function TrendingIdeasCarousel() {
     }
   };
 
-  const handleExplore = (idea: TrendingIdea) => {
-    // Prepare the idea data for the app
-    const ideaData = {
-      title: idea.title,
-      description: idea.description,
-      market: idea.market,
-      trend: idea.trend,
-      difficulty: idea.difficulty,
-      investment: idea.investment,
-      timeToLaunch: idea.timeToLaunch,
-      potential: idea.potential,
-      tags: idea.tags,
-      source: 'trending-ideas',
-      sourceId: idea._id
-    };
+  const generateIdeaSummary = async (idea: TrendingIdea): Promise<string> => {
+    try {
+      const businessTypeInfo = businessTypes.find(bt => bt.id === idea.businessType);
+      const locationContext = user?.location ? 
+        `Location: ${user.location.city}, ${user.location.region}, ${user.location.country}. ` : 
+        '';
+      
+      const prompt = `Create a concise 50-word summary of this business idea for a user to explore. Include the key opportunity, target market, and potential. Make it engaging and actionable.
 
-    // Store the idea data in localStorage for the app to access
-    localStorage.setItem('prefilledIdea', JSON.stringify(ideaData));
-    
-    // Clear any existing app state to start fresh
-    localStorage.removeItem('appState');
-    
-    // Navigate to the app
-    navigate('/app');
+Business Type: ${businessTypeInfo?.title || 'General'}
+${locationContext}
+Title: ${idea.title}
+Description: ${idea.description}
+Market: ${idea.market}
+Trend: ${idea.trend}
+Difficulty: ${idea.difficulty}
+Investment: ${idea.investment}
+Time to Launch: ${idea.timeToLaunch}
+Potential: ${idea.potential}
+
+Write exactly 50 words:`;
+
+      const response = await fetchChatGPT(prompt);
+      return typeof response === 'string' ? response : response.message || idea.description;
+    } catch (error) {
+      console.error('Error generating idea summary:', error);
+      // Fallback to a simple summary if AI fails
+      return `${idea.title}: ${idea.description.substring(0, 100)}...`;
+    }
+  };
+
+  const handleExplore = async (idea: TrendingIdea) => {
+    try {
+      setExploringIdeaId(idea._id);
+      // Generate AI summary
+      const aiSummary = await generateIdeaSummary(idea);
+      
+      // Prepare the idea data for the app
+      const ideaData = {
+        title: idea.title,
+        description: idea.description,
+        market: idea.market,
+        trend: idea.trend,
+        difficulty: idea.difficulty,
+        investment: idea.investment,
+        timeToLaunch: idea.timeToLaunch,
+        potential: idea.potential,
+        tags: idea.tags,
+        businessType: idea.businessType,
+        aiSummary: aiSummary,
+        source: 'trending-ideas',
+        sourceId: idea._id
+      };
+
+      // Store the idea data in localStorage for the app to access
+      localStorage.setItem('prefilledIdea', JSON.stringify(ideaData));
+      
+      // Clear any existing app state to start fresh
+      localStorage.removeItem('appState');
+      
+      // Navigate to the app
+      navigate('/app');
+    } catch (error) {
+      console.error('Error handling explore:', error);
+      // Fallback to original behavior if AI summary fails
+      const ideaData = {
+        title: idea.title,
+        description: idea.description,
+        market: idea.market,
+        trend: idea.trend,
+        difficulty: idea.difficulty,
+        investment: idea.investment,
+        timeToLaunch: idea.timeToLaunch,
+        potential: idea.potential,
+        tags: idea.tags,
+        businessType: idea.businessType,
+        source: 'trending-ideas',
+        sourceId: idea._id
+      };
+      
+      localStorage.setItem('prefilledIdea', JSON.stringify(ideaData));
+      localStorage.removeItem('appState');
+      navigate('/app');
+    } finally {
+      setExploringIdeaId(null);
+    }
   };
 
   const handleIdeaTypeChange = (type: 'general' | 'local') => {
@@ -993,6 +1156,12 @@ export function TrendingIdeasCarousel() {
             <FiClock />
             {formatDate()}
           </DateDisplay>
+          {ideaType === 'local' && user?.location && (
+            <LocationIndicator>
+              <FiMapPin />
+              {user.location.city}, {user.location.region}
+            </LocationIndicator>
+          )}
           <ToggleContainer>
             <ToggleButton 
               $active={ideaType === 'general'} 
@@ -1066,6 +1235,13 @@ export function TrendingIdeasCarousel() {
                     <IdeaTitle>{idea.title}</IdeaTitle>
                     <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
                   </IdeaHeader>
+                  
+                  {ideaType === 'local' && user?.location && (
+                    <LocationBadge>
+                      <FiMapPin />
+                      {user.location.city}, {user.location.region}
+                    </LocationBadge>
+                  )}
 
                   <IdeaDescription>{idea.description}</IdeaDescription>
 
@@ -1092,11 +1268,16 @@ export function TrendingIdeasCarousel() {
                     </DetailItem>
                   </IdeaDetails>
 
-                  <TagsContainer>
-                    {idea.tags.map((tag, tagIndex) => (
-                      <Tag key={tagIndex}>{tag}</Tag>
-                    ))}
-                  </TagsContainer>
+                                                                  <TagsContainer>
+                                  {idea.businessType && (
+                                    <Tag 
+                                      $isHighlighted={true}
+                                      $color={businessTypes.find(bt => bt.id === idea.businessType)?.color || '#3b82f6'}
+                                    >
+                                      <strong>Business Type:</strong> {businessTypes.find(bt => bt.id === idea.businessType)?.title}
+                                    </Tag>
+                                  )}
+                                </TagsContainer>
 
                   <ActionButtons>
                     <LikeButton 
@@ -1106,8 +1287,11 @@ export function TrendingIdeasCarousel() {
                       <FiHeart />
                       {idea.isLiked ? 'Liked' : 'Like'} ({idea.likes || 0})
                     </LikeButton>
-                    <ExploreButton onClick={() => handleExplore(idea)}>
-                      Explore This Alpha Idea
+                    <ExploreButton 
+                      onClick={() => handleExplore(idea)}
+                      disabled={exploringIdeaId === idea._id}
+                    >
+                      {exploringIdeaId === idea._id ? 'Generating Summary...' : 'Explore This Alpha Idea'}
                     </ExploreButton>
                   </ActionButtons>
                 </IdeaCard>

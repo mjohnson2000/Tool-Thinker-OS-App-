@@ -894,7 +894,7 @@ function AppContent() {
           // Pre-fill the idea data with supported fields
           parsedState.idea = {
             ...parsedState.idea,
-            existingIdeaText: ideaData.title,
+            existingIdeaText: ideaData.aiSummary || ideaData.title,
             interests: ideaData.description || '',
             area: { 
               id: 'trending-idea', 
@@ -925,7 +925,13 @@ function AppContent() {
   } else if (prefilledIdea) {
     // Only set to existingIdea if we're not showing login
     parsedState.currentStep = 'existingIdea';
-    console.log('Setting currentStep to existingIdea from prefilledIdea');
+    parsedState.entryPoint = 'premature'; // Set entryPoint to premature for trending ideas
+    console.log('Setting currentStep to existingIdea and entryPoint to premature from prefilledIdea');
+    
+    // Force immediate state update to ensure progress tracker renders correctly
+    setTimeout(() => {
+      console.log('Forcing state update for progress tracker');
+    }, 0);
   }
   
   // Ensure the idea object is properly structured

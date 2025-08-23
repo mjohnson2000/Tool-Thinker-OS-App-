@@ -1362,8 +1362,15 @@ Write exactly 50 words:`;
   const handleExplore = async (idea: TrendingIdea) => {
     try {
       setExploringIdeaId(idea._id);
-      // Generate AI summary
-      const aiSummary = await generateIdeaSummary(idea);
+      
+      // Generate AI summary with retry logic
+      let aiSummary = '';
+      try {
+        aiSummary = await generateIdeaSummary(idea);
+      } catch (summaryError) {
+        console.warn('AI summary generation failed, using fallback:', summaryError);
+        aiSummary = `${idea.title}: ${idea.description.substring(0, 100)}...`;
+      }
       
       // Prepare the idea data for the app
       const ideaData = {
@@ -1388,14 +1395,20 @@ Write exactly 50 words:`;
       // Store the idea data in localStorage for the app to access
       localStorage.setItem('prefilledIdea', JSON.stringify(ideaData));
       
+      // Add a flag to indicate idea exploration was initiated
+      localStorage.setItem('ideaExplorationInitiated', 'true');
+      
       // Clear any existing app state to start fresh
       localStorage.removeItem('appState');
       
-      // Navigate to the app
-      navigate('/app');
+      // Add a small delay to ensure localStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to the dedicated idea explorer
+      navigate('/explore-idea');
     } catch (error) {
       console.error('Error handling explore:', error);
-      // Fallback to original behavior if AI summary fails
+      // Fallback to original behavior if everything fails
       const ideaData = {
         title: idea.title,
         description: idea.description,
@@ -1412,8 +1425,16 @@ Write exactly 50 words:`;
       };
       
       localStorage.setItem('prefilledIdea', JSON.stringify(ideaData));
+      
+      // Add a flag to indicate idea exploration was initiated
+      localStorage.setItem('ideaExplorationInitiated', 'true');
+      
       localStorage.removeItem('appState');
-      navigate('/app');
+      
+      // Add a small delay to ensure localStorage is written
+      setTimeout(() => {
+        navigate('/explore-idea');
+      }, 100);
     } finally {
       setExploringIdeaId(null);
     }

@@ -13,6 +13,7 @@ import { FeedbackWidget } from './components/common/FeedbackWidget';
 import { trackEvent } from './utils/analytics';
 import AdminLogsPage from './components/business-plan/AdminLogsPage';
 import { AutomatedDiscoveryPage } from './components/idea-discovery/AutomatedDiscoveryPage';
+import { TrendingIdeaExplorer } from './components/idea-exploration/TrendingIdeaExplorer';
 
 // Landing and Auth Components
 import WebLandingPage from './components/WebLandingPage';
@@ -809,6 +810,7 @@ interface AppState {
   competitionDescription: string | null;
   isTrackerCollapsed: boolean;
   stepBeforeAuth: Step | null;
+
   // Premature path specific state
   prematureIdeaType: { id: string; title: string; description: string; icon: string; examples: string[] } | null;
   prematureLocation: { city: string; region: string; country: string; operatingModel: string } | null;
@@ -882,82 +884,93 @@ function AppContent() {
     try {
       const storedState = window.localStorage.getItem('appState');
       console.log('Loaded appState from localStorage:', storedState);
-      const parsedState = storedState ? JSON.parse(storedState) : initialAppState;
-      
-      // Check for pre-filled idea data from trending ideas
-      const prefilledIdea = localStorage.getItem('prefilledIdea');
-      if (prefilledIdea) {
-        try {
-          const ideaData = JSON.parse(prefilledIdea);
-          console.log('Found pre-filled idea data:', ideaData);
-          
-          // Pre-fill the idea data with supported fields
-          parsedState.idea = {
-            ...parsedState.idea,
-            existingIdeaText: ideaData.aiSummary || ideaData.title,
-            interests: ideaData.description || '',
-            area: { 
-              id: 'trending-idea', 
-              title: ideaData.title, 
-              description: ideaData.description, 
-              icon: '🔥' 
+              const parsedState = storedState ? JSON.parse(storedState) : initialAppState;
+        
+        // Check for pre-filled idea data from trending ideas explorer
+        const prefilledIdea = localStorage.getItem('prefilledIdea');
+        const explorationInitiated = localStorage.getItem('ideaExplorationInitiated');
+        
+        console.log('App initialization - prefilledIdea:', prefilledIdea);
+        console.log('App initialization - explorationInitiated:', explorationInitiated);
+        
+        if (prefilledIdea && explorationInitiated) {
+          try {
+            const ideaData = JSON.parse(prefilledIdea);
+            console.log('Processing idea data from explorer:', ideaData);
+            
+            // Pre-fill the idea data
+            parsedState.idea = {
+              ...parsedState.idea,
+              existingIdeaText: ideaData.aiSummary || ideaData.title,
+              interests: ideaData.description || '',
+              area: { 
+                id: 'trending-idea', 
+                title: ideaData.title, 
+                description: ideaData.description, 
+                icon: '🔥' 
+              }
+            };
+            
+            // Pre-fill business type if selected
+            if (ideaData.selectedBusinessType) {
+              const businessTypeInfo = {
+                id: ideaData.selectedBusinessType,
+                title: ideaData.selectedBusinessType.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                description: `Pre-selected business type from trending ideas`,
+                icon: '💼',
+                examples: []
+              };
+              parsedState.ideaType = businessTypeInfo;
+              parsedState.prematureIdeaType = businessTypeInfo;
             }
-          };
-          
-          // Pre-fill business type if selected
-          if (ideaData.selectedBusinessType) {
-            const businessTypeInfo = {
-              id: ideaData.selectedBusinessType,
-              title: ideaData.selectedBusinessType.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-              description: `Pre-selected business type from trending ideas`,
-              icon: '💼',
-              examples: []
-            };
-            parsedState.ideaType = businessTypeInfo;
-            parsedState.prematureIdeaType = businessTypeInfo;
+            
+            // Pre-fill scope if selected
+            if (ideaData.scopeData) {
+              const scopeData = {
+                hoursPerWeek: ideaData.scopeData.hoursPerWeek,
+                incomeTarget: ideaData.scopeData.incomeTarget
+              };
+              parsedState.scheduleGoals = scopeData;
+              parsedState.prematureScheduleGoals = scopeData;
+            }
+            
+            // Set the correct step and entry point for idea exploration
+            // Only set to existingIdea if we have actual idea data
+            if (ideaData.aiSummary || ideaData.title) {
+              parsedState.currentStep = 'existingIdea';
+              parsedState.entryPoint = 'customer';
+            } else {
+              // If no idea data, default to landing
+              parsedState.currentStep = 'landing';
+              parsedState.entryPoint = 'idea';
+            }
+            
+            console.log('Successfully processed idea data, setting step to existingIdea');
+            console.log('Final parsedState:', parsedState);
+            
+            // Don't clear the localStorage data here - we'll clear it after the component renders
+            console.log('App: Successfully processed idea data, will clear flags after render');
+            
+          } catch (error) {
+            console.error('Error parsing idea data from explorer:', error);
+            // Clear invalid data
+            localStorage.removeItem('prefilledIdea');
+            localStorage.removeItem('ideaExplorationInitiated');
+            localStorage.removeItem('fromTrendingIdeas');
           }
-          
-          // Pre-fill scope if selected
-          if (ideaData.scopeData) {
-            const scopeData = {
-              hoursPerWeek: ideaData.scopeData.hoursPerWeek,
-              incomeTarget: ideaData.scopeData.incomeTarget
-            };
-            parsedState.scheduleGoals = scopeData;
-            parsedState.prematureScheduleGoals = scopeData;
-          }
-          
-          console.log('Found pre-filled idea data:', ideaData);
-          
-                // Clear the pre-filled data from localStorage
-      localStorage.removeItem('prefilledIdea');
-    } catch (error) {
-      console.error('Error parsing pre-filled idea data:', error);
-      localStorage.removeItem('prefilledIdea');
-    }
-  }
-  
-  // Check if we should show login after navigation (from trending ideas)
-  // This must happen BEFORE any other currentStep modifications
-  const showLoginAfterNavigation = localStorage.getItem('showLoginAfterNavigation');
-  console.log('showLoginAfterNavigation:', showLoginAfterNavigation);
-  if (showLoginAfterNavigation === 'true') {
-    localStorage.removeItem('showLoginAfterNavigation');
-    parsedState.currentStep = 'login';
-    console.log('Setting currentStep to login from showLoginAfterNavigation');
-  } else if (prefilledIdea) {
-    // Only set to existingIdea if we're not showing login
-    parsedState.currentStep = 'existingIdea';
-    parsedState.entryPoint = 'premature'; // Set entryPoint to premature for trending ideas
-    console.log('Setting currentStep to existingIdea and entryPoint to premature from prefilledIdea');
-    
-    // Force immediate state update to ensure progress tracker renders correctly
-    setTimeout(() => {
-      console.log('Forcing state update for progress tracker');
-    }, 0);
-  }
-  
-  // Ensure the idea object is properly structured
+        }
+        
+        // Check if we should show login after navigation (from trending ideas)
+      // This must happen BEFORE any other currentStep modifications
+      const showLoginAfterNavigation = localStorage.getItem('showLoginAfterNavigation');
+      console.log('showLoginAfterNavigation:', showLoginAfterNavigation);
+      if (showLoginAfterNavigation === 'true') {
+        localStorage.removeItem('showLoginAfterNavigation');
+        parsedState.currentStep = 'login';
+        console.log('Setting currentStep to login from showLoginAfterNavigation');
+      }
+      
+      // Ensure the idea object is properly structured
       if (!parsedState.idea || typeof parsedState.idea !== 'object') {
         parsedState.idea = { interests: '', area: null, existingIdeaText: '' };
       }
@@ -1018,6 +1031,17 @@ function AppContent() {
     }
   }, [appState]);
 
+  // Clear trending idea flags after successful processing
+  useEffect(() => {
+    if (appState.currentStep === 'existingIdea' && localStorage.getItem('fromTrendingIdeas') === 'true') {
+      console.log('App: Clearing trending idea flags after existingIdea step is active');
+      localStorage.removeItem('prefilledIdea');
+      localStorage.removeItem('ideaExplorationInitiated');
+      localStorage.removeItem('fromTrendingIdeas');
+      console.log('App: Trending idea flags cleared');
+    }
+  }, [appState.currentStep]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('profile') === '1') {
@@ -1062,6 +1086,8 @@ function AppContent() {
       }
     }
   }, [isAuthenticated, appState.currentStep, navigate]);
+
+
 
 
 
@@ -1360,6 +1386,8 @@ function AppContent() {
   // Debug: log appState before rendering
   console.log('AppContent about to render, appState:', appState);
   console.log('Current step:', currentStep, 'isFlowStep:', isFlowStep);
+  console.log('isAuthenticated:', isAuthenticated);
+  console.log('location.pathname:', location.pathname);
   if (currentStep === 'summary') {
     console.log('Summary render check:', { idea, customer, job });
   }
@@ -1392,6 +1420,7 @@ function AppContent() {
       )}
       <Routes>
         <Route path="/" element={<WebLandingPage />} />
+        <Route path="/explore-idea" element={<TrendingIdeaExplorer />} />
         <Route path="/app" element={
           <AppContainer>
 
@@ -1552,6 +1581,17 @@ function AppContent() {
                   )}
                   <MainContent isExpanded={isTrackerCollapsed}>
                     <>
+                      {currentStep === 'existingIdea' && (
+                        <ExistingIdea 
+                          key={`existingIdea-${idea?.existingIdeaText || 'empty'}`}
+                          onSubmit={handleExistingIdeaSubmit} 
+                          initialValue={idea?.existingIdeaText || ''} 
+                          onClear={handleClearExistingIdea}
+                          ideaType={entryPoint === 'customer' ? appState.prematureIdeaType : ideaType}
+                          location={entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null)}
+                          scheduleGoals={entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals}
+                        />
+                      )}
                       {currentStep === 'ideaType' && <IdeaTypeSelection onSelect={handleIdeaTypeSelect} />}
                       {currentStep === 'location' && <LocationSelection onSelect={handleLocationSelect} ideaType={ideaType} />}
                       {currentStep === 'skillAssessment' && idea.area && (
@@ -1625,17 +1665,6 @@ function AppContent() {
                       )}
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />
-                      )}
-                      {currentStep === 'existingIdea' && (
-                        <ExistingIdea 
-                          key={`existingIdea-${idea?.existingIdeaText || 'empty'}`}
-                          onSubmit={handleExistingIdeaSubmit} 
-                          initialValue={idea?.existingIdeaText || ''} 
-                          onClear={handleClearExistingIdea}
-                          ideaType={entryPoint === 'customer' ? appState.prematureIdeaType : ideaType}
-                          location={entryPoint === 'customer' ? appState.prematureLocation : (appState.location ? { city: appState.location.city, region: appState.location.region, country: appState.location.country } : null)}
-                          scheduleGoals={entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals}
-                        />
                       )}
                       {currentStep === 'describeCustomer' && (
                         <DescribeCustomer 
@@ -2265,7 +2294,6 @@ function AppContent() {
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />
                       )}
-                      {currentStep === 'existingIdea' && <ExistingIdea onSubmit={handleExistingIdeaSubmit} initialValue={idea.existingIdeaText} onClear={handleClearStep} />}
                       {currentStep === 'describeCustomer' && <DescribeCustomer onSubmit={handleDescribeCustomerSubmit} initialValue={customer?.description} onClear={handleClearStep} />}
                       {currentStep === 'describeProblem' && (
                         <DescribeProblem

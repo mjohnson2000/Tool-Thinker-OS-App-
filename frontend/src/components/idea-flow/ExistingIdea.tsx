@@ -556,7 +556,6 @@ export function ExistingIdea({ onSubmit, initialValue = '', onClear, ideaType, l
             {isLoading ? 'Assessing...' : 'Continue'}
           </SubmitButton>
         </form>
-        <ClearButton onClick={() => window.location.reload()}>Refresh Page</ClearButton>
         
         
       </FormCard>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -502,6 +502,7 @@ const WebLandingPage: React.FC = () => {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
+
   React.useEffect(() => {
     const onScroll = () => setScrolled((window.scrollY || 0) > 24);
     onScroll();
@@ -509,8 +510,14 @@ const WebLandingPage: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+
+
   const handleStart = () => {
     window.localStorage.removeItem('appState');
+    // Clear any trending idea data to ensure clean start
+    localStorage.removeItem('prefilledIdea');
+    localStorage.removeItem('ideaExplorationInitiated');
+    localStorage.removeItem('fromTrendingIdeas');
     trackEvent('hero_primary_cta', 'engagement', 'start_for_free');
     navigate('/app');
   };

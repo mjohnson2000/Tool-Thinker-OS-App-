@@ -513,13 +513,28 @@ const WebLandingPage: React.FC = () => {
 
 
   const handleStart = () => {
-    window.localStorage.removeItem('appState');
-    // Clear any trending idea data to ensure clean start
-    localStorage.removeItem('prefilledIdea');
-    localStorage.removeItem('ideaExplorationInitiated');
-    localStorage.removeItem('fromTrendingIdeas');
-    trackEvent('hero_primary_cta', 'engagement', 'start_for_free');
-    navigate('/app');
+    // Comprehensive cleanup to ensure clean start
+    const keysToRemove = [
+      'appState',
+      'prefilledIdea', 
+      'ideaExplorationInitiated',
+      'fromTrendingIdeas',
+      'pendingLocalRequest',
+      'showLoginAfterNavigation'
+    ];
+    
+    // Clear all localStorage items
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Also clear any sessionStorage items that might persist
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    
+    // Force a small delay to ensure cleanup is complete
+    setTimeout(() => {
+      trackEvent('hero_primary_cta', 'engagement', 'start_for_free');
+      // Use window.location.href to force a complete page reload and state reset
+      window.location.href = '/app';
+    }, 100);
   };
 
   const handleLogin = () => {

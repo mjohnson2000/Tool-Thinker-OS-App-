@@ -285,20 +285,40 @@ const IdeaHeader = styled.div`
 
 const SlideNumber = styled.div`
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #374151;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 0.9rem;
+  box-shadow: 
+    0 4px 12px rgba(0,0,0,0.15),
+    0 2px 4px rgba(0,0,0,0.1);
   z-index: 10;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+      0 6px 16px rgba(0,0,0,0.2),
+      0 3px 6px rgba(0,0,0,0.15);
+  }
+  
+  @media (max-width: 768px) {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
 `;
 
 const IdeaTitle = styled.h3`
@@ -958,42 +978,172 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const AuthPrompt = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  margin: 2rem 0;
-`;
-
-const AuthPromptTitle = styled.h3`
-  color: #374151;
-  margin: 0 0 0.75rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-`;
-
-const AuthPromptText = styled.p`
-  color: #6b7280;
-  margin: 0 0 1.5rem 0;
-  line-height: 1.6;
-`;
-
-const AuthButton = styled.button`
-  background: #181a1b;
-  color: white;
-  border: 1px solid #181a1b;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+const AuthModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 1rem;
   
-  &:hover {
-    background: #374151;
-    border-color: #374151;
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+`;
+
+const AuthModalCard = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 
+    0 4px 20px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+    max-width: calc(100vw - 1rem);
+    margin: 0 0.5rem;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #181a1b, #4a4a4a, #181a1b);
+    border-radius: 20px 20px 0 0;
+    
+    @media (max-width: 768px) {
+      border-radius: 16px 16px 0 0;
+    }
+  }
+`;
+
+const AuthModalTitle = styled.div`
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+`;
+
+const AuthModalMessage = styled.div`
+  font-size: 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const AuthModalButtons = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+`;
+
+const AuthModalButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  font-family: 'Audiowide', 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: 400;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  font-display: swap;
+  
+  @media (max-width: 768px) {
+    padding: 0.875rem 1rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    width: 100%;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  &:hover, &:focus {
+    transform: translateY(-1px);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &.primary {
+    background: linear-gradient(135deg, #181a1b 0%, #4a4a4a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+  }
+  
+  &.secondary {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    color: var(--text-primary);
+    border: 2px solid #E5E5E5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    
+    &:hover {
+      border-color: #181a1b;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
   }
 `;
 
@@ -1187,13 +1337,9 @@ export function TrendingIdeasCarousel() {
       setCurrentIndex((prev) => {
         const nextIndex = prev + 1;
         
-        // If we've reached the end of the first set, jump to the beginning of the second set
+        // Loop back to first slide when reaching the end
         if (nextIndex >= trendingIdeas.length) {
-          // After the transition, reset to the beginning
-          setTimeout(() => {
-            setCurrentIndex(0);
-          }, 500);
-          return trendingIdeas.length; // This will show the first slide of the second set
+          return 0;
         }
         
         return nextIndex;
@@ -1227,7 +1373,7 @@ export function TrendingIdeasCarousel() {
         }
       }
       
-      const response = await axios.get(`${API_URL}/trending-ideas?type=${ideaType}`, config);
+      const response = await axios.get(`${API_URL}/trending-ideas?type=${ideaType}&limit=5`, config);
       const data = response.data as any;
       
       if (data.status === 'success') {
@@ -1257,9 +1403,7 @@ export function TrendingIdeasCarousel() {
     setCurrentIndex((prev) => {
       const nextIndex = prev + 1;
       if (nextIndex >= trendingIdeas.length) {
-        // Jump to the beginning of the second set
-        setTimeout(() => setCurrentIndex(0), 500);
-        return trendingIdeas.length;
+        return 0; // Loop back to first slide
       }
       return nextIndex;
     });
@@ -1270,9 +1414,7 @@ export function TrendingIdeasCarousel() {
     setCurrentIndex((prev) => {
       const prevIndex = prev - 1;
       if (prevIndex < 0) {
-        // Jump to the end of the first set
-        setTimeout(() => setCurrentIndex(trendingIdeas.length - 1), 500);
-        return -1;
+        return trendingIdeas.length - 1; // Loop to last slide
       }
       return prevIndex;
     });
@@ -1442,7 +1584,7 @@ Write exactly 50 words:`;
 
   const handleIdeaTypeChange = (type: 'general' | 'local') => {
     if (type === 'local' && !isAuthenticated) {
-      // Store pending request and redirect to login
+      // Store pending request and show auth modal
       localStorage.setItem('pendingLocalRequest', 'true');
       setPendingLocalRequest(true);
       setShowAuthPrompt(true);
@@ -1480,9 +1622,9 @@ Write exactly 50 words:`;
     // Set flag for pending local request and navigate to login
     localStorage.setItem('pendingLocalRequest', 'true');
     console.log('Setting pendingLocalRequest and navigating to login');
-    // Test: try direct navigation first
-    window.location.href = '/app?login=true';
     setShowAuthPrompt(false);
+    // Navigate to login
+    window.location.href = '/app?login=true';
   };
 
 
@@ -1574,27 +1716,53 @@ Write exactly 50 words:`;
       </Header>
 
       {showAuthPrompt && (
-        <AuthPrompt>
-          <AuthPromptTitle>Sign In Required</AuthPromptTitle>
-          <AuthPromptText>
-            To view local opportunities, you need to sign in to your account.
-          </AuthPromptText>
-          <AuthButton onClick={handleSignIn}>
-            Sign In
-          </AuthButton>
-        </AuthPrompt>
+        <AuthModalOverlay onClick={() => setShowAuthPrompt(false)}>
+          <AuthModalCard onClick={(e) => e.stopPropagation()}>
+            <AuthModalTitle>🔐 Sign In Required</AuthModalTitle>
+            <AuthModalMessage>
+              To view local opportunities tailored to your area, you need to sign in to your account.
+            </AuthModalMessage>
+            <AuthModalButtons>
+              <AuthModalButton
+                className="primary"
+                onClick={handleSignIn}
+              >
+                Sign In
+              </AuthModalButton>
+              <AuthModalButton
+                className="secondary"
+                onClick={() => setShowAuthPrompt(false)}
+              >
+                Cancel
+              </AuthModalButton>
+            </AuthModalButtons>
+          </AuthModalCard>
+        </AuthModalOverlay>
       )}
 
       {showLocationPrompt && (
-        <AuthPrompt>
-          <AuthPromptTitle>Location Required</AuthPromptTitle>
-          <AuthPromptText>
-            To view local trending ideas, please add your location to your profile.
-          </AuthPromptText>
-          <AuthButton onClick={handleUpdateProfile}>
-            Update Profile
-          </AuthButton>
-        </AuthPrompt>
+        <AuthModalOverlay onClick={() => setShowLocationPrompt(false)}>
+          <AuthModalCard onClick={(e) => e.stopPropagation()}>
+            <AuthModalTitle>📍 Location Required</AuthModalTitle>
+            <AuthModalMessage>
+              To view local trending ideas, please add your location to your profile.
+            </AuthModalMessage>
+            <AuthModalButtons>
+              <AuthModalButton
+                className="primary"
+                onClick={handleUpdateProfile}
+              >
+                Update Profile
+              </AuthModalButton>
+              <AuthModalButton
+                className="secondary"
+                onClick={() => setShowLocationPrompt(false)}
+              >
+                Cancel
+              </AuthModalButton>
+            </AuthModalButtons>
+          </AuthModalCard>
+        </AuthModalOverlay>
       )}
 
       <LocationModal
@@ -1735,13 +1903,13 @@ Write exactly 50 words:`;
         )}
         <CarouselWrapper>
           <CarouselTrack $currentIndex={currentIndex}>
-            {/* Create a seamless loop by duplicating slides */}
-            {[...trendingIdeas, ...trendingIdeas].map((idea, index) => (
+            {/* Show only the original slides (no infinite scrolling) */}
+            {trendingIdeas.map((idea, index) => (
               <CarouselSlide key={`${idea._id}-${index}`}>
                 <IdeaCard>
                   <IdeaHeader>
                     <IdeaTitle>{idea.title}</IdeaTitle>
-                    <SlideNumber>{(index % trendingIdeas.length) + 1}</SlideNumber>
+                    <SlideNumber>{index + 1}</SlideNumber>
                   </IdeaHeader>
                   
                   {ideaType === 'local' && user?.location && (
@@ -1837,7 +2005,7 @@ Write exactly 50 words:`;
           {trendingIdeas.map((_, index) => (
             <Dot
               key={index}
-              $active={index === (currentIndex % trendingIdeas.length)}
+              $active={index === currentIndex}
               onClick={() => goToSlide(index)}
             />
           ))}

@@ -1042,6 +1042,40 @@ function AppContent() {
     }
   }, [appState.currentStep]);
 
+  // Fallback mechanism: Detect if user is on wrong page and provide reset option
+  useEffect(() => {
+    const prefilledIdea = localStorage.getItem('prefilledIdea');
+    const explorationInitiated = localStorage.getItem('ideaExplorationInitiated');
+    const fromTrendingIdeas = localStorage.getItem('fromTrendingIdeas');
+    
+    // If we have trending idea flags but we're not on the existingIdea step, 
+    // and we're not on the landing page, something went wrong
+    if ((prefilledIdea || explorationInitiated || fromTrendingIdeas) && 
+        appState.currentStep !== 'existingIdea' && 
+        appState.currentStep !== 'landing') {
+      
+      console.log('App: Detected wrong page state - user has trending idea flags but is on step:', appState.currentStep);
+      
+      // Show a user-friendly message and provide reset option
+      const shouldReset = window.confirm(
+        'It looks like you were exploring a trending idea but ended up on the wrong page. Would you like to reset and start fresh?'
+      );
+      
+      if (shouldReset) {
+        // Clear all trending idea flags
+        localStorage.removeItem('prefilledIdea');
+        localStorage.removeItem('ideaExplorationInitiated');
+        localStorage.removeItem('fromTrendingIdeas');
+        localStorage.removeItem('pendingLocalRequest');
+        
+        // Reset to landing page using window.location to avoid state issues
+        window.location.href = '/app';
+        
+        console.log('App: Reset to landing page after user confirmation');
+      }
+    }
+  }, [appState.currentStep]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('profile') === '1') {
@@ -2010,8 +2044,6 @@ function AppContent() {
         <Route path="/hustle/:id/edit" element={
           <AppContainer>
             <Logo
-              src={logo}
-              alt="ToolThinker Logo"
               onClick={handleLogoToLanding}
               onKeyDown={handleLogoKeyDown}
               role="link"
@@ -2085,8 +2117,6 @@ function AppContent() {
         <Route path="*" element={
           <AppContainer>
             <Logo
-              src={logo}
-              alt="ToolThinker Logo"
               onClick={handleLogoToLanding}
               onKeyDown={handleLogoKeyDown}
               role="link"

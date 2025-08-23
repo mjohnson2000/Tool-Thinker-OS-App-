@@ -1429,7 +1429,6 @@ export function TrendingIdeasCarousel() {
 
   const generateLocalTrendingIdeas = async (city: string, region: string, country: string) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/trending-ideas/generate-local`,
         {
@@ -1439,7 +1438,6 @@ export function TrendingIdeasCarousel() {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }

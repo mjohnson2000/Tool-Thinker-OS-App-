@@ -904,6 +904,29 @@ function AppContent() {
             }
           };
           
+          // Pre-fill business type if selected
+          if (ideaData.selectedBusinessType) {
+            const businessTypeInfo = {
+              id: ideaData.selectedBusinessType,
+              title: ideaData.selectedBusinessType.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+              description: `Pre-selected business type from trending ideas`,
+              icon: '💼',
+              examples: []
+            };
+            parsedState.ideaType = businessTypeInfo;
+            parsedState.prematureIdeaType = businessTypeInfo;
+          }
+          
+          // Pre-fill scope if selected
+          if (ideaData.scopeData) {
+            const scopeData = {
+              hoursPerWeek: ideaData.scopeData.hoursPerWeek,
+              incomeTarget: ideaData.scopeData.incomeTarget
+            };
+            parsedState.scheduleGoals = scopeData;
+            parsedState.prematureScheduleGoals = scopeData;
+          }
+          
           console.log('Found pre-filled idea data:', ideaData);
           
                 // Clear the pre-filled data from localStorage

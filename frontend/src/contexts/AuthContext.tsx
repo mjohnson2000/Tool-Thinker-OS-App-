@@ -110,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.data && response.data.data) {
         setAuthToken(response.data.data.token);
         setUser(response.data.data.user);
+        
+        // Refresh user data to ensure we have the most up-to-date information
+        setTimeout(() => {
+          validateToken();
+        }, 100);
       }
     } catch (error: any) {
       console.error('Login request failed:', error);

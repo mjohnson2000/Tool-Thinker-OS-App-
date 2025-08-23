@@ -246,6 +246,16 @@ const TopBarRight = styled.div`
   }
 `;
 
+const TopBarRightSimple = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.05rem;
+  }
+`;
+
 const LoginButton = styled.button`
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #181a1b;
@@ -305,6 +315,40 @@ const SignupFreeButton = styled.button`
   &:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+`;
+
+const LogoutButton = styled.button`
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #181a1b;
+  border: 2px solid rgba(24, 26, 27, 0.15);
+  border-radius: 12px;
+  padding: 0.7rem 1.4rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+  
+  &:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-color: rgba(24, 26, 27, 0.25);
+    color: #181a1b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 26, 27, 0.1);
   }
   
   @media (max-width: 768px) {
@@ -454,7 +498,7 @@ const CTADesc = styled.p`opacity: .95; margin: 0 auto 1.2rem auto; max-width: 68
 
 const WebLandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -474,6 +518,12 @@ const WebLandingPage: React.FC = () => {
   const handleLogin = () => {
     trackEvent('header_login_click', 'engagement', 'login');
     navigate('/app?login=true');
+  };
+
+  const handleLogout = () => {
+    trackEvent('header_logout_click', 'engagement', 'logout');
+    logout();
+    navigate('/');
   };
 
   const scrollTo = (id: string, label: string) => (e: React.MouseEvent) => {
@@ -507,11 +557,15 @@ const WebLandingPage: React.FC = () => {
               <a href="#demo" onClick={scrollTo('demo', 'demo')}>Demo</a>
               <a href="#testimonials" onClick={scrollTo('testimonials', 'testimonials')}>Testimonials</a>
             </DesktopNav>
-            {!isAuthenticated && (
-              <TopBarRight>
+            {!isAuthenticated ? (
+              <TopBarRightSimple>
                 <LoginButton onClick={handleLogin}>Log in</LoginButton>
                 <SignupFreeButton onClick={handleStart}>Sign up for free</SignupFreeButton>
-              </TopBarRight>
+              </TopBarRightSimple>
+            ) : (
+              <TopBarRightSimple>
+                <LogoutButton onClick={handleLogout}>Log out</LogoutButton>
+              </TopBarRightSimple>
             )}
             <MobileMenuButton 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -524,8 +578,12 @@ const WebLandingPage: React.FC = () => {
             <a href="#features" onClick={(e) => { scrollTo('features', 'features')(e); setMobileMenuOpen(false); }}>Features</a>
             <a href="#demo" onClick={(e) => { scrollTo('demo', 'demo')(e); setMobileMenuOpen(false); }}>Demo</a>
             <a href="#testimonials" onClick={(e) => { scrollTo('testimonials', 'testimonials')(e); setMobileMenuOpen(false); }}>Testimonials</a>
-            {!isAuthenticated && <a href="#" onClick={() => { handleLogin(); setMobileMenuOpen(false); }}>Log in</a>}
-            <a href="#" onClick={() => { handleStart(); setMobileMenuOpen(false); }}>Sign up for free</a>
+            {!isAuthenticated ? (
+              <a href="#" onClick={() => { handleLogin(); setMobileMenuOpen(false); }}>Log in</a>
+            ) : (
+              <a href="#" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>Log out</a>
+            )}
+            {!isAuthenticated && <a href="#" onClick={() => { handleStart(); setMobileMenuOpen(false); }}>Sign up for free</a>}
           </MobileNav>
         </Header>
 
@@ -571,7 +629,7 @@ const WebLandingPage: React.FC = () => {
               <StatLabel>Success Rate</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>12min</StatNumber>
+              <StatNumber>15min</StatNumber>
               <StatLabel>Time to Find Your Idea</StatLabel>
             </StatCard>
           </StatsGrid>

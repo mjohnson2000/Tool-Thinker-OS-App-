@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FiTrendingUp, FiClock, FiDollarSign, FiTarget, FiArrowLeft, FiArrowRight, FiBookmark, FiPause, FiPlay, FiMapPin, FiGlobe, FiHeart } from 'react-icons/fi';
+import { FiTrendingUp, FiClock, FiDollarSign, FiTarget, FiArrowLeft, FiArrowRight, FiBookmark, FiPause, FiPlay, FiMapPin, FiGlobe, FiHeart, FiChevronDown } from 'react-icons/fi';
 import { FaFire } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -32,37 +32,61 @@ const businessTypes = [
     id: 'digital-services',
     title: 'Digital Services',
     icon: '💻',
-    color: '#3b82f6'
+    color: '#6b7280'
   },
   {
     id: 'local-services',
     title: 'Local Services',
     icon: '🏠',
-    color: '#10b981'
+    color: '#6b7280'
   },
   {
     id: 'creative-services',
     title: 'Creative Services',
     icon: '🎨',
-    color: '#8b5cf6'
+    color: '#6b7280'
   },
   {
     id: 'professional-services',
     title: 'Professional Services',
     icon: '👔',
-    color: '#f59e0b'
+    color: '#6b7280'
   },
   {
     id: 'physical-products',
     title: 'Physical Products',
     icon: '🛍️',
-    color: '#ef4444'
+    color: '#6b7280'
   },
   {
     id: 'online-business',
     title: 'Online Business',
     icon: '🌐',
-    color: '#06b6d4'
+    color: '#6b7280'
+  }
+];
+
+const scopeOptions = [
+  {
+    id: 'part-time-low',
+    title: 'Part-Time Low',
+    description: '5-10 hrs/week • $500-2K/month',
+    hoursPerWeek: 7,
+    incomeTarget: 1250
+  },
+  {
+    id: 'part-time-medium',
+    title: 'Part-Time Medium',
+    description: '10-20 hrs/week • $2K-5K/month',
+    hoursPerWeek: 15,
+    incomeTarget: 3500
+  },
+  {
+    id: 'full-time',
+    title: 'Full-Time',
+    description: '20+ hrs/week • $5K+/month',
+    hoursPerWeek: 25,
+    incomeTarget: 7500
   }
 ];
 
@@ -97,10 +121,12 @@ const Container = styled.div`
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0.25rem 0;
+  padding: 0.0625rem 0;
+  position: relative;
   
   @media (max-width: 768px) {
-    padding: 0.125rem 0;
+    padding: 0.03125rem 0.5rem;
+    max-width: 100%;
   }
 `;
 
@@ -108,7 +134,7 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -163,10 +189,15 @@ const Title = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  padding-left: 2rem;
   
   svg {
     color: #374151;
     animation: ${float} 3s ease-in-out infinite;
+  }
+  
+  @media (max-width: 768px) {
+    padding-left: 1rem;
   }
 `;
 
@@ -176,54 +207,71 @@ const Subtitle = styled.p`
   line-height: 1.6;
   margin: 0;
   max-width: 600px;
+  padding-left: 2rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    line-height: 1.5;
+    padding-left: 1rem;
+  }
 `;
 
 const ToggleContainer = styled.div`
   display: flex;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
-  padding: 0.25rem;
-  gap: 0.25rem;
+  padding: 0.125rem;
+  gap: 0.125rem;
+  width: 100%;
+  min-height: 44px;
 `;
 
-const ToggleButton = styled.button<{ $active: boolean }>`
-  background: ${props => props.$active ? '#ffffff' : 'transparent'};
-  color: ${props => props.$active ? '#181a1b' : '#6b7280'};
+const ToggleButton = styled.button<{ $active: boolean; $isLocal?: boolean }>`
+  background: ${props => props.$active ? (props.$isLocal ? '#6b7280' : '#6b7280') : 'transparent'};
+  color: ${props => props.$active ? 'white' : '#1d1d1f'};
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  box-shadow: ${props => props.$active ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'};
+  flex: 1;
+  min-height: 36px;
   
   &:hover {
-    background: ${props => props.$active ? '#ffffff' : '#f1f5f9'};
-    color: ${props => props.$active ? '#181a1b' : '#374151'};
+    background: ${props => props.$active ? (props.$isLocal ? '#4b5563' : '#4b5563') : 'rgba(255, 255, 255, 0.9)'};
+    color: ${props => props.$active ? 'white' : '#1d1d1f'};
+    transform: translateY(-1px);
   }
   
   @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.95rem;
+    min-height: 32px;
   }
 `;
 
 const CarouselContainer = styled.div`
   position: relative;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  padding: 1rem 2rem;
+  padding: 0.5rem 2rem;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   
   @media (max-width: 768px) {
-    padding: 0.75rem 1.5rem;
+    padding: 0.375rem 1rem;
+    border-radius: 12px;
+    margin: 0 0.5rem;
   }
 `;
 
@@ -268,6 +316,12 @@ const IdeaDescription = styled.p`
   margin-bottom: 2.5rem;
   font-size: 1.1rem;
   font-weight: 500;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+  }
 `;
 
 const IdeaDetails = styled.div`
@@ -410,6 +464,18 @@ const NavigationButtons = styled.div`
   .nav-right {
     margin-right: -0.5rem;
   }
+  
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+    
+    .nav-left {
+      margin-left: -2rem;
+    }
+    
+    .nav-right {
+      margin-right: -2rem;
+    }
+  }
 `;
 
 const NavButton = styled.button`
@@ -452,6 +518,11 @@ const ProgressContainer = styled.div`
   justify-content: center;
   margin-top: 2rem;
   gap: 0.5rem;
+  
+  @media (max-width: 768px) {
+    margin-top: 1.5rem;
+    gap: 0.4rem;
+  }
 `;
 
 const Dot = styled.button<{ $active: boolean }>`
@@ -465,6 +536,11 @@ const Dot = styled.button<{ $active: boolean }>`
   
   &:hover {
     background: ${props => props.$active ? '#374151' : '#9ca3af'};
+  }
+  
+  @media (max-width: 768px) {
+    width: 10px;
+    height: 10px;
   }
 `;
 
@@ -528,25 +604,334 @@ const LocationIndicator = styled.div`
   gap: 0.5rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-right: 1rem;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  margin-top: 0.75rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   
   svg {
     font-size: 1rem;
   }
   
   @media (max-width: 768px) {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    margin-right: 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
     
     svg {
       font-size: 0.9rem;
     }
+  }
+`;
+
+const GlobalSelectorsContainer = styled.div`
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-bottom: 0;
+    border-radius: 12px;
+  }
+`;
+
+const SelectorGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  align-items: stretch;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  min-height: 140px;
+  justify-content: flex-start;
+  overflow: visible;
+  
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 20%;
+    bottom: 20%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1), transparent);
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+    padding: 1.25rem;
+    min-height: auto;
+    
+    &:not(:last-child)::after {
+      display: none;
+    }
+  }
+`;
+
+const SelectorLabel = styled.label`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 0.625rem;
+  letter-spacing: -0.01em;
+  
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const SelectorDropdown = styled.select`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 3rem;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #6b7280;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+  }
+  
+  option {
+    background: white !important;
+    color: #1d1d1f !important;
+    padding: 0.75rem !important;
+  }
+  
+  option:hover {
+    background: #f3f4f6 !important;
+  }
+  
+  option:checked {
+    background: #6b7280 !important;
+    color: white !important;
+  }
+  
+  option:focus {
+    background: #f3f4f6 !important;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+    padding: 0.875rem 1rem;
+    padding-right: 2.75rem;
+  }
+`;
+
+const SelectorsRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0;
+  align-items: start;
+  position: relative;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+const SelectorsTitle = styled.h3`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 2rem 0;
+  text-align: center;
+  letter-spacing: -0.02em;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const CollapsibleHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.875rem 0;
+    margin-bottom: 1.25rem;
+    min-height: 44px; /* Better touch target */
+  }
+`;
+
+const CollapsibleTitle = styled.h3`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    gap: 0.5rem;
+  }
+`;
+
+const CollapsibleIcon = styled.div<{ $isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: ${props => props.$isExpanded ? '#6b7280' : 'rgba(0, 0, 0, 0.1)'};
+  color: ${props => props.$isExpanded ? 'white' : '#1d1d1f'};
+  transition: all 0.2s ease;
+  transform: ${props => props.$isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+`;
+
+const CollapsibleContent = styled.div<{ $isExpanded: boolean }>`
+  max-height: ${props => props.$isExpanded ? '1000px' : '0'};
+  overflow: visible;
+  transition: all 0.3s ease-in-out;
+  opacity: ${props => props.$isExpanded ? '1' : '0'};
+`;
+
+const CustomDropdown = styled.div`
+  position: relative;
+  width: 100%;
+  z-index: 999999;
+`;
+
+const CustomDropdownButton = styled.button`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #6b7280;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+    padding: 0.875rem 1rem;
+  }
+`;
+
+const CustomDropdownMenu = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 999999;
+  max-height: ${props => props.$isOpen ? '300px' : '0'};
+  overflow: hidden;
+  transition: all 0.2s ease;
+  opacity: ${props => props.$isOpen ? '1' : '0'};
+  margin-top: 4px;
+`;
+
+const CustomDropdownOption = styled.div<{ $isSelected?: boolean }>`
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.$isSelected ? '#6b7280' : 'white'};
+  color: ${props => props.$isSelected ? 'white' : '#1d1d1f'};
+  
+  &:hover {
+    background: ${props => props.$isSelected ? '#4b5563' : '#f3f4f6'};
+  }
+  
+  &:first-child {
+    border-radius: 12px 12px 0 0;
+  }
+  
+  &:last-child {
+    border-radius: 0 0 12px 12px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    min-height: 44px; /* Better touch target */
+    display: flex;
+    align-items: center;
   }
 `;
 
@@ -645,6 +1030,7 @@ const CarouselWrapper = styled.div`
   width: 100%;
   overflow: hidden;
   position: relative;
+  margin-top: 1rem;
 `;
 
 const CarouselTrack = styled.div<{ $currentIndex: number }>`
@@ -703,6 +1089,13 @@ export function TrendingIdeasCarousel() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [pendingLocalRequest, setPendingLocalRequest] = useState(false);
   const [exploringIdeaId, setExploringIdeaId] = useState<string | null>(null);
+  
+  // Global selections
+  const [selectedBusinessType, setSelectedBusinessType] = useState<string | null>(null);
+  const [selectedScope, setSelectedScope] = useState<string | null>(null);
+  const [isRefineSearchExpanded, setIsRefineSearchExpanded] = useState(false);
+  const [showBusinessTypeDropdown, setShowBusinessTypeDropdown] = useState(false);
+  const [showScopeDropdown, setShowScopeDropdown] = useState(false);
 
 
 
@@ -719,41 +1112,42 @@ export function TrendingIdeasCarousel() {
     console.log('user:', user);
     console.log('user?.location:', user?.location);
     
-    if (pendingRequest === 'true' && isAuthenticated) {
+    if (pendingRequest === 'true' && isAuthenticated && user) {
       localStorage.removeItem('pendingLocalRequest');
       setPendingLocalRequest(false);
       
-      // Scroll to the carousel
+      // Add a small delay to ensure user data is fully loaded
       setTimeout(() => {
+        // Scroll to the carousel
         const carouselElement = document.querySelector('[data-carousel-section]');
         if (carouselElement) {
           carouselElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 100);
-      
-      // Check if user has complete location info
-      const hasLocation = user?.location && 
-                         user.location.city && 
-                         user.location.region && 
-                         user.location.country &&
-                         user.location.city.trim() !== '' &&
-                         user.location.region.trim() !== '' &&
-                         user.location.country.trim() !== '';
-      
-      console.log('hasLocation:', hasLocation);
-      console.log('user?.location?.city:', user?.location?.city);
-      console.log('user?.location?.region:', user?.location?.region);
-      console.log('user?.location?.country:', user?.location?.country);
-      
-      if (!hasLocation) {
-        console.log('Showing location modal');
-        setShowLocationModal(true);
-      } else {
-        console.log('Switching to local ideas');
-        setIdeaType('local');
-      }
+        
+        // Check if user has complete location info
+        const hasLocation = user.location && 
+                           user.location.city && 
+                           user.location.region && 
+                           user.location.country &&
+                           user.location.city.trim() !== '' &&
+                           user.location.region.trim() !== '' &&
+                           user.location.country.trim() !== '';
+        
+        console.log('hasLocation:', hasLocation);
+        console.log('user?.location?.city:', user?.location?.city);
+        console.log('user?.location?.region:', user?.location?.region);
+        console.log('user?.location?.country:', user?.location?.country);
+        
+        if (!hasLocation) {
+          console.log('Showing location modal');
+          setShowLocationModal(true);
+        } else {
+          console.log('Switching to local ideas');
+          setIdeaType('local');
+        }
+      }, 200); // Small delay to ensure user data is fully loaded
     }
-  }, [isAuthenticated, user?.location]);
+  }, [isAuthenticated, user]);
 
   // Handle post-login navigation back to landing page
   useEffect(() => {
@@ -836,7 +1230,7 @@ export function TrendingIdeasCarousel() {
       const response = await axios.get(`${API_URL}/trending-ideas?type=${ideaType}`, config);
       const data = response.data as any;
       
-      if (data.success) {
+      if (data.status === 'success') {
         setTrendingIdeas(data.data);
       } else {
         setError('Failed to fetch trending ideas');
@@ -984,6 +1378,9 @@ Write exactly 50 words:`;
         tags: idea.tags,
         businessType: idea.businessType,
         aiSummary: aiSummary,
+        selectedBusinessType: selectedBusinessType,
+        selectedScope: selectedScope,
+        scopeData: selectedScope ? scopeOptions.find(s => s.id === selectedScope) : null,
         source: 'trending-ideas',
         sourceId: idea._id
       };
@@ -1067,10 +1464,7 @@ Write exactly 50 words:`;
     setShowAuthPrompt(false);
   };
 
-  const testNavigation = () => {
-    console.log('Testing navigation to landing page');
-    window.location.href = '/';
-  };
+
 
   const handleUpdateProfile = () => {
     navigate('/app?profile=1');
@@ -1140,11 +1534,10 @@ Write exactly 50 words:`;
   }
 
   return (
-    <Container data-carousel-section>
+    <Container className="carousel-container" data-carousel-section>
       <Header>
         <HeaderLeft>
           <Title>
-            <FaFire style={{ color: '#374151' }} />
             Today's Alpha-Niche Ideas
           </Title>
           <Subtitle>
@@ -1156,28 +1549,6 @@ Write exactly 50 words:`;
             <FiClock />
             {formatDate()}
           </DateDisplay>
-          {ideaType === 'local' && user?.location && (
-            <LocationIndicator>
-              <FiMapPin />
-              {user.location.city}, {user.location.region}
-            </LocationIndicator>
-          )}
-          <ToggleContainer>
-            <ToggleButton 
-              $active={ideaType === 'general'} 
-              onClick={() => handleIdeaTypeChange('general')}
-            >
-              <FiGlobe />
-              General
-            </ToggleButton>
-            <ToggleButton 
-              $active={ideaType === 'local'} 
-              onClick={() => handleIdeaTypeChange('local')}
-            >
-              <FiMapPin />
-              Local
-            </ToggleButton>
-          </ToggleContainer>
         </HeaderRight>
       </Header>
 
@@ -1185,13 +1556,10 @@ Write exactly 50 words:`;
         <AuthPrompt>
           <AuthPromptTitle>Sign In Required</AuthPromptTitle>
           <AuthPromptText>
-            To like trending ideas and view local opportunities, you need to sign in to your account.
+            To view local opportunities, you need to sign in to your account.
           </AuthPromptText>
           <AuthButton onClick={handleSignIn}>
             Sign In
-          </AuthButton>
-          <AuthButton onClick={testNavigation} style={{ marginTop: '10px', backgroundColor: '#181a1b' }}>
-            Test Navigation
           </AuthButton>
         </AuthPrompt>
       )}
@@ -1213,6 +1581,125 @@ Write exactly 50 words:`;
         onClose={handleLocationModalClose}
         onSave={handleLocationModalSave}
       />
+
+      <GlobalSelectorsContainer>
+        <CollapsibleHeader onClick={() => setIsRefineSearchExpanded(!isRefineSearchExpanded)}>
+          <CollapsibleTitle>
+            <FiTarget />
+            Refine Your Search
+          </CollapsibleTitle>
+          <CollapsibleIcon $isExpanded={isRefineSearchExpanded}>
+            <FiChevronDown />
+          </CollapsibleIcon>
+        </CollapsibleHeader>
+        
+        <CollapsibleContent $isExpanded={isRefineSearchExpanded}>
+          <SelectorsRow>
+            <SelectorGroup>
+              <SelectorLabel>Idea Type</SelectorLabel>
+              <ToggleContainer>
+                <ToggleButton 
+                  $active={ideaType === 'general'} 
+                  onClick={() => handleIdeaTypeChange('general')}
+                >
+                  <FiGlobe />
+                  General
+                </ToggleButton>
+                <ToggleButton 
+                  $active={ideaType === 'local'} 
+                  $isLocal={true}
+                  onClick={() => handleIdeaTypeChange('local')}
+                >
+                  <FiMapPin />
+                  Local
+                </ToggleButton>
+              </ToggleContainer>
+              {ideaType === 'local' && user?.location && (
+                <LocationIndicator>
+                  <FiMapPin />
+                  {user.location.city}, {user.location.region}
+                </LocationIndicator>
+              )}
+            </SelectorGroup>
+            
+            <SelectorGroup>
+              <SelectorLabel>Business Type</SelectorLabel>
+              <CustomDropdown>
+                <CustomDropdownButton
+                  onClick={() => setShowBusinessTypeDropdown(!showBusinessTypeDropdown)}
+                  onBlur={() => setTimeout(() => setShowBusinessTypeDropdown(false), 150)}
+                >
+                  {selectedBusinessType ? businessTypes.find(bt => bt.id === selectedBusinessType)?.title : 'Select business type'}
+                  <FiChevronDown style={{ transform: showBusinessTypeDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                </CustomDropdownButton>
+                <CustomDropdownMenu 
+                  $isOpen={showBusinessTypeDropdown}
+                >
+                  <CustomDropdownOption
+                    onClick={() => {
+                      setSelectedBusinessType(null);
+                      setShowBusinessTypeDropdown(false);
+                    }}
+                  >
+                    Select business type
+                  </CustomDropdownOption>
+                  {businessTypes.map((businessType) => (
+                    <CustomDropdownOption
+                      key={businessType.id}
+                      $isSelected={selectedBusinessType === businessType.id}
+                      onClick={() => {
+                        setSelectedBusinessType(businessType.id);
+                        setShowBusinessTypeDropdown(false);
+                      }}
+                    >
+                      {businessType.title}
+                    </CustomDropdownOption>
+                  ))}
+                </CustomDropdownMenu>
+              </CustomDropdown>
+            </SelectorGroup>
+            
+            <SelectorGroup>
+              <SelectorLabel>Time Commitment</SelectorLabel>
+              <CustomDropdown>
+                <CustomDropdownButton
+                  onClick={() => setShowScopeDropdown(!showScopeDropdown)}
+                  onBlur={() => setTimeout(() => setShowScopeDropdown(false), 150)}
+                >
+                  {selectedScope ? scopeOptions.find(s => s.id === selectedScope)?.description : 'Select time commitment'}
+                  <FiChevronDown style={{ transform: showScopeDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                </CustomDropdownButton>
+                <CustomDropdownMenu 
+                  $isOpen={showScopeDropdown}
+                >
+                  <CustomDropdownOption
+                    onClick={() => {
+                      setSelectedScope(null);
+                      setShowScopeDropdown(false);
+                    }}
+                  >
+                    Select time commitment
+                  </CustomDropdownOption>
+                  {scopeOptions.map((scope) => (
+                    <CustomDropdownOption
+                      key={scope.id}
+                      $isSelected={selectedScope === scope.id}
+                      onClick={() => {
+                        setSelectedScope(scope.id);
+                        setShowScopeDropdown(false);
+                      }}
+                    >
+                      {scope.description}
+                    </CustomDropdownOption>
+                  ))}
+                </CustomDropdownMenu>
+              </CustomDropdown>
+            </SelectorGroup>
+          </SelectorsRow>
+        </CollapsibleContent>
+      </GlobalSelectorsContainer>
+      
+
 
       <CarouselContainer>
         {trendingIdeas.length > 1 && (
@@ -1269,12 +1756,20 @@ Write exactly 50 words:`;
                   </IdeaDetails>
 
                                                                   <TagsContainer>
-                                  {idea.businessType && (
+                                  {selectedBusinessType && (
                                     <Tag 
                                       $isHighlighted={true}
-                                      $color={businessTypes.find(bt => bt.id === idea.businessType)?.color || '#3b82f6'}
+                                      $color={businessTypes.find(bt => bt.id === selectedBusinessType)?.color || '#6b7280'}
                                     >
-                                      <strong>Business Type:</strong> {businessTypes.find(bt => bt.id === idea.businessType)?.title}
+                                      <strong>Business Type:</strong> {businessTypes.find(bt => bt.id === selectedBusinessType)?.title}
+                                    </Tag>
+                                  )}
+                                  {selectedScope && (
+                                    <Tag 
+                                      $isHighlighted={true}
+                                      $color="#8b5cf6"
+                                    >
+                                      <strong>Scope:</strong> {scopeOptions.find(s => s.id === selectedScope)?.description}
                                     </Tag>
                                   )}
                                 </TagsContainer>
@@ -1291,7 +1786,11 @@ Write exactly 50 words:`;
                       onClick={() => handleExplore(idea)}
                       disabled={exploringIdeaId === idea._id}
                     >
-                      {exploringIdeaId === idea._id ? 'Generating Summary...' : 'Explore This Alpha Idea'}
+                      {exploringIdeaId === idea._id ? 'Generating Summary...' : 
+                        `Explore This Alpha Idea${selectedBusinessType || selectedScope ? ` (${[
+                          selectedBusinessType && businessTypes.find(bt => bt.id === selectedBusinessType)?.title,
+                          selectedScope && scopeOptions.find(s => s.id === selectedScope)?.title
+                        ].filter(Boolean).join(' • ')})` : ''}`}
                     </ExploreButton>
                   </ActionButtons>
                 </IdeaCard>

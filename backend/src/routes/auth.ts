@@ -76,9 +76,14 @@ router.post('/signup', async (req, res, next) => {
         token,
         user: {
           email: user.email,
+          name: user.name,
+          profilePic: user.profilePic,
+          location: user.location,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
           subscriptionTier: user.subscriptionTier || 'basic',
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin
         }
       }
     });
@@ -119,6 +124,7 @@ router.post('/login', async (req, res, next) => {
           email: user.email,
           name: user.name,
           profilePic: user.profilePic,
+          location: user.location,
           isVerified: user.isVerified,
           isSubscribed: user.isSubscribed,
           subscriptionTier: user.subscriptionTier || 'basic',

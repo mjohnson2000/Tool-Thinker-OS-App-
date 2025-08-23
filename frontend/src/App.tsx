@@ -767,9 +767,7 @@ const steps = [
   { key: 'job', label: 'Problem' },
   { key: 'solution', label: 'Solution' },
   { key: 'skillAssessment', label: 'Skills' },
-  { key: 'businessPlan', label: 'Side Hustle Plan', isPremium: true },
-  { key: 'nextStepsHub', label: 'Discovery', isPremium: true },
-  { key: 'launch', label: 'Launch', isPremium: true },
+  { key: 'businessPlan', label: 'Alpha Plan', isPremium: true },
 ];
 
 const prematureIdeaFlowSteps = [
@@ -781,11 +779,9 @@ const prematureIdeaFlowSteps = [
   { key: 'describeProblem', label: '6. Problem' },
   { key: 'describeSolution', label: '7. Solution' },
   { key: 'prematureSkillAssessment', label: '8. Skills' },
-  { key: 'businessPlan', label: '9. New Idea', isPremium: true },
+  { key: 'businessPlan', label: '9. Alpha Plan', isPremium: true },
   { key: 'marketEvaluation', label: '10. Market Evaluation', isPremium: true },
   { key: 'evaluationScore', label: '11. Validation Score', isPremium: true },
-  { key: 'nextStepsHub', label: '12. Discovery', isPremium: true },
-  { key: 'launch', label: '13. Launch', isPremium: true },
 ];
 
 const flowStepKeys = [...steps.map(s => s.key), ...prematureIdeaFlowSteps.map(s => s.key)];

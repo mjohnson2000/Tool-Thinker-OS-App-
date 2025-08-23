@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark gray outer square with rounded corners -->
+  <rect width="32" height="32" rx="6" fill="#4a4a4a"/>
+  
+  <!-- White inner square with rounded corners -->
+  <rect x="2" y="2" width="28" height="28" rx="4" fill="white"/>
+  
+  <!-- Black uppercase "A" -->
+  <path d="M16 6 L22 24 L20 24 L18.5 20 L13.5 20 L12 24 L10 24 Z M16 8 L14.5 18 L17.5 18 Z" fill="black"/>
+</svg>

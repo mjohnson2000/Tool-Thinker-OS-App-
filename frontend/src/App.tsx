@@ -27,12 +27,12 @@ import { SubscriptionPage } from './components/auth/SubscriptionPage';
 import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
 import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
 import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage';
-import { StartupPlanPageDiscovery } from './components/idea-discovery/StartupPlanPageDiscovery';
 import { AutomatedValidationPage } from './components/business-plan/AutomatedValidationPage';
 
 // Idea Flow Components
 import { Landing } from './components/idea-flow/Landing';
 import { IdeaTypeSelection } from './components/idea-flow/IdeaTypeSelection';
+import { Guidance } from './components/idea-flow/Guidance';
 import { LocationSelection } from './components/idea-flow/LocationSelection';
 import { SkillAssessment } from './components/idea-flow/SkillAssessment';
 import { ScheduleGoalsSelection } from './components/idea-flow/ScheduleGoalsSelection';
@@ -675,7 +675,7 @@ const PlanBadge = styled.div`
   }
 `;
 
-type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment';
+type Step = 'landing' | 'idea' | 'ideaType' | 'location' | 'skillAssessment' | 'scheduleGoals' | 'customer' | 'job' | 'summary' | 'app' | 'login' | 'signup' | 'profile' | 'existingIdea' | 'describeCustomer' | 'describeProblem' | 'describeSolution' | 'describeCompetition' | 'businessPlan' | 'prematureJobDiscovery' | 'marketEvaluation' | 'evaluationScore' | 'startupPlan' | 'launch' | 'solution' | 'prematureIdeaType' | 'prematureLocation' | 'prematureScheduleGoals' | 'prematureSkillAssessment' | 'customerGuidance' | 'problemGuidance';
 
 type EntryPoint = 'idea' | 'customer';
 
@@ -1153,7 +1153,9 @@ function AppContent() {
       prematureIdeaType: 'Business Type Selection',
       prematureLocation: 'Location Selection',
       prematureScheduleGoals: 'Scope',
-      prematureSkillAssessment: 'Skill Assessment'
+      prematureSkillAssessment: 'Skill Assessment',
+      customerGuidance: 'Customer Guidance',
+      problemGuidance: 'Problem Guidance'
     };
 
     const pageTitle = pageTitles[appState.currentStep] || 'Unknown Page';
@@ -1667,31 +1669,7 @@ function AppContent() {
                         </div>
                       )}
                       {currentStep === 'businessPlan' && job && (
-                        <StartupPlanPageDiscovery
-                          context={{
-                            idea,
-                            customer,
-                            job,
-                            problemDescription,
-                            solutionDescription,
-                            competitionDescription,
-                            location: userLocation,
-                            scheduleGoals,
-                            skillAssessment,
-                          }}
-                          onSignup={() => {
-                            setAppState(prev => ({
-                              ...prev,
-                              currentStep: 'signup',
-                              stepBeforeAuth: 'businessPlan',
-                            }));
-                          }}
-                          onLogin={() => {
-                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
-                          }}
-                          isAuthenticated={isAuthenticated}
-                          isSubscribed={user?.isSubscribed}
-                        />
+                        <StartupPlanViewPage />
                       )}
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />
@@ -2285,37 +2263,7 @@ function AppContent() {
                         </div>
                       )}
                       {currentStep === 'businessPlan' && job && (
-                        <StartupPlanPageDiscovery
-                          context={{
-                            idea,
-                            customer,
-                            job: entryPoint === 'customer' ? appState.prematureJob : job,
-                            problemDescription,
-                            solutionDescription,
-                            competitionDescription,
-                            location: entryPoint === 'customer' ? appState.prematureLocation : userLocation,
-                            scheduleGoals: entryPoint === 'customer' ? appState.prematureScheduleGoals : scheduleGoals,
-                            skillAssessment: entryPoint === 'customer' ? 
-                              (appState.prematureSkillAssessment ? {
-                                skills: [],
-                                selectedSkills: appState.prematureSkillAssessment.selectedSkills,
-                                recommendations: appState.prematureSkillAssessment.recommendations,
-                                learningPath: appState.prematureSkillAssessment.learningPath
-                              } : null) : skillAssessment,
-                          }}
-                          onSignup={() => {
-                            setAppState(prev => ({
-                              ...prev,
-                              currentStep: 'signup',
-                              stepBeforeAuth: 'businessPlan',
-                            }));
-                          }}
-                          onLogin={() => {
-                            setAppState(prev => ({ ...prev, stepBeforeAuth: 'businessPlan', currentStep: 'login' }));
-                          }}
-                          isAuthenticated={isAuthenticated}
-                          isSubscribed={user?.isSubscribed}
-                        />
+                        <StartupPlanViewPage />
                       )}
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />

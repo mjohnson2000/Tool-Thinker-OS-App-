@@ -7,12 +7,21 @@ const router = Router();
 // Get trending ideas
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { type, limit = 10 } = req.query;
+    const { type, limit = 10, city, region, country } = req.query;
     
     let query: any = {};
     if (type === 'local') {
-      // For local ideas, filter by isLocal flag
+      // For local ideas, filter by isLocal flag and location
       query.isLocal = true;
+      
+      // If location parameters are provided, filter by specific location
+      if (city && region && country) {
+        query.location = {
+          city: city,
+          region: region,
+          country: country
+        };
+      }
     } else if (type === 'general') {
       // For general ideas, filter by isLocal flag being false
       query.isLocal = false;
@@ -156,6 +165,115 @@ router.post('/generate', async (req: Request, res: Response, next: NextFunction)
       success: true,
       data: savedIdeas,
       message: 'Successfully generated new trending ideas'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/trending-ideas/generate-local - Generate location-specific trending ideas
+router.post('/generate-local', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { city, region, country } = req.body;
+    
+    if (!city || !region || !country) {
+      return res.status(400).json({
+        success: false,
+        error: 'City, region, and country are required for local idea generation'
+      });
+    }
+    
+    // Check if ideas already exist for this location today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const existingIdeas = await TrendingIdea.find({
+      isLocal: true,
+      location: {
+        city: city,
+        region: region,
+        country: country
+      },
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    });
+    
+    if (existingIdeas.length > 0) {
+      return res.json({
+        success: true,
+        data: existingIdeas,
+        message: 'Local ideas already exist for this location today'
+      });
+    }
+    
+    // Generate location-specific ideas
+    const localIdeas = [
+      {
+        title: `${city} Food Delivery Network`,
+        description: `Connect local ${city} restaurants with customers for food delivery`,
+        market: `Local ${city} restaurants and food lovers`,
+        trend: 'Local food delivery growth',
+        difficulty: 'Medium' as const,
+        investment: 'Medium' as const,
+        timeToLaunch: '2-4 weeks' as const,
+        potential: '$3K-8K/month' as const,
+        tags: ['food', 'delivery', 'local', 'restaurants', city.toLowerCase()],
+        businessType: 'local-services' as const,
+        isLocal: true,
+        location: {
+          city: city,
+          region: region,
+          country: country
+        }
+      },
+      {
+        title: `${city} Handyman Services`,
+        description: `Connect skilled handymen with ${city} homeowners`,
+        market: `Local ${city} homeowners and renters`,
+        trend: 'Home improvement services',
+        difficulty: 'Easy' as const,
+        investment: 'Low' as const,
+        timeToLaunch: '1-2 weeks' as const,
+        potential: '$2K-6K/month' as const,
+        tags: ['handyman', 'home', 'repair', 'local', city.toLowerCase()],
+        businessType: 'local-services' as const,
+        isLocal: true,
+        location: {
+          city: city,
+          region: region,
+          country: country
+        }
+      },
+      {
+        title: `${city} Event Planning Services`,
+        description: `Provide event planning and coordination services for ${city} businesses and residents`,
+        market: `Local ${city} businesses and event organizers`,
+        trend: 'Local event services',
+        difficulty: 'Medium' as const,
+        investment: 'Low' as const,
+        timeToLaunch: '1-2 months' as const,
+        potential: '$4K-10K/month' as const,
+        tags: ['events', 'planning', 'local', 'services', city.toLowerCase()],
+        businessType: 'local-services' as const,
+        isLocal: true,
+        location: {
+          city: city,
+          region: region,
+          country: country
+        }
+      }
+    ];
+    
+    const savedIdeas = await TrendingIdea.insertMany(localIdeas);
+    
+    res.json({
+      success: true,
+      data: savedIdeas,
+      message: `Successfully generated local trending ideas for ${city}, ${region}`
     });
   } catch (error) {
     next(error);

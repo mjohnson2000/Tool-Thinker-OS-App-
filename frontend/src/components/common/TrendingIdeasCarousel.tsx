@@ -1373,11 +1373,34 @@ export function TrendingIdeasCarousel() {
         }
       }
       
-      const response = await axios.get(`${API_URL}/trending-ideas?type=${ideaType}&limit=5`, config);
+      // For local ideas, include user location in the request
+      let url = `${API_URL}/trending-ideas?type=${ideaType}&limit=5`;
+      if (ideaType === 'local' && user?.location) {
+        const { city, region, country } = user.location;
+        if (city && region && country) {
+          url += `&city=${encodeURIComponent(city)}&region=${encodeURIComponent(region)}&country=${encodeURIComponent(country)}`;
+        }
+      }
+      
+      const response = await axios.get(url, config);
       const data = response.data as any;
       
       if (data.status === 'success') {
         setTrendingIdeas(data.data);
+        
+        // If no local ideas found and user has location, try to generate them
+        if (ideaType === 'local' && data.data.length === 0 && user?.location) {
+          const { city, region, country } = user.location;
+          if (city && region && country) {
+            await generateLocalTrendingIdeas(city, region, country);
+            // Fetch again after generation
+            const retryResponse = await axios.get(url, config);
+            const retryData = retryResponse.data as any;
+            if (retryData.status === 'success') {
+              setTrendingIdeas(retryData.data);
+            }
+          }
+        }
       } else {
         setError('Failed to fetch trending ideas');
       }
@@ -1395,6 +1418,31 @@ export function TrendingIdeasCarousel() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateLocalTrendingIdeas = async (city: string, region: string, country: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/trending-ideas/generate-local`,
+        {
+          city,
+          region,
+          country
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Generated local trending ideas:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error generating local trending ideas:', error);
     }
   };
 

@@ -26,6 +26,7 @@ import { SubscriptionPage } from './components/auth/SubscriptionPage';
 // Business Plan Components
 import StartupPlanDashboard from './components/business-plan/StartupPlanDashboard';
 import StartupPlanViewPage from './components/business-plan/StartupPlanViewPage';
+import { GeneratedBusinessPlan } from './components/idea-flow/GeneratedBusinessPlan';
 import StartupPlanEditPage from './components/business-plan/StartupPlanEditPage';
 import { AutomatedValidationPage } from './components/business-plan/AutomatedValidationPage';
 
@@ -1084,6 +1085,11 @@ function AppContent() {
       // Remove ?login=true from the URL after opening
       params.delete('login');
       navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    } else if (params.get('signup') === 'true') {
+      setAppState(prev => ({ ...prev, currentStep: 'signup' }));
+      // Remove ?signup=true from the URL after opening
+      params.delete('signup');
+      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
     }
   }, [location.search]);
 
@@ -1669,7 +1675,14 @@ function AppContent() {
                         </div>
                       )}
                       {currentStep === 'businessPlan' && job && (
-                        <StartupPlanViewPage />
+                        <GeneratedBusinessPlan 
+                          idea={idea}
+                          customer={customer}
+                          job={job}
+                          solutionDescription={solutionDescription || undefined}
+                          competitionDescription={competitionDescription || undefined}
+                          problemDescription={problemDescription || undefined}
+                        />
                       )}
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />
@@ -2263,7 +2276,14 @@ function AppContent() {
                         </div>
                       )}
                       {currentStep === 'businessPlan' && job && (
-                        <StartupPlanViewPage />
+                        <GeneratedBusinessPlan 
+                          idea={idea}
+                          customer={customer}
+                          job={job}
+                          solutionDescription={solutionDescription || undefined}
+                          competitionDescription={competitionDescription || undefined}
+                          problemDescription={problemDescription || undefined}
+                        />
                       )}
                       {currentStep === 'businessPlan' && (!idea || !customer || !job) && (
                         <Navigate to="/" replace />

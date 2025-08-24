@@ -185,6 +185,250 @@ const Summary = styled.p`
   }
 `;
 
+// Preview styled components
+const PreviewHeader = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const SuccessIcon = styled.div`
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+  
+  svg {
+    font-size: 2rem;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    width: 60px;
+    height: 60px;
+    
+    svg {
+      font-size: 1.5rem;
+    }
+  }
+`;
+
+const PreviewTitle = styled.h2`
+  color: #181a1b;
+  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+`;
+
+const PreviewSubtitle = styled.p`
+  color: #6b7280;
+  font-size: 1.1rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const PreviewSection = styled.div`
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #dee2e6;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const PreviewSectionTitle = styled.h3`
+  color: #181a1b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  
+  svg {
+    color: #28a745;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+`;
+
+const PreviewGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+  }
+`;
+
+const PreviewCard = styled.div<{ locked?: boolean }>`
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+  }
+`;
+
+const LockOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  svg {
+    color: #6b7280;
+    font-size: 1.5rem;
+  }
+  
+  span {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 768px) {
+    svg {
+      font-size: 1.2rem;
+    }
+    
+    span {
+      font-size: 0.8rem;
+    }
+  }
+`;
+
+const PreviewCardTitle = styled.h4`
+  color: #181a1b;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
+`;
+
+const PreviewCardText = styled.p`
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+  }
+`;
+
+const ValueProposition = styled.div`
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #ffeaa7;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const ValuePropositionTitle = styled.h3`
+  color: #856404;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  
+  svg {
+    color: #f39c12;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+`;
+
+const ValuePropositionList = styled.div`
+  display: grid;
+  gap: 0.8rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.6rem;
+  }
+`;
+
+const ValuePropositionItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  svg {
+    color: #28a745;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  
+  span {
+    color: #856404;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 768px) {
+    svg {
+      font-size: 0.8rem;
+    }
+    
+    span {
+      font-size: 0.85rem;
+    }
+  }
+`;
+
+const PreviewActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+`;
+
 const SectionCard = styled.div`
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   border-radius: 16px;
@@ -789,6 +1033,22 @@ export default function StartupPlanViewPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  
+  // Function to handle signup - set currentStep to 'signup'
+  const handleSignup = () => {
+    // Store the current state so we can return to it after signup
+    localStorage.setItem('pendingLocalRequest', 'true');
+    // Navigate to the main app page which will handle the signup state
+    window.location.href = '/app?signup=true';
+  };
+  
+  // Function to handle login - set currentStep to 'login'
+  const handleLogin = () => {
+    // Store the current state so we can return to it after login
+    localStorage.setItem('pendingLocalRequest', 'true');
+    // Navigate to the main app page which will handle the login state
+    window.location.href = '/app?login=true';
+  };
   const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [rawPlan, setRawPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1238,212 +1498,99 @@ export default function StartupPlanViewPage() {
           return (
             <Container>
               <FormCard>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                  <div style={{ 
-                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                    borderRadius: '50%',
-                    width: '80px',
-                    height: '80px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1rem',
-                    boxShadow: '0 4px 20px rgba(40, 167, 69, 0.3)'
-                  }}>
-                    <FaCheckCircle style={{ fontSize: '2rem', color: 'white' }} />
-                  </div>
-                  <h2 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>🎉 Your Business Plan is Ready!</h2>
-                  <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>We've generated a comprehensive business plan based on your inputs.</p>
-                </div>
+                <PreviewHeader>
+                  <SuccessIcon>
+                    <FaCheckCircle />
+                  </SuccessIcon>
+                  <PreviewTitle>🎉 Your Business Plan is Ready!</PreviewTitle>
+                  <PreviewSubtitle>We've generated a comprehensive business plan based on your inputs.</PreviewSubtitle>
+                </PreviewHeader>
 
                 {/* Business Plan Preview */}
-                <div style={{ 
-                  background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  marginBottom: '2rem',
-                  border: '1px solid #dee2e6'
-                }}>
-                  <h3 style={{ color: '#181a1b', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <FaChartLine style={{ color: '#28a745' }} />
+                <PreviewSection>
+                  <PreviewSectionTitle>
+                    <FaChartLine />
                     Business Plan Preview
-                  </h3>
+                  </PreviewSectionTitle>
                   
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    <div style={{ 
-                      background: 'white', 
-                      padding: '1rem', 
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef'
-                    }}>
-                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>💡 Business Idea Summary</h4>
-                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                  <PreviewGrid>
+                    <PreviewCard>
+                      <PreviewCardTitle>💡 Business Idea Summary</PreviewCardTitle>
+                      <PreviewCardText>
                         Your personalized side hustle opportunity based on your interests, skills, and market analysis.
-                      </p>
-                    </div>
+                      </PreviewCardText>
+                    </PreviewCard>
                     
-                    <div style={{ 
-                      background: 'white', 
-                      padding: '1rem', 
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef'
-                    }}>
-                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>👥 Target Customer Profile</h4>
-                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                    <PreviewCard>
+                      <PreviewCardTitle>👥 Target Customer Profile</PreviewCardTitle>
+                      <PreviewCardText>
                         Detailed analysis of your ideal customer, their pain points, and how your solution addresses their needs.
-                      </p>
-                    </div>
+                      </PreviewCardText>
+                    </PreviewCard>
                     
-                    <div style={{ 
-                      background: 'white', 
-                      padding: '1rem', 
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        right: '0',
-                        bottom: '0',
-                        background: 'rgba(255,255,255,0.9)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}>
-                        <FaLock style={{ color: '#6b7280', fontSize: '1.5rem' }} />
-                        <span style={{ color: '#6b7280', fontWeight: '600' }}>Sign up to unlock</span>
-                      </div>
-                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>📊 Market Analysis</h4>
-                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                    <PreviewCard locked>
+                      <LockOverlay>
+                        <FaLock />
+                        <span>Sign up to unlock</span>
+                      </LockOverlay>
+                      <PreviewCardTitle>📊 Market Analysis</PreviewCardTitle>
+                      <PreviewCardText>
                         Market size, competitor analysis, and validation strategies for your business idea.
-                      </p>
-                    </div>
+                      </PreviewCardText>
+                    </PreviewCard>
                     
-                    <div style={{ 
-                      background: 'white', 
-                      padding: '1rem', 
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        right: '0',
-                        bottom: '0',
-                        background: 'rgba(255,255,255,0.9)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}>
-                        <FaLock style={{ color: '#6b7280', fontSize: '1.5rem' }} />
-                        <span style={{ color: '#6b7280', fontWeight: '600' }}>Sign up to unlock</span>
-                      </div>
-                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>💰 Financial Projections</h4>
-                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                    <PreviewCard locked>
+                      <LockOverlay>
+                        <FaLock />
+                        <span>Sign up to unlock</span>
+                      </LockOverlay>
+                      <PreviewCardTitle>💰 Financial Projections</PreviewCardTitle>
+                      <PreviewCardText>
                         Revenue models, cost analysis, and income projections for your side hustle.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                      </PreviewCardText>
+                    </PreviewCard>
+                  </PreviewGrid>
+                </PreviewSection>
 
                 {/* Value Proposition */}
-                <div style={{ 
-                  background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  marginBottom: '2rem',
-                  border: '1px solid #ffeaa7'
-                }}>
-                  <h3 style={{ color: '#856404', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <FaStar style={{ color: '#f39c12' }} />
+                <ValueProposition>
+                  <ValuePropositionTitle>
+                    <FaStar />
                     What You'll Get with Alpha Hustler Pro
-                  </h3>
-                  <div style={{ display: 'grid', gap: '0.8rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
-                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Complete business plan with all sections</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
-                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>AI-powered validation and scoring</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
-                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Step-by-step launch roadmap</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
-                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Expert coach consultations</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
-                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Unlimited plan iterations</span>
-                    </div>
-                  </div>
-                </div>
+                  </ValuePropositionTitle>
+                  <ValuePropositionList>
+                    <ValuePropositionItem>
+                      <FaCheckCircle />
+                      <span>Complete business plan with all sections</span>
+                    </ValuePropositionItem>
+                    <ValuePropositionItem>
+                      <FaCheckCircle />
+                      <span>AI-powered validation and scoring</span>
+                    </ValuePropositionItem>
+                    <ValuePropositionItem>
+                      <FaCheckCircle />
+                      <span>Step-by-step launch roadmap</span>
+                    </ValuePropositionItem>
+                    <ValuePropositionItem>
+                      <FaCheckCircle />
+                      <span>Expert coach consultations</span>
+                    </ValuePropositionItem>
+                    <ValuePropositionItem>
+                      <FaCheckCircle />
+                      <span>Unlimited plan iterations</span>
+                    </ValuePropositionItem>
+                  </ValuePropositionList>
+                </ValueProposition>
 
                 {/* CTA Buttons */}
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button 
-                    onClick={() => navigate('/signup')}
-                    style={{
-                      background: 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)',
-                      color: 'white',
-                      border: 'none',
-                      padding: '1rem 2rem',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                    }}
-                  >
+                <PreviewActions>
+                  <PrimaryButton onClick={handleSignup}>
                     🚀 Get Your Complete Business Plan
-                  </button>
-                  <button 
-                    onClick={() => navigate('/login')}
-                    style={{
-                      background: 'transparent',
-                      color: '#181a1b',
-                      border: '2px solid #181a1b',
-                      padding: '1rem 2rem',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = '#181a1b';
-                      e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = '#181a1b';
-                    }}
-                  >
+                  </PrimaryButton>
+                  <SecondaryButton onClick={handleLogin}>
                     Sign In
-                  </button>
-                </div>
+                  </SecondaryButton>
+                </PreviewActions>
               </FormCard>
             </Container>
           );

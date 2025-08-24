@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { FaCheckCircle, FaSpinner, FaStar, FaChartLine, FaUsers, FaLightbulb, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner, FaStar, FaChartLine, FaUsers, FaLightbulb, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -235,6 +235,128 @@ const LoadingContainer = styled.div`
   text-align: center;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+`;
+
+const ModalClose = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+`;
+
+const ModalTitle = styled.h2`
+  color: #181a1b;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+`;
+
+const ModalText = styled.p`
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  text-align: center;
+`;
+
+const ModalBenefits = styled.div`
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ModalBenefitsTitle = styled.h3`
+  color: #181a1b;
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const ModalBenefitsList = styled.ul`
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #6b7280;
+`;
+
+const ModalBenefitsItem = styled.li`
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background: transparent;
+  color: #181a1b;
+  border: 2px solid #181a1b;
+  border-radius: 12px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    background: #181a1b;
+    color: white;
+  }
+`;
+
 
 
 interface GeneratedBusinessPlanProps {
@@ -259,6 +381,7 @@ export function GeneratedBusinessPlan({
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     generateBusinessPlan();
@@ -309,7 +432,25 @@ export function GeneratedBusinessPlan({
   };
 
   const handleManageHustles = () => {
-    navigate('/plans');
+    if (!isAuthenticated) {
+      setShowModal(true);
+    } else {
+      navigate('/plans');
+    }
+  };
+
+  const handleSignup = () => {
+    setShowModal(false);
+    window.location.href = '/app?signup=true';
+  };
+
+  const handleLogin = () => {
+    setShowModal(false);
+    window.location.href = '/app?login=true';
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
   };
 
   if (loading) {
@@ -343,144 +484,183 @@ export function GeneratedBusinessPlan({
   }
 
   return (
-    <Container>
-      <FormCard>
-        <Title>🎉 Your Business Plan is Ready!</Title>
-        <Meta>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span>Generated: {new Date().toLocaleDateString()}</span>
-            <span style={{ color: '#6c757d' }}>|</span>
-            <span style={{ 
-              padding: '0.25rem 0.75rem',
-              borderRadius: '12px',
-              fontSize: '0.85rem',
-              fontWeight: '600',
-              background: '#d4edda',
-              color: '#155724'
-            }}>
-              Draft
-            </span>
+    <>
+      <Container>
+        <FormCard>
+          <Title>🎉 Your Business Plan is Ready!</Title>
+          <Meta>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <span>Generated: {new Date().toLocaleDateString()}</span>
+              <span style={{ color: '#6c757d' }}>|</span>
+              <span style={{ 
+                padding: '0.25rem 0.75rem',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                background: '#d4edda',
+                color: '#155724'
+              }}>
+                Draft
+              </span>
+            </div>
+          </Meta>
+
+          {generatedPlan && (
+            <>
+              <SectionCard>
+                <SectionLabel>
+                  <FaLightbulb style={{ color: '#28a745' }} />
+                  Business Idea Summary
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.summary || 'Your personalized side hustle opportunity based on your interests, skills, and market analysis.'}
+                </SectionContent>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaUsers style={{ color: '#28a745' }} />
+                  Customer Profile
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.sections?.Customer || 'Detailed analysis of your ideal customer, their pain points, and how your solution addresses their needs.'}
+                </SectionContent>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaUsers style={{ color: '#28a745' }} />
+                  Customer Struggles
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.sections?.Struggles || 'Key pain points and challenges your target customers face.'}
+                </SectionContent>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaStar style={{ color: '#28a745' }} />
+                  Value Proposition
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.sections?.Value || 'How your solution uniquely addresses customer needs and provides value.'}
+                </SectionContent>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaChartLine style={{ color: '#28a745' }} />
+                  Market Research
+                </SectionLabel>
+                <MarketResearchSection>
+                  <MarketResearchSubsection>
+                    <MarketResearchTitle>Market Size</MarketResearchTitle>
+                    <MarketResearchContent>
+                      {generatedPlan.sections?.MarketSize || 'Market size analysis and validation strategies for your business idea.'}
+                    </MarketResearchContent>
+                  </MarketResearchSubsection>
+                  
+                  <MarketResearchSubsection>
+                    <MarketResearchTitle>Market Trends</MarketResearchTitle>
+                    <MarketResearchList>
+                      {generatedPlan.sections?.Trends ? (
+                        <MarketResearchListItem>
+                          {generatedPlan.sections.Trends}
+                        </MarketResearchListItem>
+                      ) : (
+                        <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
+                          Market trends not yet analyzed.
+                        </MarketResearchListItem>
+                      )}
+                    </MarketResearchList>
+                  </MarketResearchSubsection>
+                  
+                  <MarketResearchSubsection>
+                    <MarketResearchTitle>Competitors</MarketResearchTitle>
+                    <MarketResearchList>
+                      {generatedPlan.sections?.Competitors ? (
+                        <MarketResearchListItem>
+                          {generatedPlan.sections.Competitors}
+                        </MarketResearchListItem>
+                      ) : (
+                        <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
+                          Competitor analysis not yet completed.
+                        </MarketResearchListItem>
+                      )}
+                    </MarketResearchList>
+                  </MarketResearchSubsection>
+                </MarketResearchSection>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaChartLine style={{ color: '#28a745' }} />
+                  Market Validation
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.sections?.Validation || 'How to validate your business idea and test market demand.'}
+                </SectionContent>
+              </SectionCard>
+
+              <SectionCard>
+                <SectionLabel>
+                  <FaChartLine style={{ color: '#28a745' }} />
+                  Financial Summary
+                </SectionLabel>
+                <SectionContent>
+                  {generatedPlan.sections?.Financial || 'Revenue models, cost analysis, and income projections for your side hustle.'}
+                </SectionContent>
+              </SectionCard>
+            </>
+          )}
+
+          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
+              Ready to take your side hustle to the next level?
+            </p>
+            <PrimaryButton onClick={handleManageHustles}>
+              Manage Your Alpha Hustles
+            </PrimaryButton>
           </div>
-        </Meta>
+        </FormCard>
+      </Container>
 
-        {generatedPlan && (
-          <>
-            <SectionCard>
-              <SectionLabel>
-                <FaLightbulb style={{ color: '#28a745' }} />
-                Business Idea Summary
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.summary || 'Your personalized side hustle opportunity based on your interests, skills, and market analysis.'}
-              </SectionContent>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaUsers style={{ color: '#28a745' }} />
-                Customer Profile
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.sections?.Customer || 'Detailed analysis of your ideal customer, their pain points, and how your solution addresses their needs.'}
-              </SectionContent>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaUsers style={{ color: '#28a745' }} />
-                Customer Struggles
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.sections?.Struggles || 'Key pain points and challenges your target customers face.'}
-              </SectionContent>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaStar style={{ color: '#28a745' }} />
-                Value Proposition
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.sections?.Value || 'How your solution uniquely addresses customer needs and provides value.'}
-              </SectionContent>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaChartLine style={{ color: '#28a745' }} />
-                Market Research
-              </SectionLabel>
-              <MarketResearchSection>
-                <MarketResearchSubsection>
-                  <MarketResearchTitle>Market Size</MarketResearchTitle>
-                  <MarketResearchContent>
-                    {generatedPlan.sections?.MarketSize || 'Market size analysis and validation strategies for your business idea.'}
-                  </MarketResearchContent>
-                </MarketResearchSubsection>
-                
-                <MarketResearchSubsection>
-                  <MarketResearchTitle>Market Trends</MarketResearchTitle>
-                  <MarketResearchList>
-                    {generatedPlan.sections?.Trends ? (
-                      <MarketResearchListItem>
-                        {generatedPlan.sections.Trends}
-                      </MarketResearchListItem>
-                    ) : (
-                      <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
-                        Market trends not yet analyzed.
-                      </MarketResearchListItem>
-                    )}
-                  </MarketResearchList>
-                </MarketResearchSubsection>
-                
-                <MarketResearchSubsection>
-                  <MarketResearchTitle>Competitors</MarketResearchTitle>
-                  <MarketResearchList>
-                    {generatedPlan.sections?.Competitors ? (
-                      <MarketResearchListItem>
-                        {generatedPlan.sections.Competitors}
-                      </MarketResearchListItem>
-                    ) : (
-                      <MarketResearchListItem style={{ color: '#666', fontStyle: 'italic' }}>
-                        Competitor analysis not yet completed.
-                      </MarketResearchListItem>
-                    )}
-                  </MarketResearchList>
-                </MarketResearchSubsection>
-              </MarketResearchSection>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaChartLine style={{ color: '#28a745' }} />
-                Market Validation
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.sections?.Validation || 'How to validate your business idea and test market demand.'}
-              </SectionContent>
-            </SectionCard>
-
-            <SectionCard>
-              <SectionLabel>
-                <FaChartLine style={{ color: '#28a745' }} />
-                Financial Summary
-              </SectionLabel>
-              <SectionContent>
-                {generatedPlan.sections?.Financial || 'Revenue models, cost analysis, and income projections for your side hustle.'}
-              </SectionContent>
-            </SectionCard>
-          </>
-        )}
-
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
-            Ready to take your side hustle to the next level?
-          </p>
-          <PrimaryButton onClick={handleManageHustles}>
-            Manage Your Alpha Hustles
-          </PrimaryButton>
-        </div>
-      </FormCard>
-    </Container>
+      {/* Authentication Modal */}
+      {showModal && (
+        <ModalOverlay onClick={handleCloseModal}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalClose onClick={handleCloseModal}>
+              <FaTimes />
+            </ModalClose>
+            
+            <ModalTitle>🚀 Join Alpha Hustler Pro</ModalTitle>
+            <ModalText>
+              Sign up or log in to access your complete business plan dashboard and start managing your side hustles!
+            </ModalText>
+            
+            <ModalBenefits>
+              <ModalBenefitsTitle>What you'll get with Alpha Hustler Pro:</ModalBenefitsTitle>
+              <ModalBenefitsList>
+                <ModalBenefitsItem>Complete business plan with all sections</ModalBenefitsItem>
+                <ModalBenefitsItem>AI-powered validation and scoring</ModalBenefitsItem>
+                <ModalBenefitsItem>Step-by-step launch roadmap</ModalBenefitsItem>
+                <ModalBenefitsItem>Expert coach consultations</ModalBenefitsItem>
+                <ModalBenefitsItem>Unlimited plan iterations</ModalBenefitsItem>
+                <ModalBenefitsItem>Access to your side hustle dashboard</ModalBenefitsItem>
+              </ModalBenefitsList>
+            </ModalBenefits>
+            
+            <ModalActions>
+              <PrimaryButton onClick={handleSignup}>
+                🚀 Sign Up
+              </PrimaryButton>
+              <SecondaryButton onClick={handleLogin}>
+                Sign In
+              </SecondaryButton>
+            </ModalActions>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+    </>
   );
 }

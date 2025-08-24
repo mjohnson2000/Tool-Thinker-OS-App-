@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaCheckCircle, FaSpinner, FaStar, FaChartLine, FaUsers, FaLightbulb } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner, FaStar, FaChartLine, FaUsers, FaLightbulb } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -55,17 +55,7 @@ const FormCard = styled.div`
   }
 `;
 
-const TopActions = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-`;
+
 
 const PrimaryButton = styled.button`
   background: linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%);
@@ -94,25 +84,7 @@ const PrimaryButton = styled.button`
   }
 `;
 
-const SecondaryButton = styled.button`
-  background: transparent;
-  color: #181a1b;
-  border: 2px solid #181a1b;
-  border-radius: 12px;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  &:hover {
-    background: #181a1b;
-    color: white;
-  }
-`;
+
 
 const Section = styled.div`
   margin-bottom: 2rem;
@@ -147,18 +119,7 @@ const LoadingContainer = styled.div`
   text-align: center;
 `;
 
-const SuccessMessage = styled.div`
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  border: 1px solid #c3e6cb;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  color: #155724;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
+
 
 interface GeneratedBusinessPlanProps {
   idea: any;
@@ -181,8 +142,6 @@ export function GeneratedBusinessPlan({
   const { isAuthenticated } = useAuth();
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -233,41 +192,8 @@ export function GeneratedBusinessPlan({
     }
   };
 
-  const handleSavePlan = async () => {
-    if (!isAuthenticated) {
-      // Redirect to signup if not authenticated
-      navigate('/signup');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      
-      const response = await fetch(`${API_URL}/business-plan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...generatedPlan,
-          status: 'draft'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save business plan');
-      }
-
-      setSaved(true);
-      setTimeout(() => {
-        navigate('/plans');
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to save business plan');
-    } finally {
-      setSaving(false);
-    }
+  const handleManageHustles = () => {
+    navigate('/plans');
   };
 
   if (loading) {
@@ -303,22 +229,6 @@ export function GeneratedBusinessPlan({
   return (
     <Container>
       <FormCard>
-        <TopActions>
-          <SecondaryButton onClick={() => navigate('/app')}>
-            <FaArrowLeft /> Back to Ideas
-          </SecondaryButton>
-          <PrimaryButton onClick={handleSavePlan} disabled={saving || saved}>
-            {saving ? <FaSpinner className="fa-spin" /> : saved ? <FaCheckCircle /> : <FaSave />}
-            {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Business Plan'}
-          </PrimaryButton>
-        </TopActions>
-
-        {saved && (
-          <SuccessMessage>
-            <FaCheckCircle style={{ color: '#28a745' }} />
-            Business plan saved successfully! Redirecting to your plans...
-          </SuccessMessage>
-        )}
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ 
@@ -442,9 +352,8 @@ export function GeneratedBusinessPlan({
           <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
             Ready to take your side hustle to the next level?
           </p>
-          <PrimaryButton onClick={handleSavePlan} disabled={saving || saved}>
-            {saving ? <FaSpinner className="fa-spin" /> : saved ? <FaCheckCircle /> : <FaSave />}
-            {saving ? 'Saving...' : saved ? 'Saved!' : 'Save & Continue'}
+          <PrimaryButton onClick={handleManageHustles}>
+            Manage Your Alpha Hustles
           </PrimaryButton>
         </div>
       </FormCard>

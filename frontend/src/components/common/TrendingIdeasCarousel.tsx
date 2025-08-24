@@ -1253,6 +1253,29 @@ export function TrendingIdeasCarousel() {
     fetchTrendingIdeas();
   }, [ideaType]);
 
+  // Ensure general ideas are available when component first loads
+  useEffect(() => {
+    const ensureGeneralIdeas = async () => {
+      try {
+        const config: any = {};
+        if (isAuthenticated) {
+          const token = localStorage.getItem('token');
+          if (token) {
+            config.headers = { Authorization: `Bearer ${token}` };
+          }
+        }
+        
+        // Ensure general ideas are available (this will generate them if needed)
+        await axios.post(`${API_URL}/trending-ideas/ensure-available`, { type: 'general' }, config);
+      } catch (error) {
+        console.error('Error ensuring general ideas are available:', error);
+        // Continue anyway, might still have ideas
+      }
+    };
+    
+    ensureGeneralIdeas();
+  }, []); // Only run once when component mounts
+
   // Check for pending local request when returning from login
   useEffect(() => {
     const pendingRequest = localStorage.getItem('pendingLocalRequest');
@@ -1373,7 +1396,39 @@ export function TrendingIdeasCarousel() {
         }
       }
       
-      // For local ideas, include user location in the request
+      // First, ensure ideas are available for the current type
+      let ensurePayload: any = { type: ideaType };
+      
+      if (ideaType === 'local') {
+        if (!user?.location) {
+          setShowLocationPrompt(true);
+          setError('Please add your location to your profile to view local trending ideas');
+          setLoading(false);
+          return;
+        }
+        
+        const { city, region, country } = user.location;
+        if (!city || !region || !country) {
+          setShowLocationPrompt(true);
+          setError('Please add your location to your profile to view local trending ideas');
+          setLoading(false);
+          return;
+        }
+        
+        ensurePayload.city = city;
+        ensurePayload.region = region;
+        ensurePayload.country = country;
+      }
+      
+      // Ensure ideas are available (this will generate them if needed)
+      try {
+        await axios.post(`${API_URL}/trending-ideas/ensure-available`, ensurePayload, config);
+      } catch (ensureError) {
+        console.error('Error ensuring ideas are available:', ensureError);
+        // Continue anyway, might still have ideas
+      }
+      
+      // Now fetch the ideas
       let url = `${API_URL}/trending-ideas?type=${ideaType}&limit=5`;
       if (ideaType === 'local' && user?.location) {
         const { city, region, country } = user.location;
@@ -1387,20 +1442,6 @@ export function TrendingIdeasCarousel() {
       
       if (data.status === 'success') {
         setTrendingIdeas(data.data);
-        
-        // If no local ideas found and user has location, try to generate them
-        if (ideaType === 'local' && data.data.length === 0 && user?.location) {
-          const { city, region, country } = user.location;
-          if (city && region && country) {
-            await generateLocalTrendingIdeas(city, region, country);
-            // Fetch again after generation
-            const retryResponse = await axios.get(url, config);
-            const retryData = retryResponse.data as any;
-            if (retryData.status === 'success') {
-              setTrendingIdeas(retryData.data);
-            }
-          }
-        }
       } else {
         setError('Failed to fetch trending ideas');
       }

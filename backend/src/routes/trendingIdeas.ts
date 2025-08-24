@@ -280,6 +280,169 @@ router.post('/generate-local', async (req: Request, res: Response, next: NextFun
   }
 });
 
+// POST /api/trending-ideas/ensure-available - Check and generate ideas if needed
+router.post('/ensure-available', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { type = 'general', city, region, country } = req.body;
+    
+    // Check if ideas exist for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    let query: any = {
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    };
+    
+    if (type === 'local') {
+      if (!city || !region || !country) {
+        return res.status(400).json({
+          success: false,
+          error: 'City, region, and country are required for local idea generation'
+        });
+      }
+      
+      query.isLocal = true;
+      query.location = {
+        city: city,
+        region: region,
+        country: country
+      };
+    } else {
+      query.type = 'general';
+    }
+    
+    const existingIdeas = await TrendingIdea.find(query);
+    
+    if (existingIdeas.length > 0) {
+      return res.json({
+        success: true,
+        data: existingIdeas,
+        message: 'Ideas already exist',
+        generated: false
+      });
+    }
+    
+    // Generate ideas if none exist
+    let newIdeas;
+    if (type === 'local') {
+      newIdeas = [
+        {
+          title: `${city} Food Delivery Network`,
+          description: `Connect local ${city} restaurants with customers for food delivery`,
+          market: `Local ${city} restaurants and food lovers`,
+          trend: 'Local food delivery growth',
+          difficulty: 'Medium' as const,
+          investment: 'Medium' as const,
+          timeToLaunch: '2-4 weeks' as const,
+          potential: '$3K-8K/month' as const,
+          tags: ['food', 'delivery', 'local', 'restaurants', city.toLowerCase()],
+          businessType: 'local-services' as const,
+          isLocal: true,
+          location: {
+            city: city,
+            region: region,
+            country: country
+          }
+        },
+        {
+          title: `${city} Handyman Services`,
+          description: `Connect skilled handymen with ${city} homeowners`,
+          market: `Local ${city} homeowners and renters`,
+          trend: 'Home improvement services',
+          difficulty: 'Easy' as const,
+          investment: 'Low' as const,
+          timeToLaunch: '1-2 weeks' as const,
+          potential: '$3K-8K/month' as const,
+          tags: ['handyman', 'home', 'repair', 'local', city.toLowerCase()],
+          businessType: 'local-services' as const,
+          isLocal: true,
+          location: {
+            city: city,
+            region: region,
+            country: country
+          }
+        },
+        {
+          title: `${city} Event Planning Services`,
+          description: `Provide event planning and coordination services for ${city} businesses and residents`,
+          market: `Local ${city} businesses and event organizers`,
+          trend: 'Local event services',
+          difficulty: 'Medium' as const,
+          investment: 'Low' as const,
+          timeToLaunch: '1-2 months' as const,
+          potential: '$5K+/month' as const,
+          tags: ['events', 'planning', 'local', 'services', city.toLowerCase()],
+          businessType: 'local-services' as const,
+          isLocal: true,
+          location: {
+            city: city,
+            region: region,
+            country: country
+          }
+        }
+      ];
+    } else {
+      newIdeas = [
+        {
+          title: 'AI-Powered Content Creation',
+          description: 'Create personalized content for businesses using AI tools',
+          market: 'Small businesses and startups',
+          trend: 'AI automation in content marketing',
+          difficulty: 'Easy' as const,
+          investment: 'Low' as const,
+          timeToLaunch: '1-2 weeks' as const,
+          potential: '$2K-5K/month' as const,
+          tags: ['AI', 'content', 'automation', 'marketing'],
+          businessType: 'digital-services' as const,
+          type: 'general'
+        },
+        {
+          title: 'Local Service Marketplace',
+          description: 'Connect local service providers with customers in your area',
+          market: 'Local communities and service providers',
+          trend: 'Local business digitization',
+          difficulty: 'Medium' as const,
+          investment: 'Medium' as const,
+          timeToLaunch: '1-2 months' as const,
+          potential: '$5K+/month' as const,
+          tags: ['marketplace', 'local', 'services', 'community'],
+          businessType: 'local-services' as const,
+          type: 'general'
+        },
+        {
+          title: 'E-commerce Dropshipping',
+          description: 'Start an online store with trending products and dropshipping',
+          market: 'Online shoppers and e-commerce enthusiasts',
+          trend: 'E-commerce growth and dropshipping',
+          difficulty: 'Easy' as const,
+          investment: 'Low' as const,
+          timeToLaunch: '1-2 weeks' as const,
+          potential: '$2K-5K/month' as const,
+          tags: ['e-commerce', 'dropshipping', 'online', 'retail'],
+          businessType: 'online-business' as const,
+          type: 'general'
+        }
+      ];
+    }
+    
+    const savedIdeas = await TrendingIdea.insertMany(newIdeas);
+    
+    res.json({
+      success: true,
+      data: savedIdeas,
+      message: `Successfully generated ${type} trending ideas`,
+      generated: true
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // DELETE /api/trending-ideas/cleanup - Clean up old trending ideas
 router.delete('/cleanup', async (req: Request, res: Response, next: NextFunction) => {
   try {

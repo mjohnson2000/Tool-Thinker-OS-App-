@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes, FaHistory, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaSave, FaCheckCircle, FaSpinner, FaTimes, FaHistory, FaInfoCircle, FaLock, FaStar, FaChartLine } from 'react-icons/fa';
 // Logo components for consistent branding
 import { sideHustleCoach } from '../../utils/sideHustleCoach';
 import type { CoachEvaluation } from '../../utils/sideHustleCoach';
 import { FeedbackBar } from '../common/FeedbackBar';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -787,6 +788,7 @@ export default function StartupPlanViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const [plan, setPlan] = useState<StartupPlan | null>(null);
   const [rawPlan, setRawPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1235,24 +1237,214 @@ export default function StartupPlanViewPage() {
         if (!id) {
           return (
             <Container>
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <h2>Business Plan Generated!</h2>
-                <p>Your business plan has been created successfully.</p>
-                <button 
-                  onClick={() => window.location.href = '/plans'}
-                  style={{
-                    background: '#181a1b',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    marginTop: '1rem'
-                  }}
-                >
-                  View My Business Plans
-                </button>
-              </div>
+              <FormCard>
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                  <div style={{ 
+                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                    borderRadius: '50%',
+                    width: '80px',
+                    height: '80px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem',
+                    boxShadow: '0 4px 20px rgba(40, 167, 69, 0.3)'
+                  }}>
+                    <FaCheckCircle style={{ fontSize: '2rem', color: 'white' }} />
+                  </div>
+                  <h2 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>🎉 Your Business Plan is Ready!</h2>
+                  <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>We've generated a comprehensive business plan based on your inputs.</p>
+                </div>
+
+                {/* Business Plan Preview */}
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  marginBottom: '2rem',
+                  border: '1px solid #dee2e6'
+                }}>
+                  <h3 style={{ color: '#181a1b', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FaChartLine style={{ color: '#28a745' }} />
+                    Business Plan Preview
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div style={{ 
+                      background: 'white', 
+                      padding: '1rem', 
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>💡 Business Idea Summary</h4>
+                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                        Your personalized side hustle opportunity based on your interests, skills, and market analysis.
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      background: 'white', 
+                      padding: '1rem', 
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>👥 Target Customer Profile</h4>
+                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                        Detailed analysis of your ideal customer, their pain points, and how your solution addresses their needs.
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      background: 'white', 
+                      padding: '1rem', 
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        bottom: '0',
+                        background: 'rgba(255,255,255,0.9)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <FaLock style={{ color: '#6b7280', fontSize: '1.5rem' }} />
+                        <span style={{ color: '#6b7280', fontWeight: '600' }}>Sign up to unlock</span>
+                      </div>
+                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>📊 Market Analysis</h4>
+                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                        Market size, competitor analysis, and validation strategies for your business idea.
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      background: 'white', 
+                      padding: '1rem', 
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        bottom: '0',
+                        background: 'rgba(255,255,255,0.9)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}>
+                        <FaLock style={{ color: '#6b7280', fontSize: '1.5rem' }} />
+                        <span style={{ color: '#6b7280', fontWeight: '600' }}>Sign up to unlock</span>
+                      </div>
+                      <h4 style={{ color: '#181a1b', marginBottom: '0.5rem' }}>💰 Financial Projections</h4>
+                      <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                        Revenue models, cost analysis, and income projections for your side hustle.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Value Proposition */}
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  marginBottom: '2rem',
+                  border: '1px solid #ffeaa7'
+                }}>
+                  <h3 style={{ color: '#856404', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FaStar style={{ color: '#f39c12' }} />
+                    What You'll Get with Alpha Hustler Pro
+                  </h3>
+                  <div style={{ display: 'grid', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
+                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Complete business plan with all sections</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
+                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>AI-powered validation and scoring</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
+                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Step-by-step launch roadmap</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
+                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Expert coach consultations</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FaCheckCircle style={{ color: '#28a745', fontSize: '0.9rem' }} />
+                      <span style={{ color: '#856404', fontSize: '0.95rem' }}>Unlimited plan iterations</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA Buttons */}
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={() => navigate('/signup')}
+                    style={{
+                      background: 'linear-gradient(135deg, #181a1b 0%, #2d2d2d 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '1rem 2rem',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                    }}
+                  >
+                    🚀 Get Your Complete Business Plan
+                  </button>
+                  <button 
+                    onClick={() => navigate('/login')}
+                    style={{
+                      background: 'transparent',
+                      color: '#181a1b',
+                      border: '2px solid #181a1b',
+                      padding: '1rem 2rem',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = '#181a1b';
+                      e.currentTarget.style.color = 'white';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#181a1b';
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </FormCard>
             </Container>
           );
         }

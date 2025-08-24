@@ -7,8 +7,8 @@ export interface ITrendingIdea extends Document {
   trend: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   investment: 'Low' | 'Medium' | 'High';
-  timeToLaunch: '1-2 weeks' | '1-2 months' | '3+ months';
-  potential: '$500-2K/month' | '$2K-5K/month' | '$5K+/month';
+  timeToLaunch: '1-2 weeks' | '2-4 weeks' | '1-2 months' | '3+ months';
+  potential: '$500-2K/month' | '$2K-5K/month' | '$3K-8K/month' | '$5K+/month';
   tags: string[];
   businessType: 'digital-services' | 'local-services' | 'creative-services' | 'professional-services' | 'physical-products' | 'online-business';
   score: number;
@@ -64,12 +64,12 @@ const trendingIdeaSchema = new Schema<ITrendingIdea>({
   },
   timeToLaunch: {
     type: String,
-    enum: ['1-2 weeks', '1-2 months', '3+ months'],
+    enum: ['1-2 weeks', '2-4 weeks', '1-2 months', '3+ months'],
     required: true
   },
   potential: {
     type: String,
-    enum: ['$500-2K/month', '$2K-5K/month', '$5K+/month'],
+    enum: ['$500-2K/month', '$2K-5K/month', '$3K-8K/month', '$5K+/month'],
     required: true
   },
   tags: [{

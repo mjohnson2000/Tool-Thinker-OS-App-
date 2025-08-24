@@ -1386,27 +1386,21 @@ export function TrendingIdeasCarousel() {
       const data = response.data as any;
       
       if (data.status === 'success') {
-        // If no local ideas found and user has location, try to generate them first
+        setTrendingIdeas(data.data);
+        
+        // If no local ideas found and user has location, try to generate them
         if (ideaType === 'local' && data.data.length === 0 && user?.location) {
           const { city, region, country } = user.location;
           if (city && region && country) {
-            console.log('No local ideas found, generating for:', city, region, country);
-            setLoading(true); // Show loading while generating
             await generateLocalTrendingIdeas(city, region, country);
             // Fetch again after generation
             const retryResponse = await axios.get(url, config);
             const retryData = retryResponse.data as any;
             if (retryData.status === 'success') {
               setTrendingIdeas(retryData.data);
-              setLoading(false);
-              return; // Exit early since we have data now
             }
-            setLoading(false);
           }
         }
-        
-        // Set the ideas (either original or after generation)
-        setTrendingIdeas(data.data);
       } else {
         setError('Failed to fetch trending ideas');
       }
@@ -1429,6 +1423,7 @@ export function TrendingIdeasCarousel() {
 
   const generateLocalTrendingIdeas = async (city: string, region: string, country: string) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/trending-ideas/generate-local`,
         {
@@ -1438,6 +1433,7 @@ export function TrendingIdeasCarousel() {
         },
         {
           headers: {
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }

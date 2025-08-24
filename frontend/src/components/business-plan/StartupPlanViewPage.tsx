@@ -828,6 +828,13 @@ export default function StartupPlanViewPage() {
 
   useEffect(() => {
     async function fetchPlan() {
+      // If no ID is provided, show a success message instead of trying to fetch
+      if (!id) {
+        setLoading(false);
+        setError(null);
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       try {
@@ -1225,6 +1232,30 @@ export default function StartupPlanViewPage() {
         
         if (loading) return <Container>Loading business plan...</Container>;
         if (error) return <Container style={{ color: '#dc3545' }}>{error}</Container>;
+        if (!id) {
+          return (
+            <Container>
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <h2>Business Plan Generated!</h2>
+                <p>Your business plan has been created successfully.</p>
+                <button 
+                  onClick={() => window.location.href = '/plans'}
+                  style={{
+                    background: '#181a1b',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.8rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    marginTop: '1rem'
+                  }}
+                >
+                  View My Business Plans
+                </button>
+              </div>
+            </Container>
+          );
+        }
         if (!plan) {
           console.log('No plan data, returning null');
           return <Container style={{ background: 'yellow', padding: '2rem', color: 'black' }}>

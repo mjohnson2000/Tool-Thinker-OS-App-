@@ -7,7 +7,7 @@ import { sideHustleCoach } from '../../utils/sideHustleCoach';
 import type { CoachEvaluation } from '../../utils/sideHustleCoach';
 import { FeedbackBar } from '../common/FeedbackBar';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Container = styled.div`
   display: flex;
